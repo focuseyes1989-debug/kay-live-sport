@@ -1,0 +1,11 @@
+# Android in-app updates
+
+Android 0.1.1 adds startup checks and the existing clickable update notification, using the saved Update notifications, Notification sound and sound-volume preferences. General > Check for updates also works when notifications are disabled.
+
+Only this repository's `android-vMAJOR.MINOR.PATCH` releases are considered, including Android preview prereleases. Windows releases are ignored. Publish the ARM64 asset as `KAYLiveSport-android-arm64-debug.apk`; GitHub must provide its SHA-256 asset digest. Download and installation both verify the exact release, size and digest. Downloads stay in the app-private cache and are shared through a narrowly scoped FileProvider.
+
+Install update opens Android's installer after checking the APK package ID, newer version code and identical signing certificate. If installation permission is missing, the button opens Android's per-app permission screen. The user must grant permission, return to KAY LIVE SPORT and tap Install update again. The user confirms Update in Android, then taps Open after installation. The app does not silently install, automatically grant permission, uninstall itself or clear settings.
+
+Keep package ID `com.kaylivesport.mobile` and the existing signing key for every update. The current preview uses this machine's existing Android debug keystore; preserve that key privately. A different key is rejected rather than suggesting uninstall. Bump both Cargo and Tauri Android versions before each new release so versionCode increases. Android 0.1.0 requires a one-time manual install of 0.1.1; future upgrades can use the new flow.
+
+Validation: ARM64 APK built; Android signature and 16 KB alignment verified; Rust release-selection/checksum tests, shared update UI tests (notification, Android install-permission and installer-return states) and mobile portrait/landscape checks passed. On the connected Redmi, in-place install retained saved preferences; live GitHub check returned Android 0.1.1/up_to_date and the native installer bridge returned installAllowed=false. No newer Android release exists yet, so a real future-release download and user-confirmed package-installer upgrade have not been tested end to end. The system permission was not changed during testing.

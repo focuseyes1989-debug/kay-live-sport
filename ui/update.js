@@ -1,3 +1,4 @@
+const androidUpdater=typeof window!=='undefined' && !!window.kayAndroid;
 let updateNotificationsEnabled=true;
 try{const saved=JSON.parse(localStorage.getItem('live-sport.update-notifications'));if(typeof saved==='boolean')updateNotificationsEnabled=saved;}catch{}
 function initializeUpdateNotificationToggle(){
@@ -30,7 +31,7 @@ async function checkUpdates(notify=false){
    $('update-notes').textContent=result.notes||'No release notes provided.';$('download-update').hidden=false;
    if(notify&&!$('update-dialog').open)showUpdateNotification(result.latest);
   }else if(result.status==='up_to_date')$('update-status').textContent='You are using the latest published version.';
-  else if(result.status==='missing_asset')$('update-status').textContent='Version '+result.latest+' has no Windows x64 download yet.';
+  else if(result.status==='missing_asset')$('update-status').textContent='Version '+result.latest+(androidUpdater?' has no Android APK download yet.':' has no Windows x64 download yet.');
   else $('update-status').textContent='No releases have been published yet.';
  }catch(e){$('update-status').textContent='Could not check for updates: '+e.message;}
  finally{setUpdateBusy(false);}
@@ -40,8 +41,8 @@ async function downloadUpdate(){
  setUpdateBusy(true,'Downloading and verifying update...');
  try{
   downloadedUpdate=await rpc('download_update',{version:availableUpdate.latest});
-  $('update-status').textContent='Download verified. Choose Install & Restart to update. Your saved settings will remain.';
-  $('update-notes').textContent=downloadedUpdate.path;$('download-update').hidden=true;$('open-update-folder').hidden=false;$('install-update').hidden=false;
+  $('update-status').textContent=androidUpdater?'APK verified. Tap Install update, then confirm in Android. Your saved settings will remain.':'Download verified. Choose Install & Restart to update. Your saved settings will remain.';
+  $('update-notes').textContent=downloadedUpdate.path;$('download-update').hidden=true;$('open-update-folder').hidden=!!androidUpdater;$('install-update').hidden=false;
  }catch(e){$('update-status').textContent='Update download failed: '+e.message;}
  finally{setUpdateBusy(false);}
 }
@@ -70,10 +71,12 @@ setTimeout(()=>checkUpdates(true),1500);
 async function installUpdate(){
  if(updateBusy||!downloadedUpdate)return;
  setUpdateBusy(true,'Verifying update and preparing to restart...');
- try{await rpc('install_update',{version:downloadedUpdate.version});}
+ try{const result=await rpc('install_update',{version:downloadedUpdate.version});if(androidUpdater){$('update-status').textContent=result.permissionRequired?'Allow updates from KAY LIVE SPORT in Android settings, return here, then tap Install update again.':'Android installer opened. Confirm Update to keep your settings. After installation, tap Open.';setUpdateBusy(false);}}
  catch(e){$('update-status').textContent='Could not install update: '+e.message;setUpdateBusy(false);}
 }
 $('install-update').onclick=installUpdate;
 $('update-dialog').addEventListener('cancel',event=>{if(updateBusy)event.preventDefault();});
 
 initializeUpdateNotificationToggle();
+
+if(androidUpdater)$('install-update').textContent='Install update';

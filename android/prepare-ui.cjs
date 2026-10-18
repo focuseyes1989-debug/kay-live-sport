@@ -1,7 +1,7 @@
 const fs=require('fs'),path=require('path');
 const source=path.join(__dirname,'../ui'),out=path.join(__dirname,'www');fs.mkdirSync(out,{recursive:true});
 for(const name of fs.readdirSync(source))if(/\.(js|json|txt)$/.test(name))fs.copyFileSync(path.join(source,name),path.join(out,name));
-fs.copyFileSync(path.join(__dirname,'../assets/live-sport.svg'),path.join(out,'logo.svg'));
+fs.copyFileSync(path.join(__dirname,'assets/logo.svg'),path.join(out,'logo.svg'));
 fs.copyFileSync(path.join(__dirname,'../assets/goal-notification.wav'),path.join(out,'goal-notification.wav'));
 for(const name of ['mobile.css','mobile-bridge.js','mobile.js'])fs.copyFileSync(path.join(__dirname,name),path.join(out,name));
 let html=fs.readFileSync(path.join(source,'index.html'),'utf8').replaceAll('PC local time','Device local time').replaceAll('PC time','Device time').replace('This will clear all saved preferences, stop playback, and restore the default window size and position.','This will clear all saved preferences and stop playback.').replace('<script>/* HLS_BUNDLE */</script>','<script src="/hls.min.js"></script>');

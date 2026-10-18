@@ -1,3 +1,4 @@
+window.kayAndroid=true;
 const invoke=(command,args)=>window.__TAURI__.core.invoke('request',{command,args});
 let mobileAudio;
 function unlockMobileAudio(){try{mobileAudio??=new AudioContext();if(mobileAudio.state==='suspended')mobileAudio.resume().catch(()=>{});}catch{}}
@@ -17,8 +18,6 @@ window.kayMobileIpc={postMessage(body){const {id,command,args={}}=JSON.parse(bod
   else if(document.fullscreenElement)await document.exitFullscreen();
   return {enabled:!!args.enabled};
  }
- if(command==='check_update')return {status:'no_release',current:'Android preview 0.1.0'};
- if(['download_update','install_update','open_update_folder'].includes(command))throw Error('Install an Android APK to update this preview.');
  try{return await invoke(command,args);}catch(error){
   if(command!=='matches')throw error;
   await new Promise(resolve=>setTimeout(resolve,1500));

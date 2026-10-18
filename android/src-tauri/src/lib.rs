@@ -1,3 +1,6 @@
+mod updater;
+#[cfg(target_os = "android")]
+use tauri::Manager;
 #[path = "../../../src/language.rs"]
 mod language;
 #[path = "../../../src/provider.rs"]
@@ -6,8 +9,14 @@ mod provider;
 mod scores;
 use serde_json::Value;
 #[tauri::command]
-async fn request(command: String, args: Value) -> Result<Value, String> {
+async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        if matches!(
+            command.as_str(),
+            "check_update" | "download_update" | "install_update"
+        ) {
+            return updater::request(&app, &command, &args);
+        }
         let client = provider::client()?;
         match command.as_str() {
             "matches" => provider::matches(&client),
@@ -15,11 +24,25 @@ async fn request(command: String, args: Value) -> Result<Value, String> {
             "scores" => scores::fetch(&client, &args),
             _ => Err("Unsupported mobile command".into()),
         }
-    }).await.map_err(|e| e.to_string())?
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri::plugin::Builder::<tauri::Wry>::new("apk-installer")
+                .setup(|_app, _api| {
+                    #[cfg(target_os = "android")]
+                    _app.manage(_api.register_android_plugin(
+                        "com.kaylivesport.mobile",
+                        "ApkInstallerPlugin",
+                    )?);
+                    Ok(())
+                })
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![request])
         .run(tauri::generate_context!())
         .expect("Could not start KAY LIVE SPORT");
