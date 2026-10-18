@@ -1,0 +1,30 @@
+name: Windows release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release version
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag must match Cargo.toml version' }
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+      - name: Validate
+        run: cargo +stable test --release --locked
+      - name: Build Windows x64
+        run: cargo +stable build --release --locked --target x86_64-pc-windows-msvc
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          Copy-Item -LiteralPath target/x86_64-pc-windows-msvc/release/live-sport.exe -Destination KAYLiveSport-windows-x64.exe
+          gh release create $env:GITHUB_REF_NAME KAYLiveSport-windows-x64.exe dist/HLS-LICENSE.txt dist/MPEGTS-LICENSE.txt dist/MPEGTS-THIRD-PARTY-LICENSES.txt --verify-tag --title "KAY LIVE SPORT $env:GITHUB_REF_NAME" --generate-notes
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

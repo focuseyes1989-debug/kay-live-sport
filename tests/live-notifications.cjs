@@ -1,0 +1,15 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const element=(tag,text='',cls='')=>({tag,textContent:text,className:cls,children:[],append(...nodes){this.children.push(...nodes)},setAttribute(){},remove(){this.removed=true}});
+const container=element('div'),message=element('p'),timers=new Map();let id=0,opened=null;
+const fixture={id:'a',sport:'1',home:'Home',away:'Away',kickoff:100,live:false,finished:false};
+const c=vm.createContext({matches:[fixture],node:element,displayName:n=>n,hasKickoffCountdown:m=>!m.live&&!m.finished&&m.kickoff>0,$:key=>key==='message'?message:container,choose:m=>opened=m,setTimeout:f=>{timers.set(++id,f);return id},clearTimeout:key=>timers.delete(key)});
+vm.runInContext(fs.readFileSync('ui/live-notifications.js','utf8'),c);
+c.observeLiveTransitions();assert.equal(container.children.length,0);
+fixture.live=true;c.observeLiveTransitions();assert.equal(container.children.length,1);c.observeLiveTransitions();assert.equal(container.children.length,1);
+const toast=container.children[0];assert.equal(opened,null);toast.children[0].onclick();assert.equal(opened,fixture);assert(toast.removed);assert.equal(timers.size,0);
+fixture.live=false;c.observeLiveTransitions();fixture.live=true;c.observeLiveTransitions();assert.equal(container.children.length,1);
+c.matches.push({...fixture,id:'b',home:'Already live'});c.observeLiveTransitions();assert.equal(container.children.length,1);
+const other={...fixture,id:'c',home:'Upcoming',live:false};c.matches.push(other);c.observeLiveTransitions();other.live=true;c.observeLiveTransitions();assert.equal(container.children.length,2);
+opened=null;other.finished=true;container.children[1].children[0].onclick();assert.equal(opened,null);assert.match(message.textContent,/no longer live/);
+const dismissed={...fixture,id:'d',home:'Dismiss',live:false};c.matches.push(dismissed);c.observeLiveTransitions();dismissed.live=true;c.observeLiveTransitions();container.children[2].children[1].onclick();assert(container.children[2].removed);assert.equal(opened,null);
+console.log('Upcoming-to-live notification, initial-live suppression, deduplication, click-to-watch, current-state validation and dismiss passed');

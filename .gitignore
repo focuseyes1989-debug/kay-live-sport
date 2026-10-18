@@ -1,0 +1,11 @@
+/target/
+/dist/*.exe
+/dist/*.WebView2/
+/KAYLiveSport-windows-x64.exe
+*.download
+/*.png
+/*-test.*
+/stream-url.txt
+/stream-test.m3u8
+/assets/exe-icon-check.png
+/.tools/

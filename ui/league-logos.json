@@ -1,0 +1,38 @@
+{
+  "eng.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png",
+    "name": "English Premier League"
+  },
+  "uefa.champions": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/2.png",
+    "name": "UEFA Champions League"
+  },
+  "esp.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/15.png",
+    "name": "Spanish LALIGA"
+  },
+  "uefa.europa": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png",
+    "name": "UEFA Europa League"
+  },
+  "fra.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/9.png",
+    "name": "French Ligue 1"
+  },
+  "ita.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/12.png",
+    "name": "Italian Serie A"
+  },
+  "ger.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/10.png",
+    "name": "German Bundesliga"
+  },
+  "ned.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/11.png",
+    "name": "Dutch Eredivisie"
+  },
+  "por.1": {
+    "url": "https://a.espncdn.com/i/leaguelogos/soccer/500/14.png",
+    "name": "Portuguese Primeira Liga"
+  }
+}
