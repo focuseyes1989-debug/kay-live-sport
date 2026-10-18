@@ -9,7 +9,9 @@ A portable Windows x64 soccer app built with Rust, Wry and WebView2.
 - HLS and HTTP-FLV playback, commentator failover, manual Retry, volume/mute, fullscreen and available HLS quality selection.
 - Persistent sidebar, window bounds, filters, last playback, notification preferences and animation settings.
 - PC-local clock with 12-hour/24-hour selection.
-- GitHub Releases update checks and verified Windows EXE downloads.
+- GitHub Releases update checks, startup notifications and verified EXE downloads with Install & Restart.
+- Goal and update notification sounds with persistent volume, preview and notification switches.
+- Scores checked every 5 seconds; sources update independently so delayed fallback responses do not hold up ESPN.
 
 Video availability depends on the stream provider. Scores and video use separate services and may differ in latency. No stream URL or account credentials are embedded in the source.
 
@@ -42,7 +44,7 @@ The live-provider integration test is ignored by default because it needs an ava
 
 Settings are stored under `%LOCALAPPDATA%\LiveSport`; existing preferences remain compatible across updates. Reset settings requires confirmation.
 
-Settings > General > Check updates reads stable public releases from this repository. A quiet startup check marks Settings when a newer version is available. Downloads verify the GitHub SHA-256 digest, file size and Windows executable header. Files are saved under `%LOCALAPPDATA%\LiveSport\Updates\<version>` without changing the running EXE. After downloading, choose **Install & Restart**. The updater rechecks the release and checksum, saves window state, waits for the app to close, backs up the old EXE, replaces it and relaunches it. Replacement or launch failures restore the backup. The app folder must be writable. Settings and the WebView profile remain in the same app-data folder. Version 0.1.0 requires a one-time manual replacement to gain this installer.
+Settings > General > Check updates reads stable public releases from this repository. A startup check marks Settings and shows a clickable notification when a newer version is available. Update notifications can be disabled under Notifications; manual checks remain available. Notification audio follows the shared sound switch and volume. Downloads verify the GitHub SHA-256 digest, file size and Windows executable header. Files are saved under `%LOCALAPPDATA%\LiveSport\Updates\<version>` without changing the running EXE. After downloading, choose **Install & Restart**. The updater rechecks the release and checksum, saves window state, waits for the app to close, backs up the old EXE, replaces it and relaunches it. Replacement or launch failures restore the backup. The app folder must be writable. Settings and the WebView profile remain in the same app-data folder. Version 0.1.0 requires a one-time manual replacement to gain this installer.
 
 ## Publish a release
 

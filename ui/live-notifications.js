@@ -120,5 +120,10 @@ function initializeNotificationSoundToggle(){
 async function playGoalNotificationSound(){
  if(!goalNotificationsEnabled||!notificationSoundEnabled||Date.now()-lastGoalSoundAt<1500)return;
  lastGoalSoundAt=Date.now();
- try{await rpc('notification_sound',{volume:notificationSoundVolume});}catch{} // Audio failure must never interrupt score updates.
+ await playNotificationSound();
+}
+
+async function playNotificationSound(){
+ if(!notificationSoundEnabled)return;
+ try{await rpc('notification_sound',{volume:notificationSoundVolume});}catch{} // Audio errors must not interrupt notifications.
 }

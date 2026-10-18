@@ -48,6 +48,21 @@ fn normalize_fotmob(data: &Value) -> Result<Vec<Value>, String> {
     }).collect())
 }
 fn provider(c: &Client, dates: &[String], source: &str) -> (Vec<Value>, Vec<Value>) {
+    std::thread::scope(|scope| {
+        let requests: Vec<_> = dates
+            .iter()
+            .map(|date| scope.spawn(move || provider_dates(c, std::slice::from_ref(date), source)))
+            .collect();
+        let mut result = (Vec::new(), Vec::new());
+        for request in requests {
+            let (batches, errors) = request.join().unwrap_or_default();
+            result.0.extend(batches);
+            result.1.extend(errors);
+        }
+        result
+    })
+}
+fn provider_dates(c: &Client, dates: &[String], source: &str) -> (Vec<Value>, Vec<Value>) {
     let mut batches = Vec::new();
     let mut errors = Vec::new();
     for date in dates {
@@ -93,6 +108,16 @@ pub fn fetch(c: &Client, args: &Value) -> Result<Value, String> {
                 .ok_or("Invalid score date")
         })
         .collect::<Result<_, _>>()?;
+    if let Some(source) = args["source"].as_str() {
+        if source != "ESPN" && source != "FotMob" {
+            return Err("Invalid score source".into());
+        }
+        let (batches, errors) = provider(c, &dates, source);
+        if batches.is_empty() {
+            return Err(format!("{source} unavailable"));
+        }
+        return Ok(json!({"batches":batches,"errors":errors}));
+    }
     let (mut batches, mut errors) = std::thread::scope(|s| {
         let espn = s.spawn(|| provider(c, &dates, "ESPN"));
         let fotmob = provider(c, &dates, "FotMob");
