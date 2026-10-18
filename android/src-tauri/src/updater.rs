@@ -1,12 +1,17 @@
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
-use std::{io::Read, sync::Mutex, time::Duration};
-use tauri::Manager;
+use std::io::Write;
+use std::{
+    sync::Mutex,
+    time::{Duration, Instant},
+};
+use tauri::{Emitter, Manager};
 const API: &str =
     "https://api.github.com/repos/focuseyes1989-debug/kay-live-sport/releases?per_page=100";
 const BASE: &str = "https://github.com/focuseyes1989-debug/kay-live-sport/releases/download/";
 const ASSET: &str = "KAYLiveSport-android-arm64-debug.apk";
 static LOCK: Mutex<()> = Mutex::new(());
+static CANCEL: Mutex<Option<tokio::sync::watch::Sender<bool>>> = Mutex::new(None);
 fn choose(rows: &Value) -> Result<Value, String> {
     let current = semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     let latest = rows
@@ -69,6 +74,15 @@ fn check() -> Result<Value, String> {
     choose(&rows)
 }
 pub fn request(app: &tauri::AppHandle, command: &str, args: &Value) -> Result<Value, String> {
+    if command == "cancel_download_update" {
+        if let Some(sender) = CANCEL.lock().map_err(|_| "Updater busy")?.as_ref() {
+            let _ = sender.send(true);
+        }
+        return Ok(json!({"cancelled":true}));
+    }
+    if command == "download_update" {
+        return download(app, args);
+    }
     if command == "check_update" {
         #[allow(unused_mut)]
         let mut result = check()?;
@@ -99,29 +113,6 @@ fn request_update(app: &tauri::AppHandle, command: &str, args: &Value) -> Result
         .join("updates");
     std::fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
     let path = folder.join(ASSET);
-    if command == "download_update" {
-        let c = reqwest::blocking::Client::builder()
-            .user_agent("KAY-LIVE-SPORT-Android")
-            .timeout(Duration::from_secs(300))
-            .build()
-            .map_err(|e| e.to_string())?;
-        let mut response = c
-            .get(release["url"].as_str().unwrap())
-            .send()
-            .and_then(|r| r.error_for_status())
-            .map_err(|e| e.to_string())?;
-        let mut bytes = Vec::new();
-        response
-            .by_ref()
-            .take(200 * 1024 * 1024 + 1)
-            .read_to_end(&mut bytes)
-            .map_err(|e| e.to_string())?;
-        verify(&bytes, &release)?;
-        let temp = folder.join("download.part");
-        std::fs::write(&temp, bytes).map_err(|e| e.to_string())?;
-        std::fs::rename(&temp, &path).map_err(|e| e.to_string())?;
-        return Ok(json!({"version":version,"path":path}));
-    }
     if command == "install_update" {
         let bytes = std::fs::read(&path).map_err(|_| "Download the APK again")?;
         verify(&bytes, &release)?;
@@ -134,6 +125,154 @@ fn request_update(app: &tauri::AppHandle, command: &str, args: &Value) -> Result
         return Err("Android installer is only available on Android".into());
     }
     Err("Unsupported update command".into())
+}
+fn download(app: &tauri::AppHandle, args: &Value) -> Result<Value, String> {
+    let _lock = LOCK
+        .try_lock()
+        .map_err(|_| "Another update operation is running")?;
+    let (sender, mut cancel) = tokio::sync::watch::channel(false);
+    *CANCEL.lock().map_err(|_| "Updater busy")? = Some(sender);
+    let result = tauri::async_runtime::block_on(async {
+        let work = async {
+            let c = reqwest::Client::builder()
+                .user_agent("KAY-LIVE-SPORT-Android")
+                .timeout(Duration::from_secs(300))
+                .build()
+                .map_err(|e| e.to_string())?;
+            let rows: Value = c
+                .get(API)
+                .send()
+                .await
+                .and_then(|r| r.error_for_status())
+                .map_err(|e| e.to_string())?
+                .json()
+                .await
+                .map_err(|e| e.to_string())?;
+            let release = choose(&rows)?;
+            let version = args["version"].as_str().ok_or("Missing version")?;
+            if release["status"] != "available" || release["latest"] != version {
+                return Err("Update changed. Check for updates again.".into());
+            }
+            let total = release["size"].as_u64().unwrap();
+            let folder = app
+                .path()
+                .app_cache_dir()
+                .map_err(|e| e.to_string())?
+                .join("updates");
+            std::fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
+            let temp = folder.join("download.part");
+            let path = folder.join(ASSET);
+            let progress = |downloaded: u64, phase: &str| {
+                let _ = app.emit(
+                    "update-download-progress",
+                    json!({"version":version,"downloaded":downloaded,"total":total,"phase":phase}),
+                );
+            };
+            download_partial(&c, &release, &temp, progress).await?;
+            progress(total, "verifying");
+            let bytes = std::fs::read(&temp).map_err(|e| e.to_string())?;
+            if let Err(error) = verify(&bytes, &release) {
+                let _ = std::fs::remove_file(&temp);
+                return Err(error);
+            }
+            std::fs::rename(&temp, &path).map_err(|e| e.to_string())?;
+            Ok(json!({"version":version,"path":path}))
+        };
+        tokio::select! { biased; _=cancel.changed()=>Err("Download cancelled".into()), result=work=>result }
+    });
+    *CANCEL.lock().map_err(|_| "Updater busy")? = None;
+    result
+}
+// A sidecar binds partial bytes to the exact immutable release asset.
+async fn download_partial(
+    c: &reqwest::Client,
+    release: &Value,
+    temp: &std::path::Path,
+    progress: impl Fn(u64, &str),
+) -> Result<(), String> {
+    let total = release["size"].as_u64().ok_or("Missing APK size")?;
+    let url = release["url"].as_str().ok_or("Missing APK URL")?;
+    let identity =
+        serde_json::to_vec(&json!({"url":url,"hash":release["hash"],"size":total})).unwrap();
+    let sidecar = temp.with_extension("json");
+    let mut offset = std::fs::metadata(temp).map(|m| m.len()).unwrap_or(0);
+    if offset > total || std::fs::read(&sidecar).ok().as_deref() != Some(identity.as_slice()) {
+        std::fs::write(temp, []).map_err(|e| e.to_string())?;
+        std::fs::write(&sidecar, identity).map_err(|e| e.to_string())?;
+        offset = 0;
+    }
+    progress(offset, "downloading");
+    if offset == total {
+        return Ok(());
+    }
+    let mut request = c
+        .get(url)
+        .header(reqwest::header::ACCEPT_ENCODING, "identity");
+    if offset > 0 {
+        request = request.header(reqwest::header::RANGE, format!("bytes={offset}-"));
+    }
+    let mut response = request.send().await.map_err(|e| e.to_string())?;
+    if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+        response = c
+            .get(url)
+            .header(reqwest::header::ACCEPT_ENCODING, "identity")
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    let resume = range_response(
+        response.status().as_u16(),
+        response
+            .headers()
+            .get(reqwest::header::CONTENT_RANGE)
+            .and_then(|h| h.to_str().ok()),
+        offset,
+        total,
+    )?;
+    if !resume {
+        offset = 0;
+        progress(0, "downloading");
+    }
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(resume)
+        .truncate(!resume)
+        .open(temp)
+        .map_err(|e| e.to_string())?;
+    let mut last = Instant::now();
+    while let Some(chunk) = response.chunk().await.map_err(|e| e.to_string())? {
+        if offset + chunk.len() as u64 > total {
+            return Err("APK exceeds expected download size".into());
+        }
+        file.write_all(&chunk).map_err(|e| e.to_string())?;
+        offset += chunk.len() as u64;
+        if last.elapsed() >= Duration::from_millis(100) {
+            progress(offset, "downloading");
+            last = Instant::now();
+        }
+    }
+    file.flush().map_err(|e| e.to_string())?;
+    progress(offset, "downloading");
+    if offset != total {
+        return Err("Download incomplete. Tap Download update to resume.".into());
+    }
+    Ok(())
+}
+fn range_response(
+    status: u16,
+    range: Option<&str>,
+    offset: u64,
+    total: u64,
+) -> Result<bool, String> {
+    match status {
+        200 => Ok(false),
+        206 if range == Some(format!("bytes {offset}-{}/{}", total - 1, total).as_str()) => {
+            Ok(true)
+        }
+        206 => Err("Invalid resumed APK range; download was not appended".into()),
+        _ => Err(format!("APK server returned HTTP {status}")),
+    }
 }
 fn verify(bytes: &[u8], release: &Value) -> Result<(), String> {
     if Some(bytes.len() as u64) != release["size"].as_u64()
@@ -148,6 +287,83 @@ fn verify(bytes: &[u8], release: &Value) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn range_headers_are_validated() {
+        assert!(range_response(206, Some("bytes 5-9/10"), 5, 10).unwrap());
+        assert!(!range_response(200, None, 5, 10).unwrap());
+        assert!(range_response(206, Some("bytes 0-9/10"), 5, 10).is_err());
+        assert!(range_response(403, None, 5, 10).is_err());
+    }
+    #[test]
+    fn interrupted_download_resumes_or_restarts_safely() {
+        use std::{
+            io::{BufRead, BufReader},
+            net::TcpListener,
+        };
+        for mode in ["resume", "ignored", "changed"] {
+            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+            let url = format!("http://{}/test.apk", listener.local_addr().unwrap());
+            let server = std::thread::spawn(move || {
+                for attempt in 0..2 {
+                    let (mut socket, _) = listener.accept().unwrap();
+                    let mut reader = BufReader::new(socket.try_clone().unwrap());
+                    let mut headers = String::new();
+                    loop {
+                        let mut line = String::new();
+                        reader.read_line(&mut line).unwrap();
+                        if line == "\r\n" {
+                            break;
+                        }
+                        headers.push_str(&line);
+                    }
+                    if attempt == 0 {
+                        socket.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 10\r\nConnection: close\r\n\r\nPKabc").unwrap();
+                    } else {
+                        if mode == "changed" {
+                            assert!(!headers.to_lowercase().contains("range:"));
+                        } else {
+                            assert!(headers.to_lowercase().contains("range: bytes=5-"));
+                        }
+                        let response = if mode == "resume" {
+                            "HTTP/1.1 206 Partial Content\r\nContent-Range: bytes 5-9/10\r\nContent-Length: 5\r\nConnection: close\r\n\r\ndefgh"
+                        } else {
+                            "HTTP/1.1 200 OK\r\nContent-Length: 10\r\nConnection: close\r\n\r\nPKabcdefgh"
+                        };
+                        socket.write_all(response.as_bytes()).unwrap();
+                    }
+                }
+            });
+            let dir =
+                std::env::temp_dir().join(format!("kay-resume-{}-{}", std::process::id(), mode));
+            std::fs::create_dir_all(&dir).unwrap();
+            let temp = dir.join("download.part");
+            let _ = std::fs::remove_file(&temp);
+            tauri::async_runtime::block_on(async {
+                let client = reqwest::Client::new();
+                let mut release = json!({"url":url,"size":10,"hash":format!("{:x}",Sha256::digest(b"PKabcdefgh"))});
+                assert!(
+                    download_partial(&client, &release, &temp, |_, _| {})
+                        .await
+                        .is_err()
+                );
+                assert_eq!(std::fs::read(&temp).unwrap(), b"PKabc");
+                if mode == "changed" {
+                    release["hash"] = json!("different-asset");
+                }
+                download_partial(&client, &release, &temp, |_, _| {})
+                    .await
+                    .unwrap();
+                assert_eq!(std::fs::read(&temp).unwrap(), b"PKabcdefgh");
+                if mode != "changed" {
+                    verify(&std::fs::read(&temp).unwrap(), &release).unwrap();
+                }
+            });
+            server.join().unwrap();
+            std::fs::remove_file(&temp).unwrap();
+            std::fs::remove_file(temp.with_extension("json")).unwrap();
+            std::fs::remove_dir(&dir).unwrap();
+        }
+    }
     #[test]
     fn windows_and_drafts_ignored() {
         assert_eq!(

@@ -13,7 +13,7 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
     tauri::async_runtime::spawn_blocking(move || {
         if matches!(
             command.as_str(),
-            "check_update" | "download_update" | "install_update"
+            "check_update" | "download_update" | "install_update" | "cancel_download_update"
         ) {
             return updater::request(&app, &command, &args);
         }

@@ -13,4 +13,19 @@ for(const permissionRequired of [true,false]) {
  await h.c.downloadUpdate();assert(h.$('open-update-folder').hidden);assert.equal(h.$('install-update').textContent,'Install update');
  await h.c.installUpdate();assert(!h.$('install-update').disabled);assert.match(h.$('update-status').textContent,permissionRequired?/Allow updates/:/Android installer opened/);
 }
+let finishDownload;
+h=harness(async cmd=>cmd==='check_update'?{status:'available',current:'0.1.1',latest:'0.1.2'}:new Promise(resolve=>{finishDownload=resolve}),undefined,true);
+await h.c.checkUpdates();const pending=h.c.downloadUpdate();assert.equal(h.$('update-download-percent').textContent,'0%');
+h.c.updateDownloadProgress({version:'0.1.2',downloaded:1048576,total:4194304,phase:'downloading'});
+assert.equal(h.$('update-download-bar').value,25);assert.equal(h.$('update-download-percent').textContent,'25%');assert.equal(h.$('update-download-size').textContent,'1.0 MB / 4.0 MB');
+h.c.updateDownloadProgress({version:'wrong',downloaded:400,total:400});assert.equal(h.$('update-download-bar').value,25);
+h.c.updateDownloadProgress({version:'0.1.2',downloaded:4194304,total:4194304,phase:'verifying'});assert.match(h.$('update-status').textContent,/Verifying/);assert(h.$('install-update').hidden);
+finishDownload({version:'0.1.2',path:'/cache/app.apk'});await pending;assert.equal(h.$('update-download-percent').textContent,'100%');assert(!h.$('install-update').hidden);
+h.c.updateDownloadProgress({version:'0.1.2',downloaded:0,total:4194304});assert.equal(h.$('update-download-bar').value,100);
+h=harness(async cmd=>{if(cmd==='check_update')return {status:'available',current:'0.1.1',latest:'0.1.2'};throw Error('connection lost')},undefined,true);await h.c.checkUpdates();await h.c.downloadUpdate();assert(h.$('update-download-progress').hidden);assert(!h.$('download-update').disabled);assert(h.$('install-update').hidden);
+let rejectCancelled,downloadCalls=0;
+h=harness(async cmd=>{if(cmd==='check_update')return {status:'available',current:'0.1.1',latest:'0.1.2'};if(cmd==='cancel_download_update'){rejectCancelled(Error('Download cancelled'));return {cancelled:true}};if(++downloadCalls===1)return new Promise((resolve,reject)=>{rejectCancelled=reject});return {version:'0.1.2',path:'/cache/app.apk'}},undefined,true);
+await h.c.checkUpdates();const cancelled=h.c.downloadUpdate();assert(!h.$('cancel-update-download').hidden);assert(h.$('download-update').hidden);
+await h.$('cancel-update-download').onclick();await cancelled;assert.match(h.$('update-status').textContent,/Download cancelled/);assert(h.$('cancel-update-download').hidden);assert(h.$('update-download-progress').hidden);assert(!h.$('download-update').hidden);assert(!h.$('download-update').disabled);assert(h.$('install-update').hidden);
+await h.c.downloadUpdate();assert(!h.$('install-update').hidden);assert(h.$('cancel-update-download').hidden);
 console.log('Update UI no-release/latest/missing-asset, available release, safe notes, verified download and network failures passed');})().catch(e=>{console.error(e);process.exitCode=1});

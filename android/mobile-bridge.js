@@ -18,10 +18,14 @@ window.kayMobileIpc={postMessage(body){const {id,command,args={}}=JSON.parse(bod
   else if(document.fullscreenElement)await document.exitFullscreen();
   return {enabled:!!args.enabled};
  }
+ if(command==='download_update'){
+  const unlisten=await window.__TAURI__.event.listen('update-download-progress',event=>window.kayUpdateProgress?.(event.payload));
+  try{return await invoke(command,args);}finally{unlisten();}
+ }
  try{return await invoke(command,args);}catch(error){
   if(command!=='matches')throw error;
   await new Promise(resolve=>setTimeout(resolve,1500));
-  try{return await invoke(command,args);}catch(retryError){
+ try{return await invoke(command,args);}catch(retryError){
    window.showMobileNetworkError?.();throw retryError;
   }
  }
