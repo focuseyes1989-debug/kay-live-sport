@@ -1,0 +1,49 @@
+:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
+html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}body{font-size:14px}
+header{height:110px;padding:calc(9px + var(--safe-top)) 12px 9px;display:grid;grid-template-columns:34px 1fr 36px 36px;gap:9px;position:relative}
+header .brand{min-width:0;gap:8px}header .brand-icon{width:30px;height:30px}header h1{font-size:14px}.eyebrow{font-size:7px}.timezone{display:none}
+header .search-wrap{position:relative!important;transform:none!important;left:auto!important;grid-column:1/-1;grid-row:2;max-width:none!important;width:100%!important}.search-wrap input{height:38px;font-size:13px}
+header button{min-height:34px}main,body.sidebar-hidden main{height:calc(100dvh - 110px - 54px - var(--safe-bottom));display:block!important;position:relative}
+#matches-sidebar,body.sidebar-hidden #matches-sidebar{width:100%;height:100%;transform:none!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;border-right:0;padding:12px;display:block;position:relative!important}
+main>section{display:none;height:100%;overflow-y:auto;padding:12px;gap:0}.mobile-watch #matches-sidebar{display:none!important}.mobile-watch main>section{display:flex}
+.card{padding:13px;margin-bottom:9px}.team-name{font-size:13px}.crest{width:30px;height:30px}.league{font-size:11px}.card-foot{font-size:11px}.filters button{font-size:12px;padding:9px 5px}.list-heading h2{font-size:15px}
+#title,body.sidebar-hidden #title{font-size:17px;white-space:normal;margin-bottom:4px}.scoreboard{padding:10px 6px;grid-template-columns:minmax(0,1fr) 100px minmax(0,1fr)}.scoreboard .team{flex-direction:column;gap:5px;text-align:center}.scoreboard .team-name{white-space:normal;font-size:11px}.scoreboard .crest{width:30px;height:30px}.scoreboard .score{font-size:24px}.scoreboard .phase{font-size:9px}
+body.sidebar-hidden .section-top,body.sidebar-hidden #subtitle,body.sidebar-hidden .channels-label,body.sidebar-hidden footer{display:revert}
+#channels{gap:6px;min-height:38px}#channels button{font-size:11px;padding:8px 10px}#stage{flex:1;min-height:230px;width:100%;border-radius:12px}video{min-height:0}.player-controls{flex-shrink:0;flex-wrap:wrap;gap:7px;padding:9px}.player-controls input[type=range]{max-width:100px}.quality-control{margin-left:auto}.player-controls button{min-height:33px}#quality-info{font-size:10px}
+#mobile-tabs{height:calc(54px + var(--safe-bottom));padding:6px 12px calc(6px + var(--safe-bottom));display:flex;gap:8px;background:#101724;border-top:1px solid var(--line)}#mobile-tabs button{flex:1;background:transparent;border-color:transparent;font-size:13px}#mobile-tabs button.active{background:#214535;border-color:#409a72;color:#8af2bd}
+#settings-menu{position:fixed!important;top:calc(52px + var(--safe-top))!important;right:10px!important;left:auto!important;margin:0!important;width:min(310px,calc(100vw - 20px));max-height:calc(100dvh - 130px);overflow:auto;z-index:3000}
+dialog{max-width:calc(100vw - 24px)!important;padding:18px!important}.dialog-actions{flex-wrap:wrap}.dialog-actions button{min-height:40px}#match-live-notifications{max-width:calc(100vw - 24px);right:12px;bottom:calc(66px + var(--safe-bottom))}#update-notification,#refresh-notification,#retry-notification,#reset-notification{left:12px;right:12px;bottom:calc(66px + var(--safe-bottom));max-width:none;font-size:12px}footer{font-size:9px;line-height:1.5}
+body.player-fullscreen header,body.player-fullscreen #mobile-tabs{display:none}body.player-fullscreen main{height:100dvh!important}#stage.is-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:4000;border:0;border-radius:0}#stage.is-fullscreen video{min-height:0}
+@media(orientation:landscape) and (max-height:520px){header{height:52px;display:flex;padding:8px 12px}header .search-wrap{max-width:300px!important;flex:1}header .brand{flex:1}header .eyebrow{display:none}main,body.sidebar-hidden main{height:calc(100dvh - 52px - 44px)}#mobile-tabs{height:44px}.mobile-watch main>section{padding:6px 12px}.mobile-watch .section-top,.mobile-watch #subtitle,.mobile-watch footer,.mobile-watch .channels-label{display:none!important}.mobile-watch .scoreboard{display:none!important}#channels{min-height:32px;margin:2px 0 4px}#title{font-size:13px!important}#stage{min-height:100px}}
+/* Compact switches keep their own dimensions inside the header popover. */
+#settings-menu .settings-section-inner{padding-inline:2px}
+#settings-menu .settings-row{margin:0;padding:9px 3px;min-height:44px;gap:10px;align-items:center}
+#settings-menu .settings-row>span{min-width:0;line-height:1.4}
+#settings-menu .settings-row button[aria-pressed]{width:44px;min-width:44px;max-width:44px;height:26px;min-height:26px;max-height:26px;flex:0 0 44px;padding:0;border-radius:999px;border-width:1px;box-sizing:border-box;align-self:center}
+#settings-menu .settings-row button[aria-pressed]::after{width:20px;height:20px;top:2px;left:2px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003}
+#settings-menu .settings-row button[aria-pressed="true"]::after{transform:translateX(18px)}
+#settings-menu .settings-row button[aria-pressed="false"]::after{transform:translateX(0)}
+#settings-menu #test-notification-sound{min-height:26px;flex-shrink:0}
+#mobile-match-summary,#mobile-drawer-backdrop{display:none}
+@media(orientation:landscape) and (max-height:520px){
+ header{height:44px;padding:5px 10px;gap:9px}header .brand-icon{width:27px;height:27px}header h1{font-size:12px}header .search-wrap input{height:33px}
+ main,body.sidebar-hidden main{height:calc(100dvh - 44px - 44px)}
+ body.mobile-watch main,body.mobile-watch.sidebar-hidden main{height:calc(100dvh - 44px)}
+ .mobile-watch header .brand{flex:0 0 auto;min-width:0}.mobile-watch header .brand h1{display:none}.mobile-watch header .search-wrap{display:none}
+ .mobile-watch #mobile-match-summary{display:block;flex:1;min-width:0;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d8e9e2}
+ .mobile-watch #mobile-tabs{display:none}
+ .mobile-watch main>section{position:relative;overflow:hidden;padding:4px 8px;gap:4px}
+ .mobile-watch #title,.mobile-watch #subtitle,.mobile-watch .section-top,.mobile-watch .scoreboard,.mobile-watch footer,.mobile-watch .channels-label{display:none!important}
+ .mobile-watch #channels{min-height:30px;margin:0;padding-bottom:0}.mobile-watch #channels button{padding:5px 9px;min-height:28px;font-size:10px}
+ .mobile-watch #stage{min-height:0;border-radius:8px;flex:1}.mobile-watch video{min-height:0}
+ .mobile-watch .player-controls{position:absolute;left:0;right:0;bottom:0;z-index:3;flex-wrap:nowrap;gap:8px;padding:6px 9px;background:linear-gradient(transparent,#0a1427ed 25%);border:0;transition:opacity calc(180ms * var(--motion-scale)),transform calc(180ms * var(--motion-scale))}
+ .mobile-watch .player-controls button{min-height:30px;height:30px;font-size:10px}.mobile-watch .player-controls input[type=range]{max-width:105px}.mobile-watch .quality-control{margin-left:auto}
+ .mobile-watch #quality-info{display:none!important}.mobile-watch #message{position:absolute;bottom:48px;left:16px;right:16px;z-index:4;margin:0;font-size:10px;pointer-events:none}
+ .mobile-watch.mobile-stream-playing #message{display:none}
+ .mobile-watch.landscape-controls-hidden .player-controls{opacity:0;pointer-events:none;transform:translateY(8px)}
+ body.mobile-watch.landscape-matches #matches-sidebar{display:block!important;position:absolute!important;top:0;left:0;width:min(292px,70vw);height:100%;z-index:42;background:#101724;border-right:1px solid var(--line);box-shadow:12px 0 36px #0008}
+ body.mobile-watch.landscape-matches #mobile-drawer-backdrop{display:block;position:absolute;inset:0;z-index:41;width:100%;height:100%;background:#0007;border:0;border-radius:0}
+ #settings-menu{top:48px!important;max-height:calc(100dvh - 58px)}
+ #match-live-notifications,#update-notification,#refresh-notification,#retry-notification,#reset-notification{bottom:14px;max-width:380px}
+ body.player-fullscreen main{height:100dvh!important}#stage.is-fullscreen .player-controls{bottom:0}
+}

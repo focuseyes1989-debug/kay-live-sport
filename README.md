@@ -55,3 +55,7 @@ Update Cargo.toml's version, run `cargo check` to update Cargo.lock, and commit 
 - hls.js: see `dist/HLS-LICENSE.txt`.
 - mpegts.js 1.8.2: see `dist/MPEGTS-LICENSE.txt` and `dist/MPEGTS-THIRD-PARTY-LICENSES.txt`.
 - Team/league images and remote data remain the property of their respective providers.
+
+## Android preview
+
+The Tauri 2 Android app and ARM64 test APK are documented in [android/README.md](android/README.md). Android releases use `android-v*` tags independently of Windows `v*` releases. The first Android preview was verified on a Redmi Note 15 Pro Plus with Android 16.

@@ -1,0 +1,1 @@
+{"name":"kay-live-sport-android","private":true,"version":"0.1.0","scripts":{"tauri":"tauri","prepare-ui":"node prepare-ui.cjs","android:init":"tauri android init","android:build":"tauri android build --apk --target aarch64 --debug"},"devDependencies":{"@playwright/test":"^1.64.1","@tauri-apps/cli":"^2"}}
