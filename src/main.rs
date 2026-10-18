@@ -237,7 +237,47 @@ fn resolve(c: &Client, args: &Value) -> Result<Value, String> {
     // the provider's signature and select a format that is not published.
     Ok(json!({"url":u.as_str(),"format":if u.path().ends_with(".flv") {"flv"} else {"hls"}}))
 }
+fn notification_audio(volume: f64) -> Vec<u8> {
+    let mut sound = include_bytes!("../assets/goal-notification.wav").to_vec();
+    // Bundled file: mono PCM16 WAV, 44-byte header. Scale samples only;
+    // never change the video volume or the Windows mixer.
+    let gain = if volume.is_finite() {
+        volume.clamp(0.0, 100.0) / 100.0
+    } else {
+        1.0
+    };
+    for sample in sound[44..].chunks_exact_mut(2) {
+        let value = i16::from_le_bytes([sample[0], sample[1]]);
+        sample.copy_from_slice(&((f64::from(value) * gain).round() as i16).to_le_bytes());
+    }
+    sound
+}
+fn play_notification_sound(args: &Value) -> Result<Value, String> {
+    static SOUND_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _lock = SOUND_LOCK
+        .try_lock()
+        .map_err(|_| "Notification sound is already playing")?;
+    #[link(name = "winmm")]
+    unsafe extern "system" {
+        fn PlaySoundW(sound: *const u16, module: *mut std::ffi::c_void, flags: u32) -> i32;
+    }
+    let volume = args["volume"].as_f64().unwrap_or(100.0).clamp(0.0, 100.0);
+    if volume == 0.0 {
+        return Ok(json!({"played":false}));
+    }
+    let sound = notification_audio(volume);
+    // Synchronous on the IPC worker: keep the scaled buffer alive until playback ends.
+    let played =
+        unsafe { PlaySoundW(sound.as_ptr().cast(), std::ptr::null_mut(), 0x0002 | 0x0004) };
+    if played == 0 {
+        return Err("Notification audio unavailable".into());
+    }
+    Ok(json!({"played":true}))
+}
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if updater::run_helper() {
+        return Ok(());
+    }
     let event_loop = EventLoopBuilder::<String>::with_user_event().build();
     let app_data = std::env::var_os("LOCALAPPDATA")
         .map(std::path::PathBuf::from)
@@ -360,7 +400,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let result = client().and_then(|c| match v["command"].as_str() {
                     Some("matches") => matches(&c),
                     Some("check_update") => updater::check(&c),
+                    Some("notification_sound") => play_notification_sound(&v["args"]),
                     Some("download_update") => updater::download(&c, &v["args"]),
+                    Some("install_update") => updater::install(&c, &v["args"]),
                     Some("open_update_folder") => updater::open_folder(&v["args"]),
                     Some("scores") => scores::fetch(&c, &v["args"]),
                     Some("resolve") => resolve(&c, &v["args"]),
@@ -392,6 +434,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 window_state::capture(&window, &mut saved_window);
             }
             Event::UserEvent(payload) => {
+                if let Ok(v) = serde_json::from_str::<Value>(&payload)
+                    && v["data"]["restart"] == true
+                {
+                    window_state::capture(&window, &mut saved_window);
+                    match window_state::save(&settings_path, &saved_window) {
+                        Ok(()) => *flow = ControlFlow::Exit,
+                        Err(e) => {
+                            if let Some(path) = v["data"]["cancel"].as_str() { let _ = std::fs::write(path, b"cancel"); }
+                            let response = json!({"id":v["id"],"error":format!("Could not save window settings: {e}")});
+                            let _ = webview.evaluate_script(&format!("window.receive({response})"));
+                        }
+                    }
+                    return;
+                }
                 if let Ok(v) = serde_json::from_str::<Value>(&payload)
                     && v["reset_window"] == true
                 {
@@ -438,6 +494,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn notification_volume_scales_pcm_without_changing_header() {
+        let original = notification_audio(100.0);
+        let quiet = notification_audio(25.0);
+        let silent = notification_audio(0.0);
+        assert_eq!(&original[..44], &quiet[..44]);
+        assert!(silent[44..].iter().all(|b| *b == 0));
+        assert_eq!(notification_audio(200.0), original);
+        for (a, b) in original[44..]
+            .chunks_exact(2)
+            .zip(quiet[44..].chunks_exact(2))
+        {
+            assert_eq!(
+                i16::from_le_bytes([b[0], b[1]]),
+                (f64::from(i16::from_le_bytes([a[0], a[1]])) * 0.25).round() as i16
+            );
+        }
+    }
     #[test]
     fn includes_upcoming_metadata_without_cards() {
         let html = r#"<script id="matches-data">[{"postid":"99","sport_id":"1","time":"1792346400","home_name":"Home","away_name":"Away","is_live":0,"is_finished":0,"status_text":"Sắp diễn ra","match_data":{"competition_full":"Premier League"}},{"postid":"100","sport_id":"2","home_name":"Basketball","away_name":"Other"}]</script>"#;

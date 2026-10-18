@@ -18,6 +18,13 @@ jobs:
         run: rustup toolchain install stable --profile minimal
       - name: Validate
         run: cargo +stable test --release --locked
+      - name: Validate UI
+        shell: pwsh
+        run: |
+          Get-ChildItem tests/*.cjs | ForEach-Object {
+            node $_.FullName
+            if ($LASTEXITCODE -ne 0) { throw "UI test failed: $($_.Name)" }
+          }
       - name: Build Windows x64
         run: cargo +stable build --release --locked --target x86_64-pc-windows-msvc
       - name: Publish release
@@ -26,5 +33,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           Copy-Item -LiteralPath target/x86_64-pc-windows-msvc/release/live-sport.exe -Destination KAYLiveSport-windows-x64.exe
-          gh release create $env:GITHUB_REF_NAME KAYLiveSport-windows-x64.exe dist/HLS-LICENSE.txt dist/MPEGTS-LICENSE.txt dist/MPEGTS-THIRD-PARTY-LICENSES.txt --verify-tag --title "KAY LIVE SPORT $env:GITHUB_REF_NAME" --generate-notes
+          gh release create $env:GITHUB_REF_NAME KAYLiveSport-windows-x64.exe dist/HLS-LICENSE.txt dist/MPEGTS-LICENSE.txt dist/MPEGTS-THIRD-PARTY-LICENSES.txt --verify-tag --title "KAY LIVE SPORT $env:GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

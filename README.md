@@ -42,7 +42,7 @@ The live-provider integration test is ignored by default because it needs an ava
 
 Settings are stored under `%LOCALAPPDATA%\LiveSport`; existing preferences remain compatible across updates. Reset settings requires confirmation.
 
-Settings > General > Check updates reads stable public releases from this repository. A quiet startup check marks Settings when a newer version is available. Downloads verify the GitHub SHA-256 digest, file size and Windows executable header. Files are saved under `%LOCALAPPDATA%\LiveSport\Updates\<version>` without changing the running EXE. After downloading, close the app and replace the old EXE with the new one. Updates do not install automatically.
+Settings > General > Check updates reads stable public releases from this repository. A quiet startup check marks Settings when a newer version is available. Downloads verify the GitHub SHA-256 digest, file size and Windows executable header. Files are saved under `%LOCALAPPDATA%\LiveSport\Updates\<version>` without changing the running EXE. After downloading, choose **Install & Restart**. The updater rechecks the release and checksum, saves window state, waits for the app to close, backs up the old EXE, replaces it and relaunches it. Replacement or launch failures restore the backup. The app folder must be writable. Settings and the WebView profile remain in the same app-data folder. Version 0.1.0 requires a one-time manual replacement to gain this installer.
 
 ## Publish a release
 
