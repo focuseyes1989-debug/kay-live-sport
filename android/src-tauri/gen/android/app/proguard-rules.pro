@@ -21,3 +21,5 @@
 #-renamesourcefileattribute SourceFile
 -keep class com.kaylivesport.mobile.ApkInstallerPlugin { *; }
 -keep class com.kaylivesport.mobile.InstallArgs { *; }
+
+-keep class com.kaylivesport.mobile.FullscreenArgs { *; }

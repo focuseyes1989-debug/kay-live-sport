@@ -16,6 +16,7 @@ window.kayMobileIpc={postMessage(body){const {id,command,args={}}=JSON.parse(bod
   const stage=document.getElementById('stage');
   if(args.enabled){try{await stage.requestFullscreen();}catch{/* CSS fallback remains available. */}}
   else if(document.fullscreenElement)await document.exitFullscreen();
+  await invoke("mobile_fullscreen",{enabled:!!args.enabled});
   return {enabled:!!args.enabled};
  }
  if(command==='download_update'){

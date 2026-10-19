@@ -1,6 +1,10 @@
 package com.kaylivesport.mobile
 
 import android.graphics.Color
+import android.os.Build
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +13,24 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : TauriActivity() {
+  private var playerFullscreen = false
+  fun setPlayerFullscreen(enabled: Boolean) {
+    playerFullscreen = enabled
+    if (Build.VERSION.SDK_INT >= 28) {
+      window.attributes = window.attributes.apply {
+        layoutInDisplayCutoutMode = if (enabled) WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES else WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+      }
+    }
+    val controller = WindowCompat.getInsetsController(window, window.decorView)
+    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    if (enabled) controller.hide(WindowInsetsCompat.Type.systemBars()) else controller.show(WindowInsetsCompat.Type.systemBars())
+    ViewCompat.requestApplyInsets(findViewById(android.R.id.content))
+  }
+  override fun onWindowFocusChanged(hasFocus: Boolean) {
+    super.onWindowFocusChanged(hasFocus)
+    if (hasFocus && playerFullscreen) setPlayerFullscreen(true)
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
     super.onCreate(savedInstanceState)
@@ -16,7 +38,7 @@ class MainActivity : TauriActivity() {
     val content = findViewById<View>(android.R.id.content)
     ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
       val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-      view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+      if (playerFullscreen) view.setPadding(0, 0, 0, 0) else view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
       WindowInsetsCompat.CONSUMED
     }
     ViewCompat.requestApplyInsets(content)

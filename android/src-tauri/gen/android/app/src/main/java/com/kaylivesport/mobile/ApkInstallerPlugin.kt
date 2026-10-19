@@ -16,12 +16,23 @@ import app.tauri.plugin.JSObject
 import java.io.File
 
 @InvokeArg
+class FullscreenArgs { var enabled: Boolean = false }
+
+@InvokeArg
 class InstallArgs { lateinit var path: String }
 
 @TauriPlugin
 class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
  @Command
  fun status(invoke: Invoke) { val result=JSObject();result.put("installAllowed",activity.packageManager.canRequestPackageInstalls());invoke.resolve(result) }
+ @Command
+ fun fullscreen(invoke: Invoke) {
+  val enabled = invoke.parseArgs(FullscreenArgs::class.java).enabled
+  activity.runOnUiThread {
+   try { (activity as MainActivity).setPlayerFullscreen(enabled); val result=JSObject();result.put("enabled",enabled);invoke.resolve(result) }
+   catch(e:Exception) {invoke.reject(e.message ?: "Could not change fullscreen")}
+  }
+ }
  @Suppress("DEPRECATION")
  @Command
  fun install(invoke: Invoke) {

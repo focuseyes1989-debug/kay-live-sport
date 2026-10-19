@@ -47,3 +47,46 @@ body.player-fullscreen header,body.player-fullscreen #mobile-tabs{display:none}b
  #match-live-notifications,#update-notification,#refresh-notification,#retry-notification,#reset-notification{bottom:14px;max-width:380px}
  body.player-fullscreen main{height:100dvh!important}#stage.is-fullscreen .player-controls{bottom:0}
 }
+
+/* Immersive stage follows the full viewport in either orientation. */
+body.player-fullscreen main>section{padding:0!important;overflow:hidden!important}
+#stage.is-fullscreen{display:block!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;padding:0!important;margin:0!important;background:#000}
+#stage.is-fullscreen video{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;min-height:0!important;object-fit:contain}
+#stage.is-fullscreen .player-controls{position:absolute!important;inset:auto 0 0!important;z-index:5;padding:10px max(14px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));background:#101b2ce8}
+#stage.is-fullscreen #quality-info{display:none!important}
+
+#mobile-fit-fill{display:none;gap:2px;padding:2px;border:1px solid #3b4b60;border-radius:8px;background:#111c2a;flex-shrink:0}
+#stage.is-fullscreen #mobile-fit-fill{display:inline-flex}
+#mobile-fit-fill button{min-height:29px;padding:4px 10px;border:0;border-radius:5px;background:transparent;color:#aebdd0;font-size:11px}
+#mobile-fit-fill button[aria-pressed="true"]{background:#24533f;color:#9dffcd}
+#mobile-fit-fill button:hover{background:#234436;color:#b8ffe2}
+#stage.is-fullscreen.video-fill video{object-fit:cover!important}
+/* The refresh toast must not stretch between the desktop top and mobile bottom. */
+#refresh-notification{top:auto;left:auto;right:12px;bottom:calc(66px + var(--safe-bottom));width:fit-content;max-width:min(360px,calc(100vw - 24px));height:auto;min-height:0;box-sizing:border-box;gap:10px;padding:10px 12px;border-radius:12px;align-items:center;font-size:12px;line-height:1.45}
+#refresh-notification-text{min-width:0;overflow-wrap:anywhere}
+#dismiss-refresh-notification{flex:0 0 28px;width:28px;height:28px;padding:0;display:grid;place-items:center;border-radius:7px;line-height:1}
+@media(orientation:landscape) and (max-height:520px){#refresh-notification{bottom:14px;max-width:min(360px,calc(100vw - 24px))}}
+
+/* Compact icon navigation with a labelled active pill. */
+#mobile-tabs{margin:0 10px;width:calc(100% - 20px);box-sizing:border-box;border:1px solid #28303d;border-radius:22px;background:#11151c;box-shadow:0 -4px 20px #0002;align-items:center;justify-content:space-around;gap:4px;padding:5px 7px;height:calc(54px + var(--safe-bottom))}
+#mobile-tabs button{display:flex;align-items:center;justify-content:center;gap:7px;flex:0 1 auto;min-width:42px;min-height:40px;padding:8px 10px;border:0;border-radius:18px;color:#89919e;background:transparent}
+#mobile-tabs button svg{width:21px;height:21px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#mobile-tabs button span{display:none;font-size:11px;font-weight:600;white-space:nowrap}
+#mobile-tabs button.active{background:#1d4033;color:#a1f5ca}
+#mobile-tabs button.active span{display:inline}
+#mobile-tabs button.active svg{color:#46e3aa}
+#mobile-tabs button:hover{background:#24352e;color:#b8ffe2}
+#mobile-tabs button.active:hover{background:#28513f;color:#c1ffe0}
+#mobile-tabs button:focus-visible{outline:2px solid #46e3aa;outline-offset:1px}
+@media(orientation:landscape) and (max-height:520px){#mobile-tabs{height:44px;border-radius:18px}#mobile-tabs button{min-height:34px;padding:5px 12px}}
+/* Match filters are controlled by the bottom navigation on Android. */
+.filters{display:none!important}
+
+#mobile-live .nav-live-label{color:#ff5268;font-size:11px;font-weight:800;letter-spacing:.6px;line-height:21px}
+#mobile-live.active span{display:none}
+/* Bottom navigation replaces the old header match-list toggle. */
+header #toggle-sidebar{display:none!important}
+@media(orientation:portrait){header{grid-template-columns:minmax(0,1fr) 36px 36px}}
+@media(orientation:landscape) and (max-height:520px){body.mobile-watch:not(.player-fullscreen) #mobile-tabs{display:flex!important}body.mobile-watch:not(.player-fullscreen) main{height:calc(100dvh - 88px)}}
+/* Hide the technical provider/time footer in the mobile app. */
+footer,body.sidebar-hidden footer,body.mobile-watch footer{display:none!important}

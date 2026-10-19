@@ -3,6 +3,8 @@ mod updater;
 use tauri::Manager;
 #[path = "../../../src/language.rs"]
 mod language;
+#[path = "../../../src/lineups.rs"]
+mod lineups;
 #[path = "../../../src/provider.rs"]
 mod provider;
 #[path = "../../../src/scores.rs"]
@@ -17,11 +19,21 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
         ) {
             return updater::request(&app, &command, &args);
         }
+        if command == "mobile_fullscreen" {
+            #[cfg(target_os = "android")]
+            return app
+                .state::<tauri::plugin::PluginHandle<tauri::Wry>>()
+                .run_mobile_plugin("fullscreen", args)
+                .map_err(|e| e.to_string());
+            #[cfg(not(target_os = "android"))]
+            return Ok(serde_json::json!({"enabled":args["enabled"]==true}));
+        }
         let client = provider::client()?;
         match command.as_str() {
             "matches" => provider::matches(&client),
             "resolve" => provider::resolve(&client, &args),
             "scores" => scores::fetch(&client, &args),
+            "lineups" => lineups::fetch(&client, &args),
             _ => Err("Unsupported mobile command".into()),
         }
     })

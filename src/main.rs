@@ -5,6 +5,7 @@ use provider::{client, matches, resolve};
 #[cfg(test)]
 use provider::{get, parse_matches};
 mod scores;
+mod lineups;
 mod updater;
 mod window_state;
 use serde_json::{Value, json};
@@ -130,6 +131,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ("text/javascript", include_bytes!("../ui/playback.js").to_vec())
             } else if request.uri().path() == "/session.js" {
                 ("text/javascript", include_bytes!("../ui/session.js").to_vec())
+            } else if request.uri().path() == "/lineups.js" {
+                ("text/javascript", include_bytes!("../ui/lineups.js").to_vec())
             } else if request.uri().path() == "/update.js" {
                 ("text/javascript", include_bytes!("../ui/update.js").to_vec())
             } else if request.uri().path() == "/settings.js" {
@@ -183,6 +186,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Some("install_update") => updater::install(&c, &v["args"]),
                     Some("open_update_folder") => updater::open_folder(&v["args"]),
                     Some("scores") => scores::fetch(&c, &v["args"]),
+                    Some("lineups") => lineups::fetch(&c, &v["args"]),
                     Some("resolve") => resolve(&c, &v["args"]),
                     _ => Err("Unknown command".into()),
                 });
