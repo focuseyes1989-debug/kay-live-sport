@@ -8,6 +8,9 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.webkit.WebView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
 import androidx.core.view.ViewCompat
@@ -46,6 +49,22 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
     super.onCreate(savedInstanceState)
+    if ((resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION) {
+      onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+          fun findWebView(view: View): WebView? {
+            if (view is WebView) return view
+            if (view is ViewGroup) for (i in 0 until view.childCount) findWebView(view.getChildAt(i))?.let { return it }
+            return null
+          }
+          val web = findWebView(window.decorView)
+          if (web == null) { finish(); return }
+          web.evaluateJavascript("Boolean(window.kayTvBack && window.kayTvBack())") { handled ->
+            if (handled != "true") finish()
+          }
+        }
+      })
+    }
     window.decorView.setBackgroundColor(Color.rgb(11, 16, 25))
     val content = findViewById<View>(android.R.id.content)
     ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->

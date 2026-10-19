@@ -1,0 +1,28 @@
+/* Remote-first TV layout; only included by build-tv.ps1. */
+body.tv-ui{font-size:16px;padding:0 22px;background:#0b1019}
+body.tv-ui header{height:76px;padding:10px 12px;gap:18px}
+body.tv-ui header .brand{min-width:220px}body.tv-ui header .brand-name{font-size:22px}
+body.tv-ui #search{font-size:17px}body.tv-ui .search-wrap{max-width:600px}
+body.tv-ui main,body.tv-ui.sidebar-hidden main{display:grid!important;grid-template-columns:clamp(320px,32vw,440px) minmax(0,1fr)!important;height:calc(100dvh - 154px);width:100%;margin:0}
+body.tv-ui #matches-sidebar,body.tv-ui.sidebar-hidden #matches-sidebar{display:block!important;visibility:visible!important;width:auto!important;opacity:1!important;transform:none!important;padding:14px;overflow:auto}
+body.tv-ui main>section{display:block!important;min-width:0;padding:18px;overflow:auto}
+body.tv-ui #list{display:block}body.tv-ui .card{width:100%;font-size:16px;margin-bottom:12px;padding:16px}
+body.tv-ui #title{font-size:23px}body.tv-ui #stage{min-height:240px}body.tv-ui .meta{font-size:14px}
+body.tv-ui #mobile-tabs{position:fixed;left:50%;top:auto;bottom:12px;transform:translateX(-50%);width:min(760px,90%);height:62px;display:flex;padding:6px;gap:8px}
+body.tv-ui #mobile-tabs button{min-height:46px;flex:1;font-size:16px;width:auto}body.tv-ui #mobile-tabs button span{display:inline!important}
+body.tv-ui #mobile-tabs #mobile-live span{display:none!important}
+body.tv-ui button,body.tv-ui input,body.tv-ui select{min-height:42px;font-size:16px}
+body.tv-ui :focus{outline:3px solid #69ffc0!important;outline-offset:3px!important;box-shadow:0 0 0 6px #39dc9233!important;border-radius:9px}
+body.tv-ui button:focus{background-color:#205b45!important;color:#fff!important}
+body.tv-ui #settings-menu{width:390px;max-height:calc(100dvh - 110px);top:82px;right:28px;font-size:17px}
+body.tv-ui .player-controls{gap:12px;padding:12px}body.tv-ui #channels button{padding:9px 12px}
+body.tv-ui.player-fullscreen{padding:0}body.tv-ui.player-fullscreen main{display:block!important;width:100vw!important;height:100dvh!important;margin:0!important}
+body.tv-ui.player-fullscreen #matches-sidebar,body.tv-ui.player-fullscreen #mobile-tabs{display:none!important}
+body.tv-ui.player-fullscreen main>section{padding:0;overflow:visible}
+body.tv-ui #tv-help{font-size:13px;color:#a4b9c9;white-space:nowrap}body.tv-ui.player-fullscreen #tv-help{display:none}
+@media(max-width:1000px){body.tv-ui{padding:0 12px}body.tv-ui main,body.tv-ui.sidebar-hidden main{grid-template-columns:300px minmax(0,1fr)!important}body.tv-ui #tv-help{display:none}}
+body.tv-ui .card .team-name{font-size:17px;line-height:1.4}body.tv-ui .card .league{font-size:13px;max-width:270px}body.tv-ui .card .card-foot,body.tv-ui .card time,body.tv-ui .countdown{font-size:12px}body.tv-ui .card .score{font-size:22px}body.tv-ui .card .badge{font-size:11px}body.tv-ui .list-heading h2{font-size:18px}body.tv-ui #count{font-size:12px}body.tv-ui #mobile-tabs button span{font-size:15px}
+/* Override the narrow-phone vertical rail when previewing TV on a phone. */
+body.tv-ui #mobile-tabs{flex-direction:row;align-items:stretch;justify-content:space-between}
+body.tv-ui #mobile-tabs button{flex-direction:row;min-width:0;max-width:none}
+@media(max-height:450px){body.tv-ui header{height:58px}body.tv-ui main,body.tv-ui.sidebar-hidden main{height:calc(100dvh - 122px)}body.tv-ui #mobile-tabs{height:50px;bottom:6px}body.tv-ui #mobile-tabs button{min-height:34px;font-size:13px}body.tv-ui #mobile-tabs button span{font-size:12px}body.tv-ui main>section{padding:10px}body.tv-ui #settings-menu{top:62px;max-height:calc(100dvh - 72px)}}
