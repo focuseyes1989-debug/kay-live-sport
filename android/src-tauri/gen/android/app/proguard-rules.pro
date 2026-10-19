@@ -23,3 +23,5 @@
 -keep class com.kaylivesport.mobile.InstallArgs { *; }
 
 -keep class com.kaylivesport.mobile.FullscreenArgs { *; }
+
+-keep class com.kaylivesport.mobile.HighlightArgs { *; }

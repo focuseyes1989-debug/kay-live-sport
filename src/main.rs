@@ -4,8 +4,9 @@ mod provider;
 use provider::{client, matches, resolve};
 #[cfg(test)]
 use provider::{get, parse_matches};
-mod scores;
+mod highlights;
 mod lineups;
+mod scores;
 mod updater;
 mod window_state;
 use serde_json::{Value, json};
@@ -133,6 +134,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ("text/javascript", include_bytes!("../ui/session.js").to_vec())
             } else if request.uri().path() == "/status-bar.js" {
                 ("text/javascript", include_bytes!("../ui/status-bar.js").to_vec())
+            } else if request.uri().path() == "/results-highlights.js" {
+                ("text/javascript", include_bytes!("../ui/results-highlights.js").to_vec())
+            } else if request.uri().path() == "/highlights.js" {
+                ("text/javascript", include_bytes!("../ui/highlights.js").to_vec())
             } else if request.uri().path() == "/lineups.js" {
                 ("text/javascript", include_bytes!("../ui/lineups.js").to_vec())
             } else if request.uri().path() == "/update.js" {
@@ -189,6 +194,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Some("open_update_folder") => updater::open_folder(&v["args"]),
                     Some("scores") => scores::fetch(&c, &v["args"]),
                     Some("lineups") => lineups::fetch(&c, &v["args"]),
+                    Some("highlights") => highlights::fetch(&c, &v["args"]),
+                    Some("highlights_catalog") => highlights::catalog(&c),
+                    Some("open_highlight") => highlights::open(&v["args"]),
                     Some("resolve") => resolve(&c, &v["args"]),
                     _ => Err("Unknown command".into()),
                 });

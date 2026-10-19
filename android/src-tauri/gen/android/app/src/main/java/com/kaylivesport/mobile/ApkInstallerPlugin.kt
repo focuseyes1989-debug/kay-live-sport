@@ -19,10 +19,21 @@ import java.io.File
 class FullscreenArgs { var enabled: Boolean = false }
 
 @InvokeArg
+class HighlightArgs { lateinit var url: String }
+
+@InvokeArg
 class InstallArgs { lateinit var path: String }
 
 @TauriPlugin
 class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
+ @Command
+ fun openHighlight(invoke: Invoke) {
+  try {
+   val uri=Uri.parse(invoke.parseArgs(HighlightArgs::class.java).url)
+   require(uri.scheme=="https" && uri.host in listOf("www.youtube.com","matchhighlights.live") && uri.userInfo==null && uri.port==-1) { "Invalid highlights link" }
+   activity.runOnUiThread {try {activity.startActivity(Intent(Intent.ACTION_VIEW,uri)); val result=JSObject();result.put("opened",true);invoke.resolve(result)}catch(e:Exception){invoke.reject(e.message ?: "Could not open highlights")}}
+  } catch(e:Exception) {invoke.reject(e.message ?: "Invalid highlights link")}
+ }
  @Command
  fun status(invoke: Invoke) { val result=JSObject();result.put("installAllowed",activity.packageManager.canRequestPackageInstalls());invoke.resolve(result) }
  @Command

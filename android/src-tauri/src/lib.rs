@@ -5,6 +5,8 @@ use tauri::Manager;
 mod language;
 #[path = "../../../src/lineups.rs"]
 mod lineups;
+#[path = "../../../src/highlights.rs"]
+mod highlights;
 #[path = "../../../src/provider.rs"]
 mod provider;
 #[path = "../../../src/scores.rs"]
@@ -18,6 +20,13 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
             "check_update" | "download_update" | "install_update" | "cancel_download_update"
         ) {
             return updater::request(&app, &command, &args);
+        }
+        if command == "open_highlight" {
+            if !highlights::allowed_url(args["url"].as_str().unwrap_or("")) {return Err("Invalid highlights link".into())}
+            #[cfg(target_os = "android")]
+            return app.state::<tauri::plugin::PluginHandle<tauri::Wry>>().run_mobile_plugin("openHighlight", args).map_err(|e| e.to_string());
+            #[cfg(not(target_os = "android"))]
+            return Ok(serde_json::json!({"opened":false}));
         }
         if command == "mobile_fullscreen" {
             #[cfg(target_os = "android")]
@@ -34,6 +43,8 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
             "resolve" => provider::resolve(&client, &args),
             "scores" => scores::fetch(&client, &args),
             "lineups" => lineups::fetch(&client, &args),
+            "highlights" => highlights::fetch(&client, &args),
+            "highlights_catalog" => highlights::catalog(&client),
             _ => Err("Unsupported mobile command".into()),
         }
     })
