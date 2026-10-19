@@ -9,10 +9,16 @@ use tauri::{Emitter, Manager};
 const API: &str =
     "https://api.github.com/repos/focuseyes1989-debug/kay-live-sport/releases?per_page=100";
 const BASE: &str = "https://github.com/focuseyes1989-debug/kay-live-sport/releases/download/";
-const ASSET: &str = "KAYLiveSport-android-arm64-debug.apk";
+const TV_EDITION: bool = cfg!(kay_tv);
+const ASSET: &str = if TV_EDITION {
+    if cfg!(target_arch = "arm") { "KAYLiveSport-tv-arm32-debug.apk" } else { "KAYLiveSport-tv-arm64-debug.apk" }
+} else { "KAYLiveSport-android-arm64-debug.apk" };
 static LOCK: Mutex<()> = Mutex::new(());
 static CANCEL: Mutex<Option<tokio::sync::watch::Sender<bool>>> = Mutex::new(None);
 fn choose(rows: &Value) -> Result<Value, String> {
+    choose_for(rows, TV_EDITION, ASSET)
+}
+fn choose_for(rows: &Value, tv: bool, asset: &str) -> Result<Value, String> {
     let current = semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     let latest = rows
         .as_array()
@@ -20,10 +26,9 @@ fn choose(rows: &Value) -> Result<Value, String> {
         .iter()
         .filter(|r| r["draft"] != true)
         .filter_map(|r| {
-            Some((
-                semver::Version::parse(r["tag_name"].as_str()?.strip_prefix("android-v")?).ok()?,
-                r,
-            ))
+            let tag = r["tag_name"].as_str()?;
+            let version = tag.strip_prefix("android-v").or_else(|| if tv { tag.strip_prefix("tv-v") } else { None })?;
+            Some((semver::Version::parse(version).ok()?, r))
         })
         .max_by(|a, b| a.0.cmp(&b.0));
     let Some((v, r)) = latest else {
@@ -34,7 +39,7 @@ fn choose(rows: &Value) -> Result<Value, String> {
     }
     let Some(a) = r["assets"].as_array().and_then(|a| {
         a.iter()
-            .find(|a| a["name"] == ASSET && a["state"] == "uploaded")
+            .find(|a| a["name"] == asset && a["state"] == "uploaded")
     }) else {
         return Ok(
             json!({"status":"missing_asset","current":current.to_string(),"latest":v.to_string()}),
@@ -43,7 +48,8 @@ fn choose(rows: &Value) -> Result<Value, String> {
     let url = a["browser_download_url"]
         .as_str()
         .ok_or("Missing APK URL")?;
-    if url != format!("{BASE}android-v{v}/{ASSET}") {
+    let tag = r["tag_name"].as_str().ok_or("Missing release tag")?;
+    if url != format!("{BASE}{tag}/{asset}") {
         return Err("Unexpected APK URL".into());
     }
     let hash = a["digest"]
@@ -363,6 +369,25 @@ mod tests {
             std::fs::remove_file(temp.with_extension("json")).unwrap();
             std::fs::remove_dir(&dir).unwrap();
         }
+    }
+    #[test]
+    fn tv_channels_keep_architecture_and_edition() {
+        let arm32 = "KAYLiveSport-tv-arm32-debug.apk";
+        let arm64 = "KAYLiveSport-tv-arm64-debug.apk";
+        let phone = "KAYLiveSport-android-arm64-debug.apk";
+        let release = |tag: &str, names: &[&str]| json!({"tag_name":tag,"assets":names.iter().map(|name| json!({"name":name,"state":"uploaded","browser_download_url":format!("{BASE}{tag}/{name}"),"digest":format!("sha256:{}", "a".repeat(64)),"size":10})).collect::<Vec<_>>()});
+        let rows = json!([release("android-v99.0.0", &[arm32, arm64, phone]), release("tv-v99.1.0", &[arm32, arm64])]);
+        for asset in [arm32, arm64] {
+            let chosen = choose_for(&rows, true, asset).unwrap();
+            assert_eq!(chosen["latest"], "99.1.0");
+            assert!(chosen["url"].as_str().unwrap().ends_with(asset));
+        }
+        assert_eq!(choose_for(&rows, false, phone).unwrap()["latest"], "99.0.0");
+        let phone_only = json!([release("android-v99.0.0", &[phone])]);
+        assert_eq!(choose_for(&phone_only, true, arm32).unwrap()["status"], "missing_asset");
+        let mut wrong = json!([release("android-v99.0.0", &[arm32])]);
+        wrong[0]["assets"][0]["browser_download_url"] = json!(format!("{BASE}android-v99.0.0/{phone}"));
+        assert!(choose_for(&wrong, true, arm32).is_err());
     }
     #[test]
     fn windows_and_drafts_ignored() {

@@ -1,6 +1,5 @@
 (()=>{
  document.body.classList.add('tv-ui');
- document.querySelector('#app-version').textContent='TV Preview - Manual APK updates';document.querySelector('#check-update').hidden=true;
  const help=document.createElement('span');help.id='tv-help';help.textContent='Remote: ↑ ↓ ← → Move · OK Select · Back Return';document.querySelector('header').append(help);
  const selector='button,input,select,a[href],[tabindex],iframe';
  const visible=e=>!e.disabled&&e.tabIndex>=0&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],.settings-group.collapsed .settings-section-content');

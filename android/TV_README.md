@@ -8,7 +8,7 @@ Try `dist/KAYLiveSport-tv-arm32-debug.apk` first on a Xiaomi TV Stick 4K. An ARM
 
 Copy the APK to the TV using a file transfer app or USB storage/file manager, allow installation for that installer when Android asks, and install. The app appears in the TV launcher as KAY LIVE SPORT. With an already connected/authorized ADB device, use `adb install -r <APK>`.
 
-This preview has the same application ID/signature as the mobile app. Installing over it retains its settings and replaces its interface with the TV interface. Do not uninstall if you want to retain settings. Updates are manual in this preview; it does not use the ARM64 phone update feed.
+This preview has the same application ID/signature as the mobile app. Installing over it retains its settings and replaces its interface with the TV interface. Do not uninstall if you want to retain settings. The updater selects the TV APK matching this build architecture from android-v or tv-v GitHub Releases. It supports update notifications, verified download, progress, Cancel/Resume and Android installer handoff. Android may ask you to allow this app to install updates and confirm installation; settings are retained. The first APK containing the updater must be installed manually.
 
 ## Remote
 

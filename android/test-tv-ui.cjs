@@ -4,7 +4,7 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
   browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({viewport:{width:1280,height:720}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.addInitScript(()=>{window.__TAURI__={core:{invoke:async(_,{command})=>command==='matches'?[['Arsenal','Chelsea'],['Liverpool','Manchester City'],['Real Madrid','Sevilla']].map(([home,away],i)=>({id:'tv-'+i,post:'1',sport:'1',home,away,league:'Premier League',live:false,finished:false,kickoff:Date.now()/1000+3600,channels:[],homeScore:'',awayScore:''})):{batches:[],errors:[]}}};});
+  await page.addInitScript(()=>{window.__TAURI__={event:{listen:async()=>()=>{}},core:{invoke:async(_,{command})=>command==='check_update'?{status:'available',current:'0.1.7',latest:'99.0.0',notes:'TV update fixture'}:command==='download_update'?{version:'99.0.0',path:'/cache/updates/KAYLiveSport-tv-arm64-debug.apk'}:command==='install_update'?{installerOpened:true}:command==='matches'?[['Arsenal','Chelsea'],['Liverpool','Manchester City'],['Real Madrid','Sevilla']].map(([home,away],i)=>({id:'tv-'+i,post:'1',sport:'1',home,away,league:'Premier League',live:false,finished:false,kickoff:Date.now()/1000+3600,channels:[],homeScore:'',awayScore:''})):{batches:[],errors:[]}}};});
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('.card').first().waitFor();assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
   // Real remote key events, no mouse clicks to navigate the cards.
   await page.locator('.card').first().focus();await page.keyboard.press('ArrowDown');assert.equal(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement),true);
@@ -12,6 +12,12 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
   await page.keyboard.press('Escape');assert(!await page.locator('body').evaluate(e=>e.classList.contains('mobile-watch')));
   await page.locator('#settings-menu-button').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('#settings-menu').matches(':popover-open'));
   await page.keyboard.press('ArrowDown');assert(await page.evaluate(()=>document.activeElement.closest('#settings-menu')!==null));await page.keyboard.press('Escape');assert(!await page.locator('#settings-menu').evaluate(e=>e.matches(':popover-open')));
+  // TV uses the existing update dialog and download/install controls.
+  await page.locator('#settings-menu-button').click();await page.locator('[data-settings-section="general"]').click();await page.locator('#check-update').click();
+  await page.waitForFunction(()=>document.querySelector('#update-status').textContent.includes('99.0.0 is available'));
+  await page.locator('#download-update').click();await page.waitForFunction(()=>!document.querySelector('#install-update').hidden);
+  await page.locator('#install-update').click();await page.waitForFunction(()=>document.querySelector('#update-status').textContent.includes('Android'));
+  await page.locator('#close-update-dialog').click();
   for(const [width,height] of [[1280,720],[1920,1080],[960,540],[806,331]]){await page.setViewportSize({width,height});await page.waitForTimeout(200);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));const panes=await page.evaluate(()=>({a:document.querySelector('#matches-sidebar').getBoundingClientRect().toJSON(),b:document.querySelector('main>section').getBoundingClientRect().toJSON()}));assert(panes.b.x>=panes.a.right-1);assert(await page.evaluate(()=>[...document.querySelectorAll('#mobile-tabs button')].every(e=>{const r=e.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.y>=0&&r.bottom<=innerHeight})));await page.screenshot({path:path.join(__dirname,`../dist/tv-preview-${width}.png`)});}
   assert.deepEqual(errors,[]);console.log('TV remote Arrow/OK/Back, Settings focus containment, 540p/720p/1080p split layout passed');
  }finally{if(browser)await browser.close();server.close()}

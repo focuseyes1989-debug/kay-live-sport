@@ -10,9 +10,6 @@ async function mobileSound(volume){
  gain.gain.value=Math.max(0,Math.min(100,Number(volume)||0))/100;source.buffer=buffer;source.connect(gain).connect(mobileAudio.destination);source.start();return {played:true};
 }
 window.kayMobileIpc={postMessage(body){const {id,command,args={}}=JSON.parse(body);(async()=>{
- // TV preview must not install the ARM64 phone update channel.
- if(window.kayTvPreview&&command==='check_update')return {status:'no_release',current:'TV Preview'};
- if(window.kayTvPreview&&['download_update','install_update'].includes(command))throw new Error('Install TV preview APKs manually.');
  if(command==='notification_sound')return mobileSound(args.volume);
  if(command==='reset_window')return {reset:true};
  if(command==='fullscreen'){

@@ -1,15 +1,22 @@
-## KAY LIVE SPORT Android v0.1.7 Preview
+## KAY LIVE SPORT TV v0.1.8 Preview
 
-- TV builds now show KAY LIVE SPORT TV in the header, page title, Android launcher and activity label.
-- Phone/tablet builds now show KAY LIVE SPORT Phone/Tablet in those locations, with a compact two-line header label.
-- Build preparation selects the matching name automatically for each edition.
+TV now supports in-app updates from GitHub Releases.
+
+- Shows update notifications and enables Check updates in Settings.
+- Selects the TV APK matching the installed build: ARM32 or ARM64. Phone/tablet APKs are never selected by the TV updater.
+- Discovers TV assets in tv-v releases and combined android-v releases.
+- Downloads with progress and percentage, Cancel/Resume, SHA256 verification and Android installer handoff.
+- Retains the existing application ID and signing key so saved settings remain when updating without uninstalling.
 
 ### Downloads
 
-- KAYLiveSport-android-arm64-debug.apk: Phone/Tablet edition, ARM64.
-- KAYLiveSport-tv-arm32-debug.apk: TV edition, ARM32 / armeabi-v7a; try this first on Xiaomi TV Stick 4K.
-- KAYLiveSport-tv-arm64-debug.apk: TV edition, ARM64 / arm64-v8a.
+- KAYLiveSport-tv-arm32-debug.apk: ARM32 / armeabi-v7a; try this first on Xiaomi TV Stick 4K.
+- KAYLiveSport-tv-arm64-debug.apk: ARM64 / arm64-v8a devices.
 
-Android 8+ preview APKs. SHA256 checksums and third-party notices are included. Install over the existing app without uninstalling to retain settings. All editions keep the same application ID and signing key; installing another edition replaces the interface on that device.
+Android 8+ preview APKs. SHA256 checksums and third-party notices are included.
 
-Phone/tablet uses the Android update channel. TV preview updates remain manual to avoid installing the phone APK. Physical Mi Stick remote/playback testing remains pending; TV playback and fullscreen were previously verified on a Redmi phone.
+Install this APK manually once to enable the TV updater. Later updates can be downloaded inside the app. Android may ask you to allow installations from this app and confirm the installation.
+
+### Validation
+
+Updater tests cover edition/architecture separation, release selection, trusted URLs, checksum rejection, range validation and interrupted-download resume. TV UI tests cover remote navigation and the update check/download/install dialog using fixtures. APK version, title, signature and alignment are verified. Physical Mi Stick update installation still needs device testing.
