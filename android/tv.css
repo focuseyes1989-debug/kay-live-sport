@@ -26,3 +26,5 @@ body.tv-ui .card .team-name{font-size:17px;line-height:1.4}body.tv-ui .card .lea
 body.tv-ui #mobile-tabs{flex-direction:row;align-items:stretch;justify-content:space-between}
 body.tv-ui #mobile-tabs button{flex-direction:row;min-width:0;max-width:none}
 @media(max-height:450px){body.tv-ui header{height:58px}body.tv-ui main,body.tv-ui.sidebar-hidden main{height:calc(100dvh - 122px)}body.tv-ui #mobile-tabs{height:50px;bottom:6px}body.tv-ui #mobile-tabs button{min-height:34px;font-size:13px}body.tv-ui #mobile-tabs button span{font-size:12px}body.tv-ui main>section{padding:10px}body.tv-ui #settings-menu{top:62px;max-height:calc(100dvh - 72px)}}
+
+body.tv-ui header h1 .edition-label{display:inline;font-size:14px;color:#65efac;margin-left:3px}

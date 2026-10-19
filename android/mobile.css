@@ -166,3 +166,5 @@ body.player-fullscreen main>section{display:block!important;width:100%;height:10
 /* Keep tablet spacing even when desktop sidebar preferences were restored. */
 @media (orientation:portrait) and (min-width:600px){#matches-sidebar,body.sidebar-hidden #matches-sidebar{padding:18px 22px}}
 #mobile-tabs #mobile-live span{display:none!important}
+
+header h1 .edition-label{display:block;font-size:10px;line-height:1.25;letter-spacing:.3px;font-weight:500;color:#a4b9c9}

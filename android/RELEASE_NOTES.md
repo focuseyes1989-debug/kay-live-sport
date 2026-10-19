@@ -1,15 +1,15 @@
-## KAY LIVE SPORT Android 0.1.6 Preview
+## KAY LIVE SPORT Android v0.1.7 Preview
 
-- Hides Android status and navigation bars in fullscreen for live video and embedded highlights, and restores them on exit.
-- Reapplies immersive fullscreen after rotation, resume and window focus changes.
-- Adds a compact vertical navigation rail and two-column match list on landscape phones.
-- Shows the match list alongside the player on landscape tablets, with a two-column list on portrait tablets.
-- Refines header, player controls, Settings sizing and highlight titles across phone and tablet layouts.
+- TV builds now show KAY LIVE SPORT TV in the header, page title, Android launcher and activity label.
+- Phone/tablet builds now show KAY LIVE SPORT Phone/Tablet in those locations, with a compact two-line header label.
+- Build preparation selects the matching name automatically for each edition.
 
-Validated responsive layouts at six phone/tablet sizes, fullscreen entry/exit, Fit/Fill and highlights playback UI. Immersive fullscreen was also checked on a connected Redmi phone.
+### Downloads
 
-### Download
+- KAYLiveSport-android-arm64-debug.apk: Phone/Tablet edition, ARM64.
+- KAYLiveSport-tv-arm32-debug.apk: TV edition, ARM32 / armeabi-v7a; try this first on Xiaomi TV Stick 4K.
+- KAYLiveSport-tv-arm64-debug.apk: TV edition, ARM64 / arm64-v8a.
 
-KAYLiveSport-android-arm64-debug.apk — Android 8+, ARM64 preview.
+Android 8+ preview APKs. SHA256 checksums and third-party notices are included. Install over the existing app without uninstalling to retain settings. All editions keep the same application ID and signing key; installing another edition replaces the interface on that device.
 
-Install over the existing app without uninstalling to retain saved settings. The application ID and signing key are unchanged. A SHA256 checksum is included.
+Phone/tablet uses the Android update channel. TV preview updates remain manual to avoid installing the phone APK. Physical Mi Stick remote/playback testing remains pending; TV playback and fullscreen were previously verified on a Redmi phone.

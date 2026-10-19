@@ -1,20 +1,15 @@
-## KAY LIVE SPORT TV v0.1.6 Preview
+## KAY LIVE SPORT Android v0.1.7 Preview
 
-First TV preview for Xiaomi TV Stick 4K, Android TV and compatible Android boxes (Android 8+).
-
-- Remote directional navigation with green focus highlights, OK selection and Back handling.
-- Side-by-side match list and player, readable TV controls and launcher banner.
-- Compact landscape preview on phones; fixes navigation items stacking vertically on narrow screens.
-- Live playback, commentator selection, fullscreen, Fit/Fill and existing scores/highlights features.
+- TV builds now show KAY LIVE SPORT TV in the header, page title, Android launcher and activity label.
+- Phone/tablet builds now show KAY LIVE SPORT Phone/Tablet in those locations, with a compact two-line header label.
+- Build preparation selects the matching name automatically for each edition.
 
 ### Downloads
 
-- KAYLiveSport-tv-arm32-debug.apk: ARM32 / armeabi-v7a. Try this first on Xiaomi TV Stick 4K; check the device ABI list if needed.
-- KAYLiveSport-tv-arm64-debug.apk: ARM64 / arm64-v8a devices.
-- SHA256 checksums and third-party notices are included.
+- KAYLiveSport-android-arm64-debug.apk: Phone/Tablet edition, ARM64.
+- KAYLiveSport-tv-arm32-debug.apk: TV edition, ARM32 / armeabi-v7a; try this first on Xiaomi TV Stick 4K.
+- KAYLiveSport-tv-arm64-debug.apk: TV edition, ARM64 / arm64-v8a.
 
-Install the APK using a TV file manager or authorized ADB. These previews retain the existing com.kaylivesport.mobile application ID and signing key: install over the existing app without uninstalling to retain settings. The TV interface replaces the mobile interface on that device. Updates are manual for this preview; the phone ARM64 update channel is disabled.
+Android 8+ preview APKs. SHA256 checksums and third-party notices are included. Install over the existing app without uninstalling to retain settings. All editions keep the same application ID and signing key; installing another edition replaces the interface on that device.
 
-### Validation
-
-Remote-style Arrow/OK/Back input and Settings navigation passed browser tests at 960x540, 1280x720, 1920x1080 and 806x331. Redmi phone landscape testing verified live Metalist 1925 Kharkiv vs FC Livyi Bereh playback, Pause/Resume, fullscreen entry/exit with hidden system bars, and retention of 10 saved settings. Phone key testing used the app WebView because Redmi blocked ADB input injection. Physical Xiaomi TV Stick playback and its actual Bluetooth remote still need device testing.
+Phone/tablet uses the Android update channel. TV preview updates remain manual to avoid installing the phone APK. Physical Mi Stick remote/playback testing remains pending; TV playback and fullscreen were previously verified on a Redmi phone.
