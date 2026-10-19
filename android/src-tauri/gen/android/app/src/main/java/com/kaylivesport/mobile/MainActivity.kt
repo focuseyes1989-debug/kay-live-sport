@@ -1,5 +1,6 @@
 package com.kaylivesport.mobile
 
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.view.WindowManager
@@ -21,6 +22,8 @@ class MainActivity : TauriActivity() {
         layoutInDisplayCutoutMode = if (enabled) WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES else WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
       }
     }
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+    if (enabled) window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN) else window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     val controller = WindowCompat.getInsetsController(window, window.decorView)
     controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     if (enabled) controller.hide(WindowInsetsCompat.Type.systemBars()) else controller.show(WindowInsetsCompat.Type.systemBars())
@@ -29,6 +32,15 @@ class MainActivity : TauriActivity() {
   override fun onWindowFocusChanged(hasFocus: Boolean) {
     super.onWindowFocusChanged(hasFocus)
     if (hasFocus && playerFullscreen) setPlayerFullscreen(true)
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    window.decorView.post { if (playerFullscreen) setPlayerFullscreen(true) }
+  }
+  override fun onResume() {
+    super.onResume()
+    window.decorView.post { if (playerFullscreen) setPlayerFullscreen(true) }
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {

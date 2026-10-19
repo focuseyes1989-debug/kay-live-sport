@@ -5,13 +5,18 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
   browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('https://www.youtube-nocookie.com/**',r=>r.fulfill({contentType:'text/html',body:'<body>Player layout fixture</body>'}));
-  await page.addInitScript(()=>{window.__TAURI__={core:{invoke:async(_,{command})=>command==='matches'?[]:command==='highlights_catalog'?{videos:[{title:'Recent Real Madrid highlights',videoId:'SjxTxaJUvpU',published:new Date(Date.now()-60000).toISOString(),url:'https://www.youtube.com/watch?v=SjxTxaJUvpU',league:'LALIGA',sections:['trending','la_liga'],views:100},{title:'Yesterday football highlights',videoId:'3uoy7oVLriY',published:new Date(new Date().setHours(-1,0,0,0)).toISOString(),url:'https://www.youtube.com/watch?v=3uoy7oVLriY',league:'Premier League',sections:['premier_league']},{title:'Old highlights',videoId:'abcdefghijk',published:new Date(Date.now()-4*86400000).toISOString(),url:'https://www.youtube.com/watch?v=abcdefghijk'}]}:command==='highlights'?{videos:[{title:'Real Madrid vs Villarreal highlights',videoId:'SjxTxaJUvpU',url:'https://www.youtube.com/watch?v=SjxTxaJUvpU'}]}:{batches:[],errors:[]}}}});
+  await page.route('https://www.youtube-nocookie.com/**',r=>r.fulfill({contentType:'text/html',body:'<body><button>Fullscreen test</button></body>'}));
+  await page.addInitScript(()=>{window.__TAURI__={core:{invoke:async(_,{command,args})=>{if(command==='mobile_fullscreen'){(window.nativeFullscreenCalls??=[]).push(args.enabled);return {enabled:args.enabled};}return command==='matches'?[]:command==='highlights_catalog'?{videos:[{title:'Recent Real Madrid highlights',videoId:'SjxTxaJUvpU',published:new Date(Date.now()-60000).toISOString(),url:'https://www.youtube.com/watch?v=SjxTxaJUvpU',league:'LALIGA',sections:['trending','la_liga'],views:100},{title:'Yesterday football highlights',videoId:'3uoy7oVLriY',published:new Date(new Date().setHours(-1,0,0,0)).toISOString(),url:'https://www.youtube.com/watch?v=3uoy7oVLriY',league:'Premier League',sections:['premier_league']},{title:'Old highlights',videoId:'abcdefghijk',published:new Date(Date.now()-4*86400000).toISOString(),url:'https://www.youtube.com/watch?v=abcdefghijk'}]}:command==='highlights'?{videos:[{title:'Real Madrid vs Villarreal highlights',videoId:'SjxTxaJUvpU',url:'https://www.youtube.com/watch?v=SjxTxaJUvpU'}]}:{batches:[],errors:[]};}}}});
   await page.goto('http://127.0.0.1:'+server.address().port);
   await page.evaluate(()=>choose({id:'test-result',sport:'1',home:'Real Madrid',away:'Villarreal',league:'LALIGA',finished:true,live:false,kickoff:Math.floor(Date.now()/1000)-3600,channels:[],homeScore:'1',awayScore:'0'}));
   for(const [name,width,height] of [['portrait',390,844],['landscape',844,390],['wide',1366,768]]){
    await page.setViewportSize({width,height});await page.getByRole('button',{name:'▶ Watch highlights',exact:true}).click();
    await page.locator('.highlights-frame').waitFor({state:'attached'});
+   await page.frameLocator('.highlights-frame').locator('body').evaluate(body=>body.requestFullscreen());
+   await page.waitForFunction(()=>!!document.fullscreenElement&&window.nativeFullscreenCalls?.at(-1)===true,{}, {timeout:5000});
+   await page.evaluate(()=>document.exitFullscreen());
+   await page.waitForFunction(()=>!document.fullscreenElement&&window.nativeFullscreenCalls?.at(-1)===false);
+
    const source=page.getByRole('button',{name:'Open in YouTube',exact:true});await source.scrollIntoViewIfNeeded();const box=await source.boundingBox();
    if(!box||box.y<0||box.y+box.height>height)throw Error(name+' source button clipped');
    if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error(name+' horizontal overflow');

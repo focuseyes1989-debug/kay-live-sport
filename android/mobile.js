@@ -1,5 +1,5 @@
 const mobileLandscape=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches;
-function showMobileView(view){document.body.classList.remove('landscape-matches');document.body.classList.toggle('mobile-watch',view==='watch');updateMobileNavigation(view==='watch'?'watch':(document.querySelector('.filters .active')?.dataset.filter==='live'?'live':document.querySelector('.filters .active')?.dataset.filter==='results'?'results':'matches'));}
+function showMobileView(view){document.body.classList.remove('landscape-matches');document.body.classList.toggle('mobile-watch',view==='watch');if(view==='watch')updateMobileSummary();updateMobileNavigation(view==='watch'?'watch':(document.querySelector('.filters .active')?.dataset.filter==='live'?'live':document.querySelector('.filters .active')?.dataset.filter==='results'?'results':'matches'));}
 const desktopChoose=choose;
 choose=async function(match){showMobileView('watch');return desktopChoose(match);};
 $('mobile-matches').onclick=()=>showMobileView('matches');$('mobile-watch').onclick=()=>showMobileView('watch');
@@ -7,7 +7,12 @@ $('toggle-sidebar').onclick=()=>{if(mobileLandscape()&&document.body.classList.c
 $('toggle-sidebar').title='Matches / Watch';$('toggle-sidebar').setAttribute('aria-label','Matches / Watch');
 $('app-version').textContent='Android';
 // Keep internal WebView navigation inside the app. Fullscreen exit restores its controls.
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement){invoke('mobile_fullscreen',{enabled:false}).catch(()=>{});$('stage').classList.remove('is-fullscreen');document.body.classList.remove('player-fullscreen');$('fullscreen').textContent='⛶ Fullscreen';}});
+document.addEventListener('fullscreenchange',()=>{
+ const enabled=!!document.fullscreenElement;
+ // Includes fullscreen initiated inside the cross-origin YouTube iframe.
+ invoke('mobile_fullscreen',{enabled}).catch(()=>{});
+ if(!enabled){$('stage').classList.remove('is-fullscreen');document.body.classList.remove('player-fullscreen');$('fullscreen').textContent='⛶ Fullscreen';}
+});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshScores();});
 showMobileView('matches');
 
@@ -20,7 +25,7 @@ window.showMobileNetworkError=()=>{
 
 const matchSummary=node('div','','mobile-match-summary');matchSummary.id='mobile-match-summary';
 document.querySelector('header').insertBefore(matchSummary,$('settings-menu-button'));
-const updateMobileSummary=()=>{matchSummary.textContent=selected?displayName(selected.home)+' vs '+displayName(selected.away)+'  ·  '+score(selected):'Choose a match';};
+function updateMobileSummary(){matchSummary.textContent=typeof catalogSelection!=='undefined'&&catalogSelection?catalogSelection.title:selected?displayName(selected.home)+' vs '+displayName(selected.away)+'  ·  '+score(selected):'Choose a match';}
 const originalUpdateSelected=updateSelected;
 updateSelected=function(){originalUpdateSelected();updateMobileSummary();};updateMobileSummary();
 const drawerBackdrop=node('button','','mobile-drawer-backdrop');drawerBackdrop.id='mobile-drawer-backdrop';drawerBackdrop.setAttribute('aria-label','Close match list');drawerBackdrop.onclick=()=>document.body.classList.remove('landscape-matches');document.querySelector('main').append(drawerBackdrop);

@@ -90,3 +90,79 @@ header #toggle-sidebar{display:none!important}
 @media(orientation:landscape) and (max-height:520px){body.mobile-watch:not(.player-fullscreen) #mobile-tabs{display:flex!important}body.mobile-watch:not(.player-fullscreen) main{height:calc(100dvh - 88px)}}
 /* Hide the technical provider/time footer in the mobile app. */
 footer,body.sidebar-hidden footer,body.mobile-watch footer{display:none!important}
+/* Adaptive phone landscape: a side rail leaves vertical space for video. */
+@media (orientation:landscape) and (max-height:539px){
+ body:not(.player-fullscreen) header{height:48px;padding:6px 12px;gap:12px}
+ body:not(.player-fullscreen) header .brand{flex:0 0 auto;min-width:0}
+ body:not(.player-fullscreen) header h1{font-size:13px}
+ body:not(.player-fullscreen) header .search-wrap{flex:1;max-width:420px!important;margin-left:auto}
+ body:not(.player-fullscreen) header .search-wrap input{height:34px}
+ body:not(.player-fullscreen) main,body.mobile-watch:not(.player-fullscreen) main{height:calc(100dvh - 48px);width:calc(100% - 72px);margin-left:72px}
+ body:not(.player-fullscreen) #mobile-tabs{position:fixed;left:8px;top:58px;bottom:10px;width:54px;height:auto;margin:0;padding:5px 3px;display:flex!important;flex-direction:column;gap:3px;border-radius:16px;z-index:30}
+ body:not(.player-fullscreen) #mobile-tabs button{width:46px;min-width:0;min-height:36px;flex:1;flex-direction:column;gap:2px;padding:4px 2px;border-radius:11px}
+ body:not(.player-fullscreen) #mobile-tabs button span{font-size:9px}
+ body:not(.player-fullscreen) #mobile-tabs button svg{width:19px;height:19px}
+ body:not(.player-fullscreen) #matches-sidebar{padding:10px 12px}
+ #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
+ #list>.card{margin:0;padding:10px}.card .team-name{font-size:12px}.card .crest{width:26px;height:26px}.card-foot{font-size:10px}
+ #list>.catalog-section,#list>.meta{grid-column:1/-1}
+ .catalog-section{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px;align-content:start}
+ .catalog-section-heading{grid-column:1/-1}
+ .list-heading{margin-bottom:7px}.list-heading h2{font-size:14px}
+ .mobile-watch header .brand h1,.mobile-watch header .search-wrap{display:none!important}
+ .mobile-watch #mobile-match-summary{display:block;font-size:12px}
+ .mobile-watch main>section{padding:5px 10px;gap:5px;overflow-y:auto}
+ .mobile-watch #channels{flex-shrink:0;min-height:28px;max-height:62px;overflow-y:auto}
+ .mobile-watch #stage{flex:1;min-height:150px;border-radius:9px}
+ .mobile-watch .player-controls{gap:6px;padding:6px 8px}
+ .mobile-watch .player-controls button{min-height:32px}
+ .mobile-watch .player-controls input[type=range]{max-width:90px}
+ .mobile-watch #message{position:static;flex-shrink:0;margin:0;font-size:10px}
+ .mobile-watch #message:empty{display:none}
+ #settings-menu{top:54px!important;max-height:calc(100dvh - 64px);width:310px}
+ #match-live-notifications,#update-notification,#refresh-notification,#retry-notification,#reset-notification{bottom:12px;left:auto;right:12px;max-width:min(380px,calc(100vw - 96px))}
+ dialog{max-height:calc(100dvh - 24px);overflow:auto}
+}
+/* Tablet portrait: comfortable browsing cards without stretching each item. */
+@media (orientation:portrait) and (min-width:600px){
+ header{height:116px;padding:12px 22px;gap:10px}header h1{font-size:18px}header .brand-icon{width:36px;height:36px}
+ main,body.sidebar-hidden main{height:calc(100dvh - 116px - 66px - var(--safe-bottom))}
+ #matches-sidebar{padding:18px 22px}
+ #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
+ #list>.card{margin:0}#list>.catalog-section,#list>.meta{grid-column:1/-1}
+ .catalog-section{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.catalog-section-heading{grid-column:1/-1}
+ .mobile-watch main>section{padding:18px 22px;max-width:1100px;margin:0 auto}
+ #stage{min-height:320px}.scoreboard{padding:14px}
+ #mobile-tabs{height:calc(60px + var(--safe-bottom));max-width:660px;margin:0 auto;width:calc(100% - 44px)}
+ #mobile-tabs button{min-height:44px}#mobile-tabs button span{display:inline}
+ #settings-menu{top:64px!important;right:20px!important;width:340px;max-height:calc(100dvh - 150px)}
+}
+/* Tablet landscape: persistent match list and an independent player pane. */
+@media (min-width:900px) and (min-height:540px){
+ body:not(.player-fullscreen) header{height:64px;padding:10px 20px;display:flex;gap:16px}
+ header .brand{flex:0 0 auto;min-width:200px}header h1{font-size:17px}header .brand-icon{width:34px;height:34px}
+ header .search-wrap{flex:1;max-width:600px!important;margin:0 auto;min-width:120px}
+ header .search-wrap input{height:40px}header .eyebrow{display:block}
+ body:not(.player-fullscreen) main,body.sidebar-hidden:not(.player-fullscreen) main{display:grid!important;grid-template-columns:clamp(280px,29vw,360px) minmax(0,1fr);height:calc(100dvh - 64px - 64px - var(--safe-bottom));width:100%;margin:0}
+ body:not(.player-fullscreen) #matches-sidebar,body.mobile-watch:not(.player-fullscreen) #matches-sidebar{display:block!important;grid-column:1;grid-row:1;width:100%;height:100%;padding:14px;border-right:1px solid var(--line);box-shadow:none}
+ body:not(.player-fullscreen) main>section{display:flex!important;grid-column:2;grid-row:1;padding:16px 18px;gap:0;height:100%;overflow-y:auto;border-left:0}
+ body:not(.player-fullscreen) #mobile-tabs{position:relative;inset:auto;display:flex!important;flex-direction:row;height:calc(60px + var(--safe-bottom));max-width:700px;width:calc(100% - 40px);margin:0 auto;padding:5px 12px;border-radius:20px}
+ #mobile-tabs button{min-height:44px;flex:1}#mobile-tabs button span{display:inline}
+ #title,body.sidebar-hidden #title{display:block!important;font-size:19px!important;margin-bottom:5px}
+ .section-top{display:flex!important}#subtitle{display:block!important}
+ .scoreboard{display:grid!important;min-height:74px;padding:10px 14px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}
+ .scoreboard .team{flex-direction:row;gap:9px;text-align:left}.scoreboard .team-name{font-size:12px}.scoreboard .crest{width:34px;height:34px}
+ #channels{min-height:34px;gap:6px;flex-shrink:0}#channels button{min-height:32px}
+ #stage{min-height:260px;flex:1}.player-controls{gap:8px;padding:9px}.player-controls input[type=range]{max-width:110px}
+ #settings-menu{top:70px!important;right:18px!important;width:340px;max-height:calc(100dvh - 145px)}
+ #mobile-match-summary,#mobile-drawer-backdrop{display:none!important}
+ #list{display:block}.catalog-section{display:block}
+ #match-live-notifications,#update-notification,#refresh-notification,#retry-notification,#reset-notification{bottom:76px;right:20px;left:auto;max-width:380px}
+}
+/* Responsive layouts never constrain the immersive fullscreen stage. */
+body.player-fullscreen main,body.player-fullscreen.sidebar-hidden main{display:block!important;width:100%!important;height:100dvh!important;margin:0!important}
+body.player-fullscreen #matches-sidebar,body.player-fullscreen #mobile-tabs{display:none!important}
+body.player-fullscreen main>section{display:block!important;width:100%;height:100%;max-width:none;margin:0;padding:0!important}
+/* Keep tablet spacing even when desktop sidebar preferences were restored. */
+@media (orientation:portrait) and (min-width:600px){#matches-sidebar,body.sidebar-hidden #matches-sidebar{padding:18px 22px}}
+#mobile-tabs #mobile-live span{display:none!important}
