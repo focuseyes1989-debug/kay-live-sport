@@ -28,6 +28,13 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
             #[cfg(not(target_os = "android"))]
             return Ok(serde_json::json!({"opened":false}));
         }
+        if command == "mobile_keyboard" {
+            #[cfg(target_os = "android")]
+            return app.state::<tauri::plugin::PluginHandle<tauri::Wry>>()
+                .run_mobile_plugin("keyboard", args).map_err(|e| e.to_string());
+            #[cfg(not(target_os = "android"))]
+            return Ok(serde_json::json!({"enabled":args["enabled"]==true}));
+        }
         if command == "mobile_fullscreen" {
             #[cfg(target_os = "android")]
             return app

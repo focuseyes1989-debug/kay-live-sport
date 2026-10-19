@@ -3,15 +3,22 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
  const root=path.join(__dirname,'www'),server=http.createServer((req,res)=>{const f=path.join(root,req.url==='/'?'index.html':req.url.split('?')[0]);if(!f.startsWith(root)||!fs.existsSync(f)){res.writeHead(404);return res.end()}res.setHeader('Content-Type',f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.svg')?'image/svg+xml':'text/html');res.end(fs.readFileSync(f))});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
-  browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({viewport:{width:1280,height:720}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  browser=await chromium.launch({executablePath:process.env.KAY_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({viewport:{width:1280,height:720}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.__TAURI__={event:{listen:async()=>()=>{}},core:{invoke:async(_,{command})=>command==='check_update'?{status:'available',current:'0.1.7',latest:'99.0.0',notes:'TV update fixture'}:command==='download_update'?{version:'99.0.0',path:'/cache/updates/KAYLiveSport-tv-arm64-debug.apk'}:command==='install_update'?{installerOpened:true}:command==='matches'?[['Arsenal','Chelsea'],['Liverpool','Manchester City'],['Real Madrid','Sevilla']].map(([home,away],i)=>({id:'tv-'+i,post:'1',sport:'1',home,away,league:'Premier League',live:false,finished:false,kickoff:Date.now()/1000+3600,channels:[],homeScore:'',awayScore:''})):{batches:[],errors:[]}}};});
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('.card').first().waitFor();assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
+  await page.evaluate(()=>{window.tvKeyboardCalls=[];const original=window.__TAURI__.core.invoke;window.__TAURI__.core.invoke=async(c,a)=>{if(a.command==='mobile_keyboard')window.tvKeyboardCalls.push(a.args.enabled);return original(c,a);};});
+  await page.locator('#search').focus();assert(await page.locator('#search').evaluate(e=>e.readOnly));
+  await page.keyboard.press('ArrowRight');assert.equal(await page.evaluate(()=>document.activeElement.id),'settings-menu-button');assert.equal(await page.evaluate(()=>window.tvKeyboardCalls.length),0);
+  await page.keyboard.press('ArrowLeft');assert.equal(await page.evaluate(()=>document.activeElement.id),'search');await page.keyboard.press('Enter');assert(!await page.locator('#search').evaluate(e=>e.readOnly));
+  await page.keyboard.type('Arsenal');await page.keyboard.press('Escape');assert(await page.locator('#search').evaluate(e=>e.readOnly));assert.deepEqual(await page.evaluate(()=>window.tvKeyboardCalls),[true,false]);
+  await page.evaluate(()=>{document.querySelector('#search').value='';document.querySelector('#search').oninput();});
   // Real remote key events, no mouse clicks to navigate the cards.
   await page.locator('.card').first().focus();await page.keyboard.press('ArrowDown');assert.equal(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement),true);
+  const focusedFixture=await page.evaluate(()=>document.activeElement.getAttribute('aria-label'));await page.evaluate(()=>render());await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),focusedFixture);
   await page.keyboard.press('Enter');await page.waitForFunction(()=>document.body.classList.contains('mobile-watch'));
   await page.keyboard.press('Escape');assert(!await page.locator('body').evaluate(e=>e.classList.contains('mobile-watch')));
-  await page.locator('#settings-menu-button').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('#settings-menu').matches(':popover-open'));
-  await page.keyboard.press('ArrowDown');assert(await page.evaluate(()=>document.activeElement.closest('#settings-menu')!==null));await page.keyboard.press('Escape');assert(!await page.locator('#settings-menu').evaluate(e=>e.matches(':popover-open')));
+  await page.locator('#settings-menu-button').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>window.kayPopoverOpen(document.querySelector('#settings-menu')));
+  await page.keyboard.press('ArrowDown');assert(await page.evaluate(()=>document.activeElement.closest('#settings-menu')!==null));await page.keyboard.press('Escape');assert(!await page.locator('#settings-menu').evaluate(e=>window.kayPopoverOpen(e)));
   // TV uses the existing update dialog and download/install controls.
   await page.locator('#settings-menu-button').click();await page.locator('[data-settings-section="general"]').click();await page.locator('#check-update').click();
   await page.waitForFunction(()=>document.querySelector('#update-status').textContent.includes('99.0.0 is available'));

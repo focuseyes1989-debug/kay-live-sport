@@ -27,3 +27,9 @@ TV assets are included only for the TV build; normal phone builds retain the mob
 Automated checks cover directional navigation, OK, Back, Settings focus containment and 960x540 / 1280x720 / 1920x1080 layouts. APK signatures, alignment and ABIs are checked separately. Physical Mi Stick remote, WebView video codec support and live playback still need testing on the actual device.
 
 Launcher setup follows the Android TV requirements: https://developer.android.com/training/tv/get-started/create
+
+## Older TV WebView compatibility
+
+Android assets include early compatibility helpers for WebView 81 (replaceChildren, replaceAll, Settings popovers, viewport sizing and remote activation). Use `KAY_TV=1 node android/prepare-ui.cjs`, set `KAY_CHROME` to a Chromium 81 executable and run `node android/test-webview81.cjs` for the legacy runtime test. It uses native CDP so current Playwright browser setup is not required in Chromium 81. The test checks actual Chromium 81 script parsing, fixture data loading, Settings, Refresh, directional focus and TV viewport bounds.
+
+TV text fields stay read-only while moving focus. Press OK to edit and open the keyboard; Enter/Back closes editing and returns to remote navigation. Header, sidebar, player and navigation use separate focus zones, and background score refreshes retain the focused fixture. The compact TV layout keeps player controls on screen.

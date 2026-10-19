@@ -28,3 +28,27 @@ body.tv-ui #mobile-tabs button{flex-direction:row;min-width:0;max-width:none}
 @media(max-height:450px){body.tv-ui header{height:58px}body.tv-ui main,body.tv-ui.sidebar-hidden main{height:calc(100dvh - 122px)}body.tv-ui #mobile-tabs{height:50px;bottom:6px}body.tv-ui #mobile-tabs button{min-height:34px;font-size:13px}body.tv-ui #mobile-tabs button span{font-size:12px}body.tv-ui main>section{padding:10px}body.tv-ui #settings-menu{top:62px;max-height:calc(100dvh - 72px)}}
 
 body.tv-ui header h1 .edition-label{display:inline;font-size:14px;color:#65efac;margin-left:3px}
+/* Compact TV layout keeps the player, commentary and controls within one screen. */
+body.tv-ui{padding:0 18px;font-size:14px}
+body.tv-ui header{height:60px;padding:7px 10px;gap:12px;display:flex}
+body.tv-ui header .brand{min-width:195px}body.tv-ui header h1{font-size:15px}body.tv-ui header .brand-icon{width:28px;height:28px}
+body.tv-ui #search{font-size:14px;height:36px}body.tv-ui header .search-wrap{flex:1;max-width:none!important}
+body.tv-ui main,body.tv-ui.sidebar-hidden main{grid-template-columns:clamp(260px,28vw,340px) minmax(0,1fr)!important;height:calc(100dvh - 124px)}
+body.tv-ui #matches-sidebar,body.tv-ui.sidebar-hidden #matches-sidebar{padding:10px}
+body.tv-ui .list-heading h2{font-size:15px}body.tv-ui .list-heading{margin-bottom:8px}
+body.tv-ui .card{padding:10px;margin-bottom:9px}body.tv-ui .card .team-name{font-size:14px}body.tv-ui .card .league{font-size:11px}body.tv-ui .card .card-foot,body.tv-ui .card time{font-size:10px}body.tv-ui .card .score{font-size:20px}
+body.tv-ui main>section{display:flex!important;flex-direction:column;padding:10px 12px;overflow:hidden}
+body.tv-ui .section-top{display:none}body.tv-ui #title{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 3px}body.tv-ui #subtitle{font-size:11px;margin:0 0 7px}
+body.tv-ui #scoreboard{min-height:56px;padding:5px 10px;margin-bottom:7px;flex-shrink:0}body.tv-ui #scoreboard .crest{width:24px;height:24px}body.tv-ui #scoreboard .team-name{font-size:12px}body.tv-ui #scoreboard .score{font-size:22px}
+body.tv-ui #channels{display:flex;flex-wrap:nowrap;overflow-x:auto;flex-shrink:0;min-height:0;margin:0 0 6px;padding:3px}
+body.tv-ui #channels button{padding:5px 9px;min-height:32px;white-space:nowrap;font-size:12px;flex-shrink:0}
+body.tv-ui .channels-label{font-size:9px;margin-bottom:3px}body.tv-ui #stage{flex:1;min-height:140px}
+body.tv-ui .player-controls{padding:7px;gap:9px;flex-shrink:0}body.tv-ui .player-controls button,body.tv-ui .player-controls select{min-height:32px;font-size:12px}
+body.tv-ui #message{font-size:11px;line-height:1.4;margin:5px 0 0;max-height:32px;overflow:hidden;flex-shrink:0}
+body.tv-ui #mobile-tabs{height:48px;bottom:10px;width:min(660px,88%);padding:4px;gap:5px}body.tv-ui #mobile-tabs button{min-height:36px;font-size:13px}body.tv-ui #mobile-tabs button span{font-size:13px}
+body.tv-ui #settings-menu{top:66px;right:22px;width:330px;max-height:calc(100dvh - 80px);padding:12px;overflow:auto}
+body.tv-ui button{transition:background-color .12s,box-shadow .12s,border-color .12s}
+body.tv-ui input[readonly]{cursor:pointer;caret-color:transparent}body.tv-ui input.tv-editing{caret-color:auto;border-color:#69ffc0}
+body.tv-ui #highlights-panel{min-height:0;overflow:auto}
+body.tv-ui.player-fullscreen main>section{padding:0;overflow:visible}body.tv-ui.player-fullscreen #stage{min-height:0}
+@media(max-height:450px){body.tv-ui header{height:52px}body.tv-ui main,body.tv-ui.sidebar-hidden main{height:calc(100dvh - 106px)}body.tv-ui #mobile-tabs{height:42px;bottom:5px}body.tv-ui #mobile-tabs button{min-height:30px}body.tv-ui #settings-menu{top:56px;max-height:calc(100dvh - 66px)}body.tv-ui #stage{min-height:110px}body.tv-ui #scoreboard{min-height:46px}}

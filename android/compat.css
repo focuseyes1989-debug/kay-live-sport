@@ -1,0 +1,11 @@
+/* Android hidden elements must stay hidden even when component CSS sets display. */
+[hidden]{display:none!important}
+html.kay-legacy-popover [popover]:not(.kay-popover-open){display:none!important}
+html.kay-legacy-popover #settings-menu.kay-popover-open{display:block;opacity:1;transform:none;overflow-y:auto;max-height:calc(var(--app-height,100vh) - 90px)}
+html.kay-legacy-popover #settings-menu{z-index:2200}
+
+.kay-no-flex-gap body.tv-ui header>*+*{margin-left:10px}
+.kay-no-flex-gap body.tv-ui .team>*+*,.kay-no-flex-gap body.tv-ui #mobile-tabs button>*+*{margin-left:8px}
+.kay-no-flex-gap body.tv-ui #channels button{margin-right:8px;margin-bottom:6px}
+.kay-no-flex-gap body.tv-ui .player-controls>*+*{margin-left:10px}
+body.tv-ui :focus{outline:none!important;box-shadow:0 0 0 3px #69ffc0,0 0 0 6px #39dc9233!important}

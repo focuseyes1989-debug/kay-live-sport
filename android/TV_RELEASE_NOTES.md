@@ -1,20 +1,23 @@
-## KAY LIVE SPORT v0.1.9
+## KAY LIVE SPORT TV v0.1.10 Preview
 
-Scheduled matches with commentator links now have a Try stream button on Windows, TV and Phone/Tablet.
+Fixes startup and controls on older TV WebViews and refines the remote-first TV interface.
 
-- Refreshes commentator links before attempting playback without changing the source match status to Live.
-- Shows the player and commentator choices while hiding the pre-match lineup overlay during manual playback.
-- Keeps normal stream failover and reconnect behavior, and rejects stale requests after switching matches.
-- Hides Try stream for finished matches, live matches and fixtures without commentator links.
-- Fixes Android match-selection forwarding so manual playback and reconnect arguments reach the shared player.
+- Supports WebView 81: removes unsupported Android bridge syntax and adds replaceChildren/replaceAll and Settings popover fallbacks.
+- Fixes match data stuck at Loading, nonresponsive Settings/Refresh and hidden components appearing on screen.
+- Sizes the layout using the actual viewport, including 540p, 720p and 1080p, without requiring dynamic viewport unit support.
+- Uses a compact header, match cards, commentary controls and navigation bar to give the player more room.
+- Keeps search fields read-only while navigating; OK/Enter opens editing and the keyboard. Enter/Back returns to remote navigation.
+- Adds native keyboard show/hide support and handles IME dismissal.
+- Uses separate header/sidebar/player/navigation focus zones, throttles held direction keys and retains the focused fixture during background score refreshes.
+- Retains architecture-aware TV updates, Try stream and saved settings.
 
 ### Downloads
 
-- KAYLiveSport-windows-x64.exe: Windows x64; Microsoft Edge WebView2 required.
-- KAYLiveSport-android-arm64-debug.apk: KAY LIVE SPORT Phone/Tablet, ARM64.
-- KAYLiveSport-tv-arm32-debug.apk: KAY LIVE SPORT TV, ARM32 / armeabi-v7a.
-- KAYLiveSport-tv-arm64-debug.apk: KAY LIVE SPORT TV, ARM64 / arm64-v8a.
+- KAYLiveSport-tv-arm32-debug.apk: ARM32 / armeabi-v7a; try this first on Xiaomi TV Stick 4K.
+- KAYLiveSport-tv-arm64-debug.apk: ARM64 / arm64-v8a devices.
 
-Android APKs are Android 8+ previews. Install over the existing app without uninstalling to retain settings. TV and Phone/Tablet share the existing application ID and signing key; select the edition and architecture you want on that device. Android update discovery uses companion android-v0.1.9; TV selects its matching TV APK.
+Android 8+ preview APKs. SHA256 checksums and third-party notices are included. Install over the existing app without uninstalling to retain settings. If an old build cannot load on WebView 81, install this APK manually once.
 
-Validation covers manual scheduled playback, fresh commentator links, unchanged status, failures/stale selections, existing recovery/autostart/lineups, and Windows/Phone/TV UI integration. Source stream availability is still controlled by the broadcaster.
+### Validation
+
+Actual Chromium 81 tests passed for script parsing, fixture data loading, Settings OK/Back, Refresh, search keyboard activation requests, remote focus and 540p/720p/1080p layout bounds. Modern browser tests also cover focus retention after list replacement, TV update UI and phone UI compatibility. ARM32/ARM64 APK builds, signatures, alignment and checksums are verified. Physical Mi Stick remote/IME behavior still needs confirmation on the device.

@@ -1,7 +1,14 @@
 window.kayAndroid=true;
-const invoke=(command,args)=>window.__TAURI__.core.invoke('request',{command,args});
+async function invoke(command,args){
+ // Older WebViews can inject the native initialization scripts after the page starts.
+ for(let attempt=0;attempt<100;attempt++){
+  if(window.__TAURI__&&window.__TAURI__.core&&typeof window.__TAURI__.core.invoke==='function')return window.__TAURI__.core.invoke('request',{command,args});
+  await new Promise(resolve=>setTimeout(resolve,100));
+ }
+ throw Error('Android connection did not initialize. Close and reopen the app.');
+}
 let mobileAudio;
-function unlockMobileAudio(){try{mobileAudio??=new AudioContext();if(mobileAudio.state==='suspended')mobileAudio.resume().catch(()=>{});}catch{}}
+function unlockMobileAudio(){try{if(!mobileAudio)mobileAudio=new AudioContext();if(mobileAudio.state==='suspended')mobileAudio.resume().catch(()=>{});}catch{}}
 document.addEventListener('pointerdown',unlockMobileAudio,{passive:true});
 async function mobileSound(volume){
  unlockMobileAudio();if(!mobileAudio||mobileAudio.state!=='running')return {played:false};

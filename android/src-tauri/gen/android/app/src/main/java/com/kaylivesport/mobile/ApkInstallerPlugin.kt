@@ -1,6 +1,8 @@
 package com.kaylivesport.mobile
 
 import android.app.Activity
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -26,6 +28,7 @@ class InstallArgs { lateinit var path: String }
 
 @TauriPlugin
 class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
+ private var keyboardRequest = 0
  @Command
  fun openHighlight(invoke: Invoke) {
   try {
@@ -42,6 +45,19 @@ class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
   activity.runOnUiThread {
    try { (activity as MainActivity).setPlayerFullscreen(enabled); val result=JSObject();result.put("enabled",enabled);invoke.resolve(result) }
    catch(e:Exception) {invoke.reject(e.message ?: "Could not change fullscreen")}
+  }
+ }
+ @Command
+ fun keyboard(invoke: Invoke) {
+  val enabled = invoke.parseArgs(FullscreenArgs::class.java).enabled
+  activity.runOnUiThread {
+   try {
+    val manager=activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val request=++keyboardRequest
+    if(enabled) activity.window.decorView.postDelayed({if(request==keyboardRequest) activity.currentFocus?.let {manager.showSoftInput(it,InputMethodManager.SHOW_IMPLICIT)}},100)
+    else manager.hideSoftInputFromWindow(activity.window.decorView.windowToken,0)
+    val result=JSObject();result.put("enabled",enabled);invoke.resolve(result)
+   } catch(e:Exception) {invoke.reject(e.message ?: "Could not change keyboard")}
   }
  }
  @Suppress("DEPRECATION")

@@ -18,6 +18,12 @@ import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : TauriActivity() {
   private var playerFullscreen = false
+  private var keyboardVisible = false
+  private fun findWebView(view: View): WebView? {
+    if (view is WebView) return view
+    if (view is ViewGroup) for (i in 0 until view.childCount) findWebView(view.getChildAt(i))?.let { return it }
+    return null
+  }
   fun setPlayerFullscreen(enabled: Boolean) {
     playerFullscreen = enabled
     if (Build.VERSION.SDK_INT >= 28) {
@@ -52,11 +58,6 @@ class MainActivity : TauriActivity() {
     if ((resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION) {
       onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-          fun findWebView(view: View): WebView? {
-            if (view is WebView) return view
-            if (view is ViewGroup) for (i in 0 until view.childCount) findWebView(view.getChildAt(i))?.let { return it }
-            return null
-          }
           val web = findWebView(window.decorView)
           if (web == null) { finish(); return }
           web.evaluateJavascript("Boolean(window.kayTvBack && window.kayTvBack())") { handled ->
@@ -68,6 +69,9 @@ class MainActivity : TauriActivity() {
     window.decorView.setBackgroundColor(Color.rgb(11, 16, 25))
     val content = findViewById<View>(android.R.id.content)
     ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
+      val visible = insets.isVisible(WindowInsetsCompat.Type.ime())
+      if (keyboardVisible && !visible) findWebView(window.decorView)?.evaluateJavascript("window.kayTvKeyboardHidden && window.kayTvKeyboardHidden()", null)
+      keyboardVisible = visible
       val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
       if (playerFullscreen) view.setPadding(0, 0, 0, 0) else view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
       WindowInsetsCompat.CONSUMED
