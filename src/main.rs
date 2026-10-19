@@ -131,6 +131,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ("text/javascript", include_bytes!("../ui/playback.js").to_vec())
             } else if request.uri().path() == "/session.js" {
                 ("text/javascript", include_bytes!("../ui/session.js").to_vec())
+            } else if request.uri().path() == "/status-bar.js" {
+                ("text/javascript", include_bytes!("../ui/status-bar.js").to_vec())
             } else if request.uri().path() == "/lineups.js" {
                 ("text/javascript", include_bytes!("../ui/lineups.js").to_vec())
             } else if request.uri().path() == "/update.js" {

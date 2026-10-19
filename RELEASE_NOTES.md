@@ -1,16 +1,13 @@
-## KAY LIVE SPORT Windows 0.1.3
+## KAY LIVE SPORT 0.1.4
 
-- Pre-match waiting area now shows starting XI, formation and substitutes from ESPN, with automatic FotMob fallback when ESPN has no matched fixture, confirmed lineup or a working response.
-- Checks both team names and kickoff time before displaying lineups; predicted FotMob lineups are not shown as confirmed.
-- Displays the lineup source, refreshes every minute and offers a Refresh line-ups button. Returns to the existing playback flow when the match becomes live.
-- Removes the technical Match times / Scores / Streams footer for a cleaner player view.
+- New soccer artwork for the Windows EXE, taskbar and window icon.
+- New Android launcher icon with adaptive mask padding and a soccer themed monochrome icon.
+- Windows status bar shows playback/connection state, match counts, score refresh time and lineup source.
+- Corrected lineup text separators.
 
-### Validation
+### Downloads
 
-Rust lineup normalization, source identity and predicted/confirmed tests passed. Frontend fallback, stale-match protection and existing UI regression tests passed. Windows x64 EXE built successfully.
+Windows: KAYLiveSport-windows-x64.exe (WebView2 required).
+Android: KAYLiveSport-android-arm64-debug.apk (Android 8+, ARM64 preview, same signing key and application ID as previous previews).
 
-### Installation
-
-Windows x64; Microsoft Edge WebView2 Runtime required. Use Settings > General > Check updates, Download, then Install & Restart. Saved settings remain intact. The app folder must be writable. Alternatively replace the existing EXE and retain the existing %LOCALAPPDATA%/LiveSport folder.
-
-Lineup availability depends on ESPN/FotMob coverage and when confirmed teams are published. This release does not include an Android APK; Android 0.1.3 remains available from its separate preview release.
+Install over the existing app without uninstalling to retain saved settings. SHA256 files are included. Android preview also appears under android-v0.1.4 so existing Android update checks can discover it.

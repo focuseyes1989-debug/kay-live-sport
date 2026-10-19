@@ -1,2 +1,13 @@
 const {chromium}=require('@playwright/test'),fs=require('fs'),path=require('path');
-(async()=>{const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({deviceScaleFactor:1});const svg=fs.readFileSync(path.join(__dirname,'assets/logo.svg'),'utf8');const res=path.join(__dirname,'src-tauri/gen/android/app/src/main/res');for(const [density,size] of Object.entries({mdpi:48,hdpi:72,xhdpi:96,xxhdpi:144,xxxhdpi:192})){await page.setViewportSize({width:size,height:size});await page.setContent(`<style>html,body{margin:0;background:transparent}svg{width:100vw;height:100vh}</style>${svg}`);for(const name of ['ic_launcher.png','ic_launcher_round.png'])await page.screenshot({path:path.join(res,'mipmap-'+density,name),omitBackground:true});}await page.setViewportSize({width:512,height:512});await page.setContent(`<style>html,body{margin:0;background:transparent}svg{width:100vw;height:100vh}</style>${svg}`);await page.screenshot({path:path.join(__dirname,'src-tauri/icons/icon.png'),omitBackground:true});await page.screenshot({path:path.join(__dirname,'../dist/android-icon-preview.png'),omitBackground:true});await browser.close();console.log('Android launcher icons generated');})().catch(e=>{console.error(e);process.exit(1)});
+(async()=>{
+ const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true}),page=await browser.newPage({deviceScaleFactor:1});
+ const master=path.join(__dirname,'assets/app-icon.png'),source=fs.existsSync(master)?master:path.join(__dirname,'assets/logo.svg');
+ const url='data:'+(source.endsWith('.png')?'image/png':'image/svg+xml')+';base64,'+fs.readFileSync(source).toString('base64'),res=path.join(__dirname,'src-tauri/gen/android/app/src/main/res');
+ async function render(size,art,file){await page.setViewportSize({width:size,height:size});await page.setContent(`<style>html,body{margin:0;background:transparent}img{position:absolute;left:${(size-art)/2}px;top:${(size-art)/2}px;width:${art}px;height:${art}px}</style><img src="${url}">`);await page.locator('img').evaluate(e=>e.decode());await page.screenshot({path:file,omitBackground:true});}
+ for(const [density,scale] of Object.entries({mdpi:1,hdpi:1.5,xhdpi:2,xxhdpi:3,xxxhdpi:4})){
+  for(const name of ['ic_launcher.png','ic_launcher_round.png'])await render(Math.round(48*scale),Math.round(48*scale),path.join(res,'mipmap-'+density,name));
+  await render(Math.round(108*scale),Math.round(68*scale),path.join(res,'mipmap-'+density,'ic_launcher_foreground.png'));
+ }
+ await render(512,512,path.join(__dirname,'src-tauri/icons/icon.png'));await render(512,512,path.join(__dirname,'../dist/android-icon-preview.png'));
+ await browser.close();console.log('Android icon resources generated from '+path.basename(source));
+})().catch(e=>{console.error(e);process.exit(1)});

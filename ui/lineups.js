@@ -30,7 +30,7 @@ function renderLineup(data,message){
 
     box.append(node('h4',label));if(!players.length)box.append(node('p','Not announced yet','meta'));
 
-    for(const p of players){const row=node('div','','lineup-player');row.append(node('span',p.number||'â€“','lineup-number'),node('span',p.name),node('small',p.position||''));box.append(row);}
+    for(const p of players){const row=node('div','','lineup-player');row.append(node('span',p.number||'\u2013','lineup-number'),node('span',p.name),node('small',p.position||''));box.append(row);}
 
    }
 
@@ -42,7 +42,7 @@ function renderLineup(data,message){
 
  }
 
- const foot=node('div','','lineup-foot');foot.append(node('small','Waiting for kickoff Â· Line-ups refresh every minute'));
+ const foot=node('div','','lineup-foot');foot.append(node('small','Waiting for kickoff \u00b7 Line-ups refresh every minute'));
 
  const retry=node('button','Refresh line-ups');retry.type='button';retry.onclick=()=>refreshLineup(true);foot.append(retry);lineupPanel.append(foot);
 
