@@ -1,20 +1,20 @@
-## KAY LIVE SPORT 0.1.5
+## KAY LIVE SPORT v0.1.9
 
-Results now includes Scores and Highlights views on Windows and Android.
+Scheduled matches with commentator links now have a Try stream button on Windows, TV and Phone/Tablet.
 
-- Loads the current MatchHighlights public feed instead of its stale pre-rendered HTML.
-- Shows highlights published today and yesterday using device local time, with date filters and team/league search.
-- Groups videos under Trending Now and competition headings such as Premier League, Champions League, La Liga, Serie A, Bundesliga and Ligue 1. Empty sections are hidden. Trending membership is retained without counting the same video twice in the total.
-- Plays highlights in an embedded YouTube player inside the app; Open in YouTube and Browse MatchHighlights provide source links. Browse searches one team name.
-- Adds recent fixture highlights to finished-match results. Historical results remain available as scores.
-- Keeps the selected highlight playing during background score refreshes and stops it when switching to another match.
-- Fixes clipped player actions and Windows browser handoff.
+- Refreshes commentator links before attempting playback without changing the source match status to Live.
+- Shows the player and commentator choices while hiding the pre-match lineup overlay during manual playback.
+- Keeps normal stream failover and reconnect behavior, and rejects stale requests after switching matches.
+- Hides Try stream for finished matches, live matches and fixtures without commentator links.
+- Fixes Android match-selection forwarding so manual playback and reconnect arguments reach the shared player.
 
 ### Downloads
 
-Windows: KAYLiveSport-windows-x64.exe (Microsoft Edge WebView2 required).
-Android: KAYLiveSport-android-arm64-debug.apk (Android 8+, ARM64 preview).
+- KAYLiveSport-windows-x64.exe: Windows x64; Microsoft Edge WebView2 required.
+- KAYLiveSport-android-arm64-debug.apk: KAY LIVE SPORT Phone/Tablet, ARM64.
+- KAYLiveSport-tv-arm32-debug.apk: KAY LIVE SPORT TV, ARM32 / armeabi-v7a.
+- KAYLiveSport-tv-arm64-debug.apk: KAY LIVE SPORT TV, ARM64 / arm64-v8a.
 
-Install over the existing app without uninstalling to retain saved settings. Android retains the same application ID and signing key. SHA256 checksums are provided. Android update discovery uses the companion android-v0.1.5 preview release.
+Android APKs are Android 8+ previews. Install over the existing app without uninstalling to retain settings. TV and Phone/Tablet share the existing application ID and signing key; select the edition and architecture you want on that device. Android update discovery uses companion android-v0.1.9; TV selects its matching TV APK.
 
-Highlight availability and regional playback restrictions depend on the source and YouTube. Only today/yesterday publications appear in the Highlights catalog.
+Validation covers manual scheduled playback, fresh commentator links, unchanged status, failures/stale selections, existing recovery/autostart/lineups, and Windows/Phone/TV UI integration. Source stream availability is still controlled by the broadcaster.

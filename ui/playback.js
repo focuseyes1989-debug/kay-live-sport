@@ -34,6 +34,8 @@ function finishRetryOutcome(success,message){
 function updateRetryState(busy){
  for(const id of ['retry','player-retry']){const button=$(id);button.disabled=busy;button.setAttribute?.('aria-busy',String(busy));button.setAttribute?.('data-reconnecting',String(busy));button.textContent=busy?'Reconnecting…':'↻ Retry stream';if(busy)button.hidden=false;}
 }
+let manualStreamFixture = null;
+function isManualStreamMatch(m){return !!m&&manualStreamFixture===waitingFixtureKey(m);}
 let waitingManualLive = false;
 let waitingFixture = null, kickoffReloadBusy = false, nextKickoffReload = 0;
 function waitingFixtureKey(m){return [m.home,m.away,m.kickoff].join('|');}
@@ -66,13 +68,14 @@ function stop() {
   v.load();
 }
 
-function choose(m, preferredChannelId = null, reconnecting = false) {
+function choose(m, preferredChannelId = null, reconnecting = false, manualStream = false) {
   if(!reconnecting){retryInProgress=false;updateRetryState(false);}
   waitingManualLive = false;
   waitingFixture = !m.live && !m.finished ? waitingFixtureKey(m) : null;
   nextKickoffReload = 0;
   ++playToken;
   stop();
+  manualStreamFixture = manualStream && !m.finished ? waitingFixtureKey(m) : null;
   selected = m;
   channel = null;
   wantPlayback = false;
@@ -81,6 +84,8 @@ function choose(m, preferredChannelId = null, reconnecting = false) {
   updateSelected();
   $('channels').replaceChildren();
   $('channel-label').hidden = !m.channels.length;
+  $('try-stream').hidden = !!m.live || !!m.finished || !m.channels.length || manualStream;
+  $('try-stream').disabled=false;$('try-stream').textContent='▶ Try stream';
   $('retry').hidden = true;$('retry').disabled=false;
   $('retry').textContent='↻ Retry stream';
   $('video').hidden = true;
@@ -92,7 +97,7 @@ function choose(m, preferredChannelId = null, reconnecting = false) {
     $('message').textContent = 'Full-time result · '+(m.scoreSource || 'Listing');
     return;
   }
-  if (!m.live) {
+  if (!m.live && !manualStream) {
     $('channel-label').hidden = true;
     $('message').textContent = kickoffAutoplayEnabled?'Waiting for kickoff · stream will open automatically when live.':'Waiting for kickoff · automatic playback is off.';
     return;
@@ -112,6 +117,34 @@ function choose(m, preferredChannelId = null, reconnecting = false) {
     checkSelectedKickoff();
   }
 }
+
+async function tryScheduledStream(){
+  const match=selected;
+  if(!match||match.live||match.finished||!match.channels?.length||$('try-stream').disabled)return;
+  const key=waitingFixtureKey(match),token=playToken;
+  $('try-stream').disabled=true;$('try-stream').textContent='Connecting…';
+  $('message').textContent='Refreshing commentator links · source still reports Scheduled.';
+  try{
+    const freshMatches=await rpc('matches');
+    if(token!==playToken||!selected||waitingFixtureKey(selected)!==key)return;
+    const candidates=freshMatches.filter(m=>waitingFixtureKey(m)===key&&!m.finished);
+    if(candidates.length!==1||!candidates[0].channels?.length)throw Error('No commentator links are available. Try again later.');
+    const fresh=candidates[0];
+    // Preserve independently verified score/status while refreshing stream metadata.
+    for(const field of ['live','finished','status','minute','homeScore','awayScore','scoreSource','scoreChecked'])fresh[field]=selected[field];
+    if(fresh.finished)throw Error('This match has finished.');
+    const index=matches.findIndex(m=>waitingFixtureKey(m)===key);if(index>=0)matches[index]=fresh;
+    choose(fresh,null,false,true);
+  }catch(e){if(token===playToken&&selected&&waitingFixtureKey(selected)===key)$('message').textContent='Could not open stream: '+e.message;}
+  finally{if(token===playToken){$('try-stream').disabled=false;$('try-stream').textContent='▶ Try stream';}}
+}
+$('try-stream').onclick=tryScheduledStream;
+const updateSelectedBeforeTryStream=updateSelected;
+updateSelected=function(...args){
+  updateSelectedBeforeTryStream(...args);
+  $('try-stream').hidden=!selected||selected.live||selected.finished||!selected.channels?.length||isManualStreamMatch(selected);
+};
+
 
 function setPlaybackIntent(playing) {
   wantPlayback = playing;

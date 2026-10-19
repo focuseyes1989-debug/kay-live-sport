@@ -50,7 +50,7 @@ function renderLineup(data,message){
 
 async function refreshLineup(force=false){
 
- const match=selected,key=lineupFixtureKey(match),show=!!match&&!match.live&&!match.finished&&match.sport==='1';
+ const match=selected,key=lineupFixtureKey(match),show=!!match&&!match.live&&!match.finished&&match.sport==='1'&&!(typeof isManualStreamMatch==='function'&&isManualStreamMatch(match));
 
  lineupPanel.hidden=!show;$('stage').classList.toggle('has-lineup',show);if(!show){++lineupRequest;return;}
 

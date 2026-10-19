@@ -1,7 +1,7 @@
 const mobileLandscape=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches;
 function showMobileView(view){document.body.classList.remove('landscape-matches');document.body.classList.toggle('mobile-watch',view==='watch');if(view==='watch')updateMobileSummary();updateMobileNavigation(view==='watch'?'watch':(document.querySelector('.filters .active')?.dataset.filter==='live'?'live':document.querySelector('.filters .active')?.dataset.filter==='results'?'results':'matches'));}
 const desktopChoose=choose;
-choose=async function(match){showMobileView('watch');return desktopChoose(match);};
+choose=async function(...args){showMobileView('watch');return desktopChoose(...args);};
 $('mobile-matches').onclick=()=>showMobileView('matches');$('mobile-watch').onclick=()=>showMobileView('watch');
 $('toggle-sidebar').onclick=()=>{if(mobileLandscape()&&document.body.classList.contains('mobile-watch'))document.body.classList.toggle('landscape-matches');else showMobileView(document.body.classList.contains('mobile-watch')?'matches':'watch');};
 $('toggle-sidebar').title='Matches / Watch';$('toggle-sidebar').setAttribute('aria-label','Matches / Watch');
