@@ -1,5 +1,11 @@
 (()=>{
  document.body.classList.add('tv-ui');
+ const tvNav=document.querySelector('#mobile-tabs');
+ tvNav.setAttribute('aria-label','TV navigation');tvNav.prepend(document.querySelector('#mobile-search'));
+ const settingsNav=document.createElement('button');settingsNav.id='tv-settings';settingsNav.type='button';settingsNav.innerHTML=document.querySelector('#settings-menu-button').innerHTML+'<span>Settings</span>';settingsNav.setAttribute('aria-label','Settings');settingsNav.onclick=()=>{document.querySelector('#settings-menu').showPopover();focus(entry(document.querySelector('#settings-menu')));};tvNav.append(settingsNav);
+ const originalTvView=showMobileView;
+ showMobileView=function(view){const changed=document.body.classList.contains('mobile-watch')!==(view==='watch');originalTvView(view);if(changed&&view==='watch')requestAnimationFrame(()=>focus(entry(document.querySelector('main>section'))));};
+
  const selector='button,input,select,a[href],[tabindex],iframe',memory={},textInputs=[...document.querySelectorAll('input[type="text"],#search')];
  let editing=null,lastFocus=null,lastMove=0;
  const menuOpen=()=>window.kayPopoverOpen(document.querySelector('#settings-menu'));
@@ -15,7 +21,7 @@
  for(const input of textInputs){input.readOnly=true;input.setAttribute('inputmode','none');input.title='Press OK to type · Back to finish';input.addEventListener('click',()=>beginEdit(input));input.addEventListener('blur',()=>{if(editing===input){editing=null;input.readOnly=true;input.setAttribute('inputmode','none');input.classList.remove('tv-editing');keyboard(false);}});}
  document.querySelector('#mobile-search').onclick=()=>{showMobileView('matches');updateMobileNavigation('search');beginEdit(document.querySelector('#search'));};
  document.addEventListener('focusin',event=>{const e=event.target,z=zone(e);if(z)memory[z.id||z.tagName]=e;lastFocus=focusKey(e);});
- function entry(root){const remembered=memory[root?.id||root?.tagName];if(remembered?.isConnected&&visible(remembered))return remembered;return items(root).find(e=>e.matches('.card.active,#channels button.active'))||items(root)[0];}
+ function entry(root){const remembered=memory[root?.id||root?.tagName];if(remembered?.isConnected&&visible(remembered))return remembered;return items(root).find(e=>e.matches('.card.active,#channels button.active'))||items(root).find(e=>e.matches('.card,.catalog-card'))||items(root)[0];}
  let highlightsFullscreen=false;
  function highlightFullscreen(enabled){
   highlightsFullscreen=enabled;document.body.classList.toggle('tv-highlights-fullscreen',enabled);
@@ -62,12 +68,15 @@
   const root=dialog||(menuOpen()?menu:null),z=zone(active),key=event.key;
   if(root){const list=items(root),i=list.indexOf(active),next=key==='ArrowDown'?list[i+1]:key==='ArrowUp'?list[i-1]:nearest(active,list,key);focus(next||list[0]);return;}
   if(!z){focus(entry(nav));return;}
-  if(z===nav){const list=items(nav),i=list.indexOf(active);if(key==='ArrowLeft'||key==='ArrowRight')focus(list[(i+(key==='ArrowRight'?1:list.length-1))%list.length]);else if(key==='ArrowUp')focus(entry(active.id==='mobile-watch'?player:sidebar));return;}
+  if(z===nav){const list=items(nav),i=list.indexOf(active);if(key==='ArrowUp'||key==='ArrowDown')focus(list[Math.max(0,Math.min(list.length-1,i+(key==='ArrowDown'?1:-1)))]);else if(key==='ArrowRight')focus(entry(document.body.classList.contains('mobile-watch')?player:sidebar));return;}
   if(z===header){if(key==='ArrowDown')focus(entry(active.closest('.search-wrap')?sidebar:player));else focus(nearest(active,items(header),key));return;}
-  if(z===sidebar){const list=items(sidebar),i=list.indexOf(active);if(key==='ArrowRight'){const sibling=nearest(active,list,key);focus(sibling&&Math.abs(sibling.getBoundingClientRect().y-active.getBoundingClientRect().y)<20?sibling:entry(player));}else if(key==='ArrowLeft')focus(nearest(active,list,key));else focus(list[i+(key==='ArrowDown'?1:-1)]||(key==='ArrowUp'?document.querySelector('#search'):document.querySelector('#mobile-matches')));return;}
-  if(z===player){const next=nearest(active,items(player),key);focus(next||(key==='ArrowLeft'?entry(sidebar):key==='ArrowUp'?document.querySelector('#settings-menu-button'):key==='ArrowDown'?document.querySelector('#mobile-watch'):null));}
+  if(z===sidebar){const next=nearest(active,items(sidebar),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#search'):null));return;}
+  if(z===player){const next=nearest(active,items(player),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#settings-menu-button'):key==='ArrowDown'?document.querySelector('#mobile-watch'):null));}
  },true);
  // Score refreshes replace cards: restore the same fixture instead of jumping to the first one.
  let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(document.activeElement!==document.body)return;const target=items(document).find(e=>focusKey(e)===lastFocus);focus(target||entry(document.querySelector('#matches-sidebar')));},60);}).observe(document.querySelector('main'),{childList:true,subtree:true});
+ const browseHeading=document.querySelector('.list-heading h2');
+ function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;browseHeading.textContent=current==='live'?'Live now':current==='results'?'Results & highlights':'All matches';}
+ new MutationObserver(updateTvHeading).observe(document.querySelector('.filters'),{subtree:true,attributes:true,attributeFilter:['class']});updateTvHeading();
  focus(document.querySelector('#mobile-matches'));
 })();

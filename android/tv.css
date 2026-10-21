@@ -94,3 +94,37 @@ body.tv-ui header #search{padding:5px 30px 5px 34px}
 body.tv-ui.tv-highlights-fullscreen #highlights-panel{padding:0}
 body.tv-ui.tv-highlights-fullscreen .highlights-heading{position:absolute;top:8px;right:8px;z-index:2}
 body.tv-ui.tv-highlights-fullscreen .highlights-heading h3,body.tv-ui.tv-highlights-fullscreen .highlights-heading button:not(#tv-highlights-fullscreen){display:none}
+
+/* Living-room navigation: a fixed left rail and separate browse/watch screens. */
+body.tv-ui{--tv-rail:110px;padding:0;background:#0c1016}
+body.tv-ui:not(.player-fullscreen) header{margin-left:var(--tv-rail);width:calc(100% - var(--tv-rail));height:58px;padding:8px 20px;border-bottom:1px solid #ffffff0c}
+body.tv-ui:not(.player-fullscreen) main,body.tv-ui.sidebar-hidden:not(.player-fullscreen) main{margin-left:var(--tv-rail)!important;width:calc(100% - var(--tv-rail))!important;height:calc(var(--app-height,100vh) - 58px);grid-template-columns:minmax(0,1fr)!important}
+body.tv-ui #mobile-tabs{left:0!important;top:0!important;bottom:0!important;transform:none!important;width:var(--tv-rail)!important;max-width:none;height:var(--app-height,100vh)!important;border:0;border-right:1px solid #ffffff0d;border-radius:0;padding:60px 9px 12px;display:flex!important;flex-direction:column;justify-content:flex-start;gap:7px;background:#11171f}
+body.tv-ui #mobile-tabs:before{content:'KAY';position:absolute;top:20px;left:0;right:0;text-align:center;font-size:17px;font-weight:800;letter-spacing:3px;color:#70e6ac}
+body.tv-ui #mobile-tabs button{flex:0 0 55px;width:100%;min-height:46px;flex-direction:column;justify-content:center;gap:4px;padding:6px 4px;border-radius:10px;font-size:12px;color:#b2bbc7}
+body.tv-ui #mobile-tabs button span{font-size:11px;display:block!important}body.tv-ui #mobile-tabs button svg{width:22px;height:22px}body.tv-ui #mobile-tabs #mobile-live span{display:none!important}
+body.tv-ui #mobile-tabs button.active{background:#25392f;border-color:#42624f;color:#b1f2d0}
+body.tv-ui #matches-sidebar,body.tv-ui.sidebar-hidden #matches-sidebar{grid-column:1;grid-row:1;width:100%!important;padding:18px 22px;border:0;background:transparent}
+body.tv-ui:not(.mobile-watch) main>section{display:none!important}
+body.tv-ui.mobile-watch #matches-sidebar,body.tv-ui.sidebar-hidden.mobile-watch #matches-sidebar{display:none!important}
+body.tv-ui.mobile-watch:not(.player-fullscreen) main>section{grid-column:1;grid-row:1;display:flex!important;width:100%;max-width:none;height:100%;padding:12px 18px}
+body.tv-ui .list-heading{margin-bottom:16px}body.tv-ui .list-heading h2{font-size:21px;font-weight:650}body.tv-ui #count{font-size:11px}
+body.tv-ui #match-league-controls,body.tv-ui #results-controls,body.tv-ui .catalog-controls{max-width:460px}
+body.tv-ui #list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-content:start}
+body.tv-ui #list>.meta,body.tv-ui #list>.catalog-section{grid-column:1/-1}
+body.tv-ui .card{min-height:155px;padding:16px;margin:0;border-radius:12px;background:#18202a;border-color:#303a47;transition:background .12s,border-color .12s}
+body.tv-ui .card .team-name{font-size:15px}body.tv-ui .card .crest{width:30px;height:30px}body.tv-ui .card .league{font-size:11px}body.tv-ui .card .score{font-size:23px}body.tv-ui .card .card-foot{font-size:10px;margin-top:12px;padding-top:9px}
+body.tv-ui .card.active{background:#1c342a;border-color:#66b58d}
+body.tv-ui .catalog-section{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px;align-content:start}
+body.tv-ui .catalog-section-heading{grid-column:1/-1;font-size:16px;margin:8px 0 2px;padding-bottom:8px}
+body.tv-ui .catalog-card{margin:0;border-radius:10px;background:#18202a}
+body.tv-ui .catalog-thumb{height:0;padding-bottom:56.25%;position:relative;overflow:hidden}
+body.tv-ui .catalog-thumb img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+body.tv-ui .catalog-card strong{font-size:13px;line-height:1.45;padding:10px 11px 4px;min-height:45px}body.tv-ui .catalog-card small{padding:0 11px 12px;font-size:11px}
+body.tv-ui button:focus{background-color:#2b4b3a!important}body.tv-ui .card:focus,body.tv-ui .catalog-card:focus{border-color:#a5f3cb;box-shadow:0 0 0 2px #a5f3cb!important}
+body.tv-ui header .search-wrap{max-width:650px!important}body.tv-ui #settings-menu{right:18px!important}
+body.tv-ui.player-fullscreen #mobile-tabs,body.tv-ui.tv-highlights-fullscreen #mobile-tabs{display:none!important}
+body.tv-ui.player-fullscreen main{margin-left:0!important;width:100%!important}
+@media(min-width:1600px){body.tv-ui #list,body.tv-ui .catalog-section{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1050px){body.tv-ui{--tv-rail:92px}body.tv-ui #list,body.tv-ui .catalog-section{grid-template-columns:repeat(2,minmax(0,1fr))}body.tv-ui #matches-sidebar,body.tv-ui.sidebar-hidden #matches-sidebar{padding:14px 16px}body.tv-ui header .brand{min-width:160px}}
+@media(max-height:450px){body.tv-ui #mobile-tabs{padding-top:36px;gap:3px}body.tv-ui #mobile-tabs:before{top:9px;font-size:13px}body.tv-ui #mobile-tabs button{flex-basis:39px;min-height:35px;flex-direction:row;gap:5px}body.tv-ui #mobile-tabs button svg{width:17px;height:17px}}
