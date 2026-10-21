@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use std::time::Duration;
 const SITE: &str = "https://www.myanmartvchannels.com";
 fn seeds() -> Vec<Value> {
-    serde_json::from_str(include_str!("../../myanmar-tv-channels.json")).unwrap()
+    serde_json::from_str(include_str!("../android/myanmar-tv-channels.json")).unwrap()
 }
 fn page(id: &str) -> String {
     format!("{SITE}/channels/{id}/")
@@ -161,5 +161,100 @@ mod tests {
         assert!(!allowed_page(
             "https://x@www.myanmartvchannels.com/channels/x/"
         ));
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn open(args: &Value) -> Result<Value, String> {
+    use std::os::windows::ffi::OsStrExt;
+    let link = args["url"]
+        .as_str()
+        .filter(|s| allowed_page(s))
+        .ok_or("Invalid Myanmar TV link")?;
+    let wide = |s: &str| {
+        std::ffi::OsStr::new(s)
+            .encode_wide()
+            .chain(Some(0))
+            .collect::<Vec<u16>>()
+    };
+    let operation = wide("open");
+    let file = wide(link);
+    #[link(name = "shell32")]
+    unsafe extern "system" {
+        fn ShellExecuteW(
+            window: *mut std::ffi::c_void,
+            operation: *const u16,
+            file: *const u16,
+            parameters: *const u16,
+            directory: *const u16,
+            show: i32,
+        ) -> isize;
+    }
+    let result = unsafe {
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            operation.as_ptr(),
+            file.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            1,
+        )
+    };
+    if result <= 32 {
+        Err(format!("Could not open the default browser ({result})"))
+    } else {
+        Ok(json!({"opened":true}))
+    }
+}
+
+pub fn logo(path: &str) -> Option<&'static [u8]> {
+    match path {
+        "/tv-channels/5plus.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/5plus.webp"))
+        }
+        "/tv-channels/channel7.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/channel7.webp"
+        )),
+        "/tv-channels/channelk.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/channelk.webp"
+        )),
+        "/tv-channels/channelme.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/channelme.webp"
+        )),
+        "/tv-channels/dvb.webp" => Some(include_bytes!("../android/assets/tv-channels/dvb.webp")),
+        "/tv-channels/farmer.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/farmer.webp"))
+        }
+        "/tv-channels/fortune.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/fortune.webp"))
+        }
+        "/tv-channels/heyplay.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/heyplay.webp"))
+        }
+        "/tv-channels/hluttaw.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/hluttaw.webp"))
+        }
+        "/tv-channels/mahar.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/mahar.webp"))
+        }
+        "/tv-channels/maharbawdi.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/maharbawdi.webp"
+        )),
+        "/tv-channels/maharesports.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/maharesports.webp"
+        )),
+        "/tv-channels/mchannel.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/mchannel.webp"
+        )),
+        "/tv-channels/mitv.webp" => Some(include_bytes!("../android/assets/tv-channels/mitv.webp")),
+        "/tv-channels/mrtv.webp" => Some(include_bytes!("../android/assets/tv-channels/mrtv.webp")),
+        "/tv-channels/mrtv4.webp" => {
+            Some(include_bytes!("../android/assets/tv-channels/mrtv4.webp"))
+        }
+        "/tv-channels/mrtvnews.webp" => Some(include_bytes!(
+            "../android/assets/tv-channels/mrtvnews.webp"
+        )),
+        "/tv-channels/nrc.webp" => Some(include_bytes!("../android/assets/tv-channels/nrc.webp")),
+        _ => None,
     }
 }

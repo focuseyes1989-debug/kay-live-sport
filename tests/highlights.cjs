@@ -15,8 +15,8 @@ const walk=e=>[e,...e.children.flatMap(walk)],text=e=>walk(e).map(n=>n.text).joi
  for(const days of [0,-1,-2,1]){
   const h=harness(),d=new Date(2026,2,9,0,0);d.setDate(d.getDate()+days);h.c.selected.kickoff=d.getTime()/1000;await h.c.refreshHighlights();assert.equal(h.panel.hidden,days!==0&&days!==-1);assert.equal(h.calls(),days===0||days===-1?1:0);
  }
- let h=harness();h.c.selected.kickoff=new Date(2026,2,8,12).getTime()/1000;await h.c.refreshHighlights();assert(!h.panel.hidden);h.setNow(new Date(2026,2,10,0,0).getTime());await h.timers[0]();assert(h.panel.hidden);assert.equal(h.panel.children.length,0);
+ let h=harness();h.c.selected.kickoff=new Date(2026,2,8,12).getTime()/1000;await h.c.refreshHighlights();assert(!h.panel.hidden);h.setNow(new Date(2026,2,10,0,0).getTime());assert.equal(h.timers.length,0,'highlights must not poll in the background');await h.c.refreshHighlights();assert(h.panel.hidden);assert.equal(h.panel.children.length,0);
  h=harness();h.c.selected.kickoff=new Date(2026,2,8,12).getTime()/1000;let finish;h.c.rpc=()=>new Promise(r=>finish=r);const late=h.c.refreshHighlights();h.setNow(new Date(2026,2,10,0,0).getTime());finish({videos:[]});await late;assert(h.panel.hidden);assert.equal(h.panel.children.length,0);
- console.log('Today/yesterday only: local calendar, old/future exclusion, no lookup for old results, midnight player cleanup and late response suppression passed');
+ console.log('Today/yesterday only: local calendar, old/future exclusion, no lookup for old results, next-entry midnight player cleanup and late response suppression passed');
  console.log('Highlights: finished-only panel, no poll reload, embed/source URLs, live transition, stale responses, missing video and network retry passed');
 })().catch(e=>{console.error(e);process.exitCode=1});

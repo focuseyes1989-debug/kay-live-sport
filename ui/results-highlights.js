@@ -101,5 +101,5 @@ render=function(){
 };
 const headerRefreshBeforeCatalog=$('refresh').onclick;
 $('refresh').onclick=()=>filter==='results'&&resultsContent==='highlights'?refreshHighlightsCatalog(true,true):headerRefreshBeforeCatalog();
-setInterval(()=>{if(filter==='results'&&resultsContent==='highlights'){window.kayCatalogHighlightActive();render();if(!document.hidden)refreshHighlightsCatalog();}},30000);
+
 render();

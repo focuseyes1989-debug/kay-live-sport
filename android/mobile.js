@@ -13,7 +13,7 @@ document.addEventListener('fullscreenchange',()=>{
  invoke('mobile_fullscreen',{enabled}).catch(()=>{});
  if(!enabled){$('stage').classList.remove('is-fullscreen');document.body.classList.remove('player-fullscreen');$('fullscreen').textContent='⛶ Fullscreen';}
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshScores();});
+
 showMobileView('matches');
 
 window.showMobileNetworkError=()=>{

@@ -1,20 +1,20 @@
-## KAY LIVE SPORT v0.1.9
+## KAY LIVE SPORT Android v0.1.23 Preview
 
-Scheduled matches with commentator links now have a Try stream button on Windows, TV and Phone/Tablet.
+Myanmar TV and page-entry lazy loading are now available on Windows and Phone/Tablet.
 
-- Refreshes commentator links before attempting playback without changing the source match status to Live.
-- Shows the player and commentator choices while hiding the pre-match lineup overlay during manual playback.
-- Keeps normal stream failover and reconnect behavior, and rejects stale requests after switching matches.
-- Hides Try stream for finished matches, live matches and fixtures without commentator links.
-- Fixes Android match-selection forwarding so manual playback and reconnect arguments reach the shared player.
+- Adds a Myanmar TV destination with 18 channels, bundled logos and search, based on https://www.myanmartvchannels.com/channels/.
+- Uses the shared in-app player for available public HLS streams, with Retry, fullscreen and a restricted source-website fallback. Some channels require a browser session or remain unavailable on the current network.
+- Replaces continuous match/score, lineup and highlights polling with page-entry fetching and short-lived caches. Manual Refresh forces a request for the current page.
+- Live score and goal/live notifications update when page-entry or manual refresh obtains new data, rather than continuously in the background.
+- Preserves Windows and Phone/Tablet settings. Includes the existing TV lazy-loading and focus behavior through a shared channel backend/UI.
+- Phone/Tablet ARM32 updates now select the ARM32 APK.
 
 ### Downloads
 
 - KAYLiveSport-windows-x64.exe: Windows x64; Microsoft Edge WebView2 required.
-- KAYLiveSport-android-arm64-debug.apk: KAY LIVE SPORT Phone/Tablet, ARM64.
-- KAYLiveSport-tv-arm32-debug.apk: KAY LIVE SPORT TV, ARM32 / armeabi-v7a.
-- KAYLiveSport-tv-arm64-debug.apk: KAY LIVE SPORT TV, ARM64 / arm64-v8a.
+- KAYLiveSport-android-arm64-debug.apk: Phone/Tablet ARM64, including the Redmi test device.
+- KAYLiveSport-android-arm32-debug.apk: Phone/Tablet ARM32.
 
-Android APKs are Android 8+ previews. Install over the existing app without uninstalling to retain settings. TV and Phone/Tablet share the existing application ID and signing key; select the edition and architecture you want on that device. Android update discovery uses companion android-v0.1.9; TV selects its matching TV APK.
+Companion Android release: android-v0.1.23. It also includes matching TV ARM32/ARM64 APKs to preserve compatibility with existing TV update discovery. TV and Phone/Tablet use the existing application ID and signing key; select the matching edition/architecture and install over the existing app without uninstalling to retain settings.
 
-Validation covers manual scheduled playback, fresh commentator links, unchanged status, failures/stale selections, existing recovery/autostart/lineups, and Windows/Phone/TV UI integration. Source stream availability is still controlled by the broadcaster.
+Validation: shared Rust directory parsing and source URL restrictions, shared UI unit tests, desktop/touch lazy-loading cache and request tests, Myanmar TV list/search/player/source controls, mobile layouts from portrait phones to landscape tablets, TV regressions and WebView 81. DVB public HLS playback progressed at 1280x720 in Windows and Phone browser tests. Native EXE/APK builds and APK version/signature/alignment checks passed. Physical Mi Stick/Redmi performance has not been benchmarked for this change.

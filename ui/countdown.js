@@ -23,7 +23,7 @@ function tickKickoffCountdowns(){
  const due=matches.filter(m=>hasKickoffCountdown(m)&&Number(m.kickoff)*1000<=now&&!kickoffChecks.has(String(m.id)+'|'+m.kickoff));
  // Batch simultaneous kickoffs into one refresh; retain pending work while
  // another refresh is running. Wall-clock time also handles sleep/resume.
- if(due.length&&!scoreBusy&&!$('refresh').disabled){
+ if(!(typeof window!=='undefined'&&window.kayLazyLoading)&&due.length&&!scoreBusy&&!$('refresh').disabled){
   for(const m of due)kickoffChecks.add(String(m.id)+'|'+m.kickoff);
   refresh();
  }

@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod language;
+mod myanmar_tv;
 mod provider;
 use provider::{client, matches, resolve};
 #[cfg(test)]
@@ -111,11 +112,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return wry::http::Response::builder().header("Content-Type","image/svg+xml")
                     .body(std::borrow::Cow::Borrowed(include_bytes!("../assets/live-sport.svg").as_slice())).unwrap();
             }
+            if let Some(logo)=myanmar_tv::logo(request.uri().path()) {
+                return wry::http::Response::builder().header("Content-Type","image/webp").body(std::borrow::Cow::Borrowed(logo)).unwrap();
+            }
             let (mime, body) = if request.uri().path() == "/hls.min.js" {
                 (
                     "text/javascript",
                     include_bytes!("../ui/hls.min.js").to_vec(),
                 )
+            } else if request.uri().path() == "/myanmar-tv.js" {
+                ("text/javascript",include_bytes!("../ui/myanmar-tv.js").to_vec())
+            } else if request.uri().path() == "/myanmar-tv.css" {
+                ("text/css",include_bytes!("../ui/myanmar-tv.css").to_vec())
+            } else if request.uri().path() == "/lazy-loading.js" {
+                ("text/javascript",include_bytes!("../ui/lazy-loading.js").to_vec())
             } else if request.uri().path() == "/mpegts.js" {
                 ("text/javascript", include_bytes!("../ui/mpegts.js").to_vec())
             } else if request.uri().path() == "/live-notifications.js" {
@@ -186,6 +196,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return;
                 };
                 let result = client().and_then(|c| match v["command"].as_str() {
+                    Some("myanmar_channels") => myanmar_tv::catalog(&c),
+                    Some("myanmar_resolve") => myanmar_tv::resolve(&c,&v["args"]),
+                    Some("open_myanmar_tv") => myanmar_tv::open(&v["args"]),
                     Some("matches") => matches(&c),
                     Some("check_update") => updater::check(&c),
                     Some("notification_sound") => play_notification_sound(&v["args"]),

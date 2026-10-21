@@ -37,3 +37,27 @@ async function refreshMyanmar(force=false){
 }
 const myanmarRefresh=$('refresh').onclick;
 $('refresh').onclick=()=>myanmarPage?refreshMyanmar(true):myanmarRefresh();
+
+// Desktop filters and touch navigation share the same channel page.
+document.addEventListener('DOMContentLoaded',()=>{
+ if(window.kayTvPreview)return;
+ const button=node('button','Myanmar TV');button.id='myanmar-tv-tab';button.type='button';button.setAttribute('aria-label','Myanmar TV');document.querySelector('.filters').append(button);
+ function openMyanmar(){myanmarPage=true;if(typeof showMobileView==='function')showMobileView('matches');render();refreshMyanmar();if(typeof updateMobileNavigation==='function')updateMobileNavigation('matches');}
+ button.onclick=openMyanmar;
+ const nav=$('mobile-tabs');
+ if(nav){
+  document.body.classList.add('phone-tablet');nav.classList.add('has-myanmar-tv');const mobile=node('button');mobile.id='mobile-myanmar';mobile.type='button';mobile.setAttribute('aria-label','Myanmar TV');mobile.title='Myanmar TV';mobile.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5H21V18H3Z M8 22H16 M12 18V22 M7 1L12 5 17 1"/></svg><span>Myanmar TV</span>';mobile.onclick=openMyanmar;nav.insertBefore(mobile,$('mobile-watch'));
+  const update=updateMobileNavigation;updateMobileNavigation=function(view){update(view);const active=myanmarPage&&view!=='watch';if(active)for(const child of nav.children){child.classList.remove('active');child.removeAttribute('aria-current');}mobile.classList.toggle('active',active);if(active)mobile.setAttribute('aria-current','page');else mobile.removeAttribute('aria-current');};
+ }
+ const baseRender=render;
+ render=function(...args){
+  const result=baseRender(...args);document.body.classList.toggle('myanmar-page',myanmarPage);
+  document.querySelector('.list-heading h2').textContent=myanmarPage?'Myanmar TV':'Match centre';
+  button.classList.toggle('active',myanmarPage);button.setAttribute('aria-pressed',String(myanmarPage));
+  for(const child of document.querySelectorAll('.filters [data-filter]'))child.classList.toggle('active',!myanmarPage&&child.dataset.filter===filter);
+  if(myanmarPage)$('match-league-controls').hidden=true;
+  if(nav)updateMobileNavigation(document.body.classList.contains('mobile-watch')?'watch':'matches');
+  return result;
+ };
+ render();
+});

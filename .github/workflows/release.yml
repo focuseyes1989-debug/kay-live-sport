@@ -33,5 +33,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           Copy-Item -LiteralPath target/x86_64-pc-windows-msvc/release/live-sport.exe -Destination KAYLiveSport-windows-x64.exe
+          gh release view $env:GITHUB_REF_NAME --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Output 'Release already exists; preserving the manually verified cross-platform assets.'
+            exit 0
+          }
           gh release create $env:GITHUB_REF_NAME KAYLiveSport-windows-x64.exe dist/HLS-LICENSE.txt dist/MPEGTS-LICENSE.txt dist/MPEGTS-THIRD-PARTY-LICENSES.txt --verify-tag --title "KAY LIVE SPORT $env:GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

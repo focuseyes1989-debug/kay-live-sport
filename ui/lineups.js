@@ -85,6 +85,3 @@ async function refreshLineup(force=false){
 const updateSelectedBeforeLineup=updateSelected;
 
 updateSelected=function(){updateSelectedBeforeLineup();refreshLineup();};
-
-setInterval(()=>{if(!document.hidden)refreshLineup();},60000);
-

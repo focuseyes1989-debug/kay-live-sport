@@ -66,5 +66,3 @@ async function refreshHighlights(force=false){
 const updateBeforeHighlights=updateSelected;
 updateSelected=function(){updateBeforeHighlights();refreshHighlights();};
 // Recheck the device's calendar after midnight, sleep or a time-zone change.
-setInterval(()=>refreshHighlights(),30000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshHighlights();});
