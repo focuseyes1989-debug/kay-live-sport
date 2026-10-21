@@ -1,16 +1,35 @@
 (()=>{
  document.body.classList.add('tv-ui');
- const tvNav=document.querySelector('#mobile-tabs');
- tvNav.setAttribute('aria-label','TV navigation');tvNav.prepend(document.querySelector('#mobile-search'));
- const settingsNav=document.createElement('button');settingsNav.id='tv-settings';settingsNav.type='button';settingsNav.innerHTML=document.querySelector('#settings-menu-button').innerHTML+'<span>Settings</span>';settingsNav.setAttribute('aria-label','Settings');settingsNav.onclick=()=>{document.querySelector('#settings-menu').showPopover();focus(entry(document.querySelector('#settings-menu')));};tvNav.append(settingsNav);
+ const tvNav=document.querySelector('#mobile-tabs');tvNav.setAttribute('aria-label','TV navigation');
+ const settingsMenu=document.querySelector('#settings-menu'),headerSettings=document.querySelector('#settings-menu-button');
+ const settingsPage=document.createElement('section');settingsPage.id='tv-settings-page';settingsPage.hidden=true;settingsPage.setAttribute('aria-label','Settings');
+ const pageHeading=document.createElement('h2');pageHeading.textContent='Settings';settingsPage.append(pageHeading);document.body.append(settingsPage);
+ settingsMenu.removeAttribute('popover');settingsMenu.classList.remove('kay-popover-open');settingsPage.append(settingsMenu);
+ function closeSettings(){settingsPage.hidden=true;document.body.classList.remove('tv-settings-page');updateMobileNavigation(document.body.classList.contains('mobile-watch')?'watch':'matches');}
+ function openSettings(){endEdit();settingsPage.hidden=false;document.body.classList.add('tv-settings-page');updateMobileNavigation('settings');focus(entry(settingsPage));}
+ // Shared dialog actions close popovers; a Settings page stays underneath dialogs.
+ settingsMenu.showPopover=openSettings;settingsMenu.hidePopover=()=>{};
+ const settingsNav=document.createElement('button');settingsNav.id='tv-settings';settingsNav.type='button';settingsNav.innerHTML=headerSettings.innerHTML+'<span>Settings</span>';settingsNav.setAttribute('aria-label','Settings');settingsNav.onclick=openSettings;tvNav.append(settingsNav);
+ for(const [id,label,content] of [['tv-scores','Scores','scores'],['tv-highlights','Highlights','highlights']]){
+  const button=document.createElement('button');button.id=id;button.type='button';button.innerHTML=document.querySelector(content==='highlights'?'#mobile-watch svg':'#mobile-results svg').outerHTML+'<span>'+label+'</span>';button.setAttribute('aria-label',label);
+  button.onclick=()=>{closeSettings();resultsContent=content;setMatchFilter('results',true);showMobileView('matches');render();if(content==='highlights')refreshHighlightsCatalog();updateMobileNavigation('matches');updateTvHeading();focus(entry(document.querySelector('#matches-sidebar')));};tvNav.insertBefore(button,document.querySelector('#mobile-watch'));
+ }
+ const baseNavigation=updateMobileNavigation;
+ updateMobileNavigation=function(view){baseNavigation(view);const id=!settingsPage.hidden?'tv-settings':document.body.classList.contains('mobile-watch')?'mobile-watch':filter==='results'?(resultsContent==='highlights'?'tv-highlights':'tv-scores'):filter==='live'?'mobile-live':'mobile-matches';
+  for(const button of tvNav.children){const active=button.id===id;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}
+ };
+ for(const id of ['mobile-matches','mobile-live','mobile-watch']){const button=document.querySelector('#'+id),handler=button.onclick;button.onclick=()=>{closeSettings();handler();updateTvHeading();updateMobileNavigation(id==='mobile-watch'?'watch':'matches');};}
+ // Hidden league controls must not retain an invisible filter on TV.
+ matchLeague='';resultsLeague='';render();
+ document.querySelector('#reset-dialog').onclose=()=>focus(document.querySelector('#reset-settings'));
  const originalTvView=showMobileView;
  showMobileView=function(view){const changed=document.body.classList.contains('mobile-watch')!==(view==='watch');originalTvView(view);if(changed&&view==='watch')requestAnimationFrame(()=>focus(entry(document.querySelector('main>section'))));};
 
  const selector='button,input,select,a[href],[tabindex],iframe',memory={},textInputs=[...document.querySelectorAll('input[type="text"],#search')];
  let editing=null,lastFocus=null,lastMove=0;
- const menuOpen=()=>window.kayPopoverOpen(document.querySelector('#settings-menu'));
+ const menuOpen=()=>false;
  const visible=e=>!e.disabled&&e.tabIndex>=0&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[aria-hidden="true"]');
- const zone=e=>e?.closest('dialog[open]')||e?.closest('#settings-menu')||e?.closest('header')||e?.closest('#mobile-tabs')||e?.closest('#matches-sidebar')||e?.closest('main>section');
+ const zone=e=>e?.closest('dialog[open]')||e?.closest('#tv-settings-page')||e?.closest('header')||e?.closest('#mobile-tabs')||e?.closest('#matches-sidebar')||e?.closest('main>section');
  function items(root){return [...(root||document).querySelectorAll(selector)].filter(visible);}
  function focusKey(e){const card=e?.closest('.card,.catalog-card');return card?'card:'+(card.getAttribute('aria-label')||'').split(',')[0]:e?.id||null;}
  function focus(e){if(!e||!visible(e))return;e.focus({preventScroll:true});e.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}
@@ -46,9 +65,10 @@
   if(endEdit())return true;
   if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});return true;}
   if(document.body.classList.contains('player-fullscreen')){setFullscreen(false);return true;}
-  const dialog=document.querySelector('dialog[open]');if(dialog){dialog.close();focus(document.querySelector('#settings-menu-button'));return true;}
+  const dialog=document.querySelector('dialog[open]');if(dialog){dialog.close();focus(!settingsPage.hidden?entry(settingsPage):document.querySelector('#search'));return true;}
+  if(!settingsPage.hidden){closeSettings();focus(document.querySelector('#tv-settings'));return true;}
   if(menuOpen()){document.querySelector('#settings-menu').hidePopover();focus(document.querySelector('#settings-menu-button'));return true;}
-  if(document.activeElement?.tagName==='IFRAME'){focus(document.querySelector('#fullscreen')||document.querySelector('#mobile-watch'));return true;}
+  if(document.activeElement?.tagName==='IFRAME'){focus(document.querySelector('#tv-highlights-fullscreen')||document.querySelector('#fullscreen')||document.querySelector('#mobile-watch'));return true;}
   if(document.body.classList.contains('mobile-watch')){showMobileView('matches');focus(entry(document.querySelector('#matches-sidebar')));return true;}
   return false;
  };
@@ -68,15 +88,16 @@
   const root=dialog||(menuOpen()?menu:null),z=zone(active),key=event.key;
   if(root){const list=items(root),i=list.indexOf(active),next=key==='ArrowDown'?list[i+1]:key==='ArrowUp'?list[i-1]:nearest(active,list,key);focus(next||list[0]);return;}
   if(!z){focus(entry(nav));return;}
-  if(z===nav){const list=items(nav),i=list.indexOf(active);if(key==='ArrowUp'||key==='ArrowDown')focus(list[Math.max(0,Math.min(list.length-1,i+(key==='ArrowDown'?1:-1)))]);else if(key==='ArrowRight')focus(entry(document.body.classList.contains('mobile-watch')?player:sidebar));return;}
+  if(z===nav){const list=items(nav),i=list.indexOf(active);if(key==='ArrowUp'||key==='ArrowDown')focus(list[Math.max(0,Math.min(list.length-1,i+(key==='ArrowDown'?1:-1)))]);else if(key==='ArrowRight')focus(entry(!settingsPage.hidden?settingsPage:document.body.classList.contains('mobile-watch')?player:sidebar));return;}
+  if(z===settingsPage){const next=nearest(active,items(settingsPage),key);focus(next||(key==='ArrowLeft'?document.querySelector('#tv-settings'):null));return;}
   if(z===header){if(key==='ArrowDown')focus(entry(active.closest('.search-wrap')?sidebar:player));else focus(nearest(active,items(header),key));return;}
   if(z===sidebar){const next=nearest(active,items(sidebar),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#search'):null));return;}
-  if(z===player){const next=nearest(active,items(player),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#settings-menu-button'):key==='ArrowDown'?document.querySelector('#mobile-watch'):null));}
+  if(z===player){const next=nearest(active,items(player),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#search'):key==='ArrowDown'?document.querySelector('#mobile-watch'):null));}
  },true);
  // Score refreshes replace cards: restore the same fixture instead of jumping to the first one.
  let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(document.activeElement!==document.body)return;const target=items(document).find(e=>focusKey(e)===lastFocus);focus(target||entry(document.querySelector('#matches-sidebar')));},60);}).observe(document.querySelector('main'),{childList:true,subtree:true});
  const browseHeading=document.querySelector('.list-heading h2');
- function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;browseHeading.textContent=current==='live'?'Live now':current==='results'?'Results & highlights':'All matches';}
- new MutationObserver(updateTvHeading).observe(document.querySelector('.filters'),{subtree:true,attributes:true,attributeFilter:['class']});updateTvHeading();
+ function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;browseHeading.textContent=current==='live'?'Live now':current==='results'?(resultsContent==='highlights'?'Highlights':'Scores'):'All matches';}
+ new MutationObserver(updateTvHeading).observe(document.querySelector('.filters'),{subtree:true,attributes:true,attributeFilter:['class']});updateTvHeading();updateMobileNavigation(document.body.classList.contains('mobile-watch')?'watch':'matches');
  focus(document.querySelector('#mobile-matches'));
 })();

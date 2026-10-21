@@ -1,12 +1,12 @@
-## KAY LIVE SPORT TV v0.1.14 Preview
+## KAY LIVE SPORT TV v0.1.16 Preview
 
-A living-room TV layout inspired by familiar TV video apps, with remote and touch navigation.
+Dedicated TV Settings, Scores and Highlights pages with a simpler navigation rail.
 
-- Fixed left navigation rail for Search, Matches, Live, Results, Watch and Settings.
-- Full-width match and highlights card grids for browsing. Selecting a match opens a separate Watch screen; Back returns to browsing.
-- Directional remote navigation follows card positions across rows and columns, with visible focus and remembered fixture focus after refresh.
-- Search opens the keyboard only after OK; card and navigation taps also work.
-- Preserves compact player messages, highlights fullscreen/Back, in-app update controls and certificate compatibility from v0.1.13.
+- Removes Search and Results from the side menu, and removes the Settings icon beside the header search box. Header search remains available.
+- Adds separate Scores and Highlights destinations instead of combined Results tabs.
+- Opens Settings as a full page from the side menu. Update and Reset confirmation dialogs return to that page when closed.
+- Removes league filter dropdowns from TV. Saved league choices no longer invisibly restrict the TV lists; existing saved preferences are retained for other editions.
+- Keeps remote/touch navigation, fullscreen and Back behavior. Includes the native Back handler fix for using the TV APK on phones/tablets, originally tested on Redmi in v0.1.15.
 
 ### APKs
 
@@ -17,4 +17,4 @@ Install over the existing app without uninstalling or clearing data to retain se
 
 If an older updater reports Signing key differs, transfer the official APK with Send to TV and open it with Android's installer to update over the existing app. Do not uninstall to work around an installation error.
 
-Validation: remote grid navigation, touch selection, focus restoration, Search, Settings, update dialog, Watch/Back, player messages and Try stream integration; Chromium 81 layout checks through 4K including highlights fullscreen. APK version, architecture, signature and alignment verified. Physical Mi Stick testing remains outstanding.
+Validation: TV page navigation, hidden filters including saved stale league choices, separate Scores/Highlights destinations, Search, Settings, update dialog, Reset confirmation/Cancel, Watch/Back and Chromium 81 layout/fullscreen checks through 4K. APK version, architecture, signature and alignment verified. The new v0.1.16 page layout has not been tested on a physical Mi Stick.

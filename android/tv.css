@@ -128,3 +128,19 @@ body.tv-ui.player-fullscreen main{margin-left:0!important;width:100%!important}
 @media(min-width:1600px){body.tv-ui #list,body.tv-ui .catalog-section{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:1050px){body.tv-ui{--tv-rail:92px}body.tv-ui #list,body.tv-ui .catalog-section{grid-template-columns:repeat(2,minmax(0,1fr))}body.tv-ui #matches-sidebar,body.tv-ui.sidebar-hidden #matches-sidebar{padding:14px 16px}body.tv-ui header .brand{min-width:160px}}
 @media(max-height:450px){body.tv-ui #mobile-tabs{padding-top:36px;gap:3px}body.tv-ui #mobile-tabs:before{top:9px;font-size:13px}body.tv-ui #mobile-tabs button{flex-basis:39px;min-height:35px;flex-direction:row;gap:5px}body.tv-ui #mobile-tabs button svg{width:17px;height:17px}}
+
+/* TV destinations are pages; retain hidden legacy controls only for shared logic. */
+body.tv-ui #mobile-search,body.tv-ui #mobile-results,body.tv-ui header #settings-menu-button,body.tv-ui .results-content-tabs,body.tv-ui #match-league-controls,body.tv-ui label[for=results-league-search],body.tv-ui #results-controls .league-search-wrap{display:none!important}
+body.tv-ui.tv-settings-page main{display:none!important}
+body.tv-ui #tv-settings-page{position:fixed;top:58px;right:0;bottom:0;left:var(--tv-rail);display:block;padding:24px 30px;overflow:auto;background:#0c1016;z-index:35}
+body.tv-ui #tv-settings-page[hidden]{display:none!important}
+body.tv-ui #tv-settings-page>h2{font-size:24px;margin:0 0 18px}
+body.tv-ui #tv-settings-page #settings-menu{display:block!important;position:static!important;top:auto!important;right:auto!important;left:auto!important;margin:0!important;width:100%!important;max-width:860px;max-height:none!important;opacity:1!important;transform:none!important;visibility:visible!important;pointer-events:auto!important;overflow:visible;border:0;border-radius:0;padding:0;background:transparent;box-shadow:none}
+body.tv-ui #tv-settings-page #settings-menu>strong{display:none}
+body.tv-ui #tv-settings-page .settings-section{padding:8px 14px;margin:0 0 12px;border:1px solid #303b48;border-radius:12px;background:#17202b}
+body.tv-ui #tv-settings-page .settings-section-title{font-size:13px}
+body.tv-ui #tv-settings-page .settings-section-content{font-size:13px}
+body.tv-ui #tv-settings-page #settings-menu button{min-height:36px}
+body.tv-ui #tv-settings-page .settings-section-title button{min-height:44px}
+
+body.tv-ui #mobile-tabs button:not(.active):not(:focus){background:transparent!important;border-color:transparent}

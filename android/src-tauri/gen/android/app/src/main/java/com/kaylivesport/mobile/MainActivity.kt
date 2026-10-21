@@ -55,17 +55,21 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
     super.onCreate(savedInstanceState)
-    if ((resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION) {
-      onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-        override fun handleOnBackPressed() {
-          val web = findWebView(window.decorView)
-          if (web == null) { finish(); return }
-          web.evaluateJavascript("Boolean(window.kayTvBack && window.kayTvBack())") { handled ->
-            if (handled != "true") finish()
-          }
+    // The TV APK is also tested on phones/tablets; uiMode is not an edition flag.
+    // Let the TV WebView consume Back before falling through to Android navigation.
+    onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+      private fun defaultBack() {
+        isEnabled = false
+        try { onBackPressedDispatcher.onBackPressed() } finally { isEnabled = true }
+      }
+      override fun handleOnBackPressed() {
+        val web = findWebView(window.decorView)
+        if (web == null) { defaultBack(); return }
+        web.evaluateJavascript("Boolean(window.kayTvBack && window.kayTvBack())") { handled ->
+          if (handled != "true") defaultBack()
         }
-      })
-    }
+      }
+    })
     window.decorView.setBackgroundColor(Color.rgb(11, 16, 25))
     val content = findViewById<View>(android.R.id.content)
     ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
