@@ -30,6 +30,13 @@ class InstallArgs { lateinit var path: String }
 class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
  private var keyboardRequest = 0
  @Command
+ fun exitApp(invoke: Invoke) {
+  activity.runOnUiThread {
+   val result=JSObject();result.put("exiting",true);invoke.resolve(result)
+   activity.finishAndRemoveTask()
+  }
+ }
+ @Command
  fun openHighlight(invoke: Invoke) {
   try {
    val uri=Uri.parse(invoke.parseArgs(HighlightArgs::class.java).url)

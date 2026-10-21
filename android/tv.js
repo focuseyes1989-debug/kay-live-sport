@@ -26,7 +26,25 @@
  showMobileView=function(view){const changed=document.body.classList.contains('mobile-watch')!==(view==='watch');originalTvView(view);if(changed&&view==='watch')requestAnimationFrame(()=>focus(entry(document.querySelector('main>section'))));};
 
  const selector='button,input,select,a[href],[tabindex],iframe',memory={},textInputs=[...document.querySelectorAll('input[type="text"],#search')];
- let editing=null,lastFocus=null,lastMove=0;
+ let editing=null,lastFocus=null,lastMove=0,lastBack=0;
+ const exitDialog=document.createElement('dialog');exitDialog.id='tv-exit-dialog';exitDialog.setAttribute('aria-labelledby','tv-exit-title');
+ exitDialog.innerHTML='<h2 id="tv-exit-title">Exit KAY LIVE SPORT TV?</h2><p>Press Back once more to exit, or choose Cancel to keep watching.</p><p id="tv-exit-error" role="status"></p><div class="dialog-actions"><button id="tv-exit-cancel" type="button">Cancel</button><button id="tv-exit-confirm" type="button">Exit</button></div>';document.body.append(exitDialog);
+ let exitRequested=false,exitFocus=null;
+ function cancelExit(){exitDialog.close();lastBack=0;focus(exitFocus);}
+ async function exitApp(){if(exitRequested)return;exitRequested=true;
+  ++playToken;wantPlayback=false;stop();
+  try{await invoke('mobile_exit',{confirmed:true});}
+  catch(error){exitRequested=false;document.querySelector('#tv-exit-error').textContent='Could not exit. Please try again.';}
+ }
+ document.querySelector('#tv-exit-cancel').onclick=cancelExit;document.querySelector('#tv-exit-confirm').onclick=exitApp;
+ exitDialog.addEventListener('cancel',event=>{event.preventDefault();exitApp();});
+ function backSequence(){const now=Date.now(),twice=lastBack>0&&now-lastBack<=1600;lastBack=now;if(twice){exitFocus=document.activeElement;document.querySelector('#tv-exit-error').textContent='';exitDialog.showModal();focus(document.querySelector('#tv-exit-cancel'));return true;}return false;}
+ // TV sound is controlled by the television/receiver, without changing phone audio preferences.
+ persistAudioPreferences=()=>{};video.volume=1;video.muted=false;
+ const tvStage=document.querySelector('#stage');tvStage.tabIndex=0;tvStage.setAttribute('aria-label','Video player. Press OK for fullscreen');
+ tvStage.addEventListener('click',event=>{if(event.target.closest('#player-controls,#recovery-bar'))return;event.preventDefault();event.stopImmediatePropagation();if(!tvStage.classList.contains('is-fullscreen'))setFullscreen(true);else if(typeof showFullscreenControls==='function')showFullscreenControls();},true);
+ tvStage.addEventListener('dblclick',event=>{event.preventDefault();event.stopImmediatePropagation();},true);
+ document.addEventListener('pointerdown',()=>{lastBack=0;},{passive:true});
  const menuOpen=()=>false;
  const visible=e=>!e.disabled&&e.tabIndex>=0&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[aria-hidden="true"]');
  const zone=e=>e?.closest('dialog[open]')||e?.closest('#tv-settings-page')||e?.closest('header')||e?.closest('#mobile-tabs')||e?.closest('#matches-sidebar')||e?.closest('main>section');
@@ -57,37 +75,49 @@
  };
  const highlightPanel=document.querySelector('#highlights-panel');
  new MutationObserver(()=>{
-  highlightPanel.classList.toggle('tv-highlight-playing',!!highlightPanel.querySelector('iframe'));
+  const frame=highlightPanel.querySelector('iframe');
+  highlightPanel.classList.toggle('tv-highlight-playing',!!frame);
+  if(frame&&!highlightPanel.querySelector('#tv-highlight-expand')){
+   const expand=document.createElement('button');expand.id='tv-highlight-expand';expand.type='button';expand.setAttribute('aria-label','Open highlights fullscreen');expand.innerHTML='<span>Fullscreen</span>';expand.onclick=()=>highlightFullscreen(true);frame.parentElement.append(expand);
+  }
   if(highlightsFullscreen&&highlightPanel.hidden)highlightFullscreen(false);
  }).observe(highlightPanel,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
  window.kayTvBack=()=>{
-  if(highlightsFullscreen){highlightFullscreen(false);focus(document.querySelector('#tv-highlights-fullscreen'));return true;}
-  if(endEdit())return true;
-  if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});return true;}
-  if(document.body.classList.contains('player-fullscreen')){setFullscreen(false);return true;}
+  if(exitDialog.open){exitApp();return true;}
+  if(highlightsFullscreen){lastBack=0;highlightFullscreen(false);focus(document.querySelector('#tv-highlights-fullscreen'));return true;}
+  if(endEdit()){lastBack=0;return true;}
+  if(document.fullscreenElement){lastBack=0;document.exitFullscreen().catch(()=>{});return true;}
+  if(document.body.classList.contains('player-fullscreen')){lastBack=0;setFullscreen(false);return true;}
   const dialog=document.querySelector('dialog[open]');if(dialog){dialog.close();focus(!settingsPage.hidden?entry(settingsPage):document.querySelector('#search'));return true;}
+  if(backSequence())return true;
   if(!settingsPage.hidden){closeSettings();focus(document.querySelector('#tv-settings'));return true;}
   if(menuOpen()){document.querySelector('#settings-menu').hidePopover();focus(document.querySelector('#settings-menu-button'));return true;}
   if(document.activeElement?.tagName==='IFRAME'){focus(document.querySelector('#tv-highlights-fullscreen')||document.querySelector('#fullscreen')||document.querySelector('#mobile-watch'));return true;}
   if(document.body.classList.contains('mobile-watch')){showMobileView('matches');focus(entry(document.querySelector('#matches-sidebar')));return true;}
-  return false;
+  return true;
  };
  function nearest(active,list,key){const r=active.getBoundingClientRect(),horizontal=key==='ArrowLeft'||key==='ArrowRight',sign=key==='ArrowLeft'||key==='ArrowUp'?-1:1;return list.filter(e=>e!==active).map(e=>{const b=e.getBoundingClientRect(),dx=b.x+b.width/2-r.x-r.width/2,dy=b.y+b.height/2-r.y-r.height/2,forward=(horizontal?dx:dy)*sign,cross=Math.abs(horizontal?dy:dx);return {e,forward,score:forward+cross*4};}).filter(v=>v.forward>4).sort((a,b)=>a.score-b.score)[0]?.e;}
  document.addEventListener('keydown',event=>{
-  const active=document.activeElement,ok=event.key==='Enter'||event.key==='NumpadEnter'||event.keyCode===23;
-  if(event.key==='Escape'||event.key==='BrowserBack'){if(window.kayTvBack()){event.preventDefault();event.stopImmediatePropagation();}return;}
+  let active=document.activeElement;const ok=['Enter','NumpadEnter','Accept','Select','DPAD_CENTER'].includes(event.key)||[13,23,66,160].includes(event.keyCode);
+  if(event.key==='Escape'||event.key==='BrowserBack'){if(event.repeat){event.preventDefault();return;}if(window.kayTvBack()){event.preventDefault();event.stopImmediatePropagation();}return;}
+  lastBack=0;
   if(editing){if(ok){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)endEdit();}return;}
+  if(ok&&(!active||active===document.body)){const remembered=items(document).find(e=>focusKey(e)===lastFocus);if(remembered){focus(remembered);active=remembered;}}
+  if(ok&&active?.id==='stage'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)setFullscreen(true);return;}
   if(ok&&textInputs.includes(active)){event.preventDefault();event.stopImmediatePropagation();beginEdit(active);return;}
   if(ok&&active?.tagName==='BUTTON'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)active.click();return;}
   if(event.key==='MediaPlayPause'){event.preventDefault();document.querySelector('#toggle-play')?.click();return;}
   if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
-  if(active?.matches('select,input[type="range"],input[type="date"]'))return;
+  if(active?.matches('select,input[type="range"],input[type="date"]')&&['ArrowUp','ArrowDown'].includes(event.key))return;
+
   event.preventDefault();event.stopImmediatePropagation();
   if(event.repeat&&Date.now()-lastMove<90)return;lastMove=Date.now();
   const dialog=document.querySelector('dialog[open]'),menu=document.querySelector('#settings-menu'),nav=document.querySelector('#mobile-tabs'),sidebar=document.querySelector('#matches-sidebar'),player=document.querySelector('main>section'),header=document.querySelector('header');
   const root=dialog||(menuOpen()?menu:null),z=zone(active),key=event.key;
   if(root){const list=items(root),i=list.indexOf(active),next=key==='ArrowDown'?list[i+1]:key==='ArrowUp'?list[i-1]:nearest(active,list,key);focus(next||list[0]);return;}
   if(!z){focus(entry(nav));return;}
+  if(!root&&key==='ArrowLeft'&&z!==nav){focus(entry(nav));return;}
+  if(!root&&key==='ArrowRight'&&z===nav){focus(entry(!settingsPage.hidden?settingsPage:document.body.classList.contains('mobile-watch')?player:sidebar));return;}
   if(z===nav){const list=items(nav),i=list.indexOf(active);if(key==='ArrowUp'||key==='ArrowDown')focus(list[Math.max(0,Math.min(list.length-1,i+(key==='ArrowDown'?1:-1)))]);else if(key==='ArrowRight')focus(entry(!settingsPage.hidden?settingsPage:document.body.classList.contains('mobile-watch')?player:sidebar));return;}
   if(z===settingsPage){const next=nearest(active,items(settingsPage),key);focus(next||(key==='ArrowLeft'?document.querySelector('#tv-settings'):null));return;}
   if(z===header){if(key==='ArrowDown')focus(entry(active.closest('.search-wrap')?sidebar:player));else focus(nearest(active,items(header),key));return;}

@@ -144,3 +144,24 @@ body.tv-ui #tv-settings-page #settings-menu button{min-height:36px}
 body.tv-ui #tv-settings-page .settings-section-title button{min-height:44px}
 
 body.tv-ui #mobile-tabs button:not(.active):not(:focus){background:transparent!important;border-color:transparent}
+
+/* TV receiver handles volume; reserve the screen for the picture. */
+body.tv-ui #volume,body.tv-ui #volume-value,body.tv-ui #mute{display:none!important}
+body.tv-ui{--tv-rail:86px}body.tv-ui #mobile-tabs:before{display:none!important}
+body.tv-ui #mobile-tabs{padding:10px 6px;gap:4px;justify-content:flex-start}
+body.tv-ui #mobile-tabs button{flex:0 0 46px;min-height:40px;padding:5px 3px;gap:3px}body.tv-ui #mobile-tabs button span{font-size:10px}body.tv-ui #mobile-tabs button svg{width:20px;height:20px}
+body.tv-ui.mobile-watch:not(.tv-settings-page):not(.player-fullscreen) header{display:none!important}
+body.tv-ui.mobile-watch:not(.tv-settings-page):not(.player-fullscreen) main{height:var(--app-height,100vh)!important}
+body.tv-ui.mobile-watch:not(.player-fullscreen) main>section{padding:5px 8px}
+body.tv-ui.mobile-watch #title{font-size:13px!important;margin:0 0 3px}body.tv-ui.mobile-watch #subtitle,body.tv-ui.mobile-watch #channel-label,body.tv-ui.mobile-watch #quality-info,body.tv-ui.mobile-watch #message{display:none!important}
+body.tv-ui.mobile-watch #scoreboard{min-height:38px;margin-bottom:4px;padding:3px 8px}body.tv-ui.mobile-watch #scoreboard .score{font-size:18px}body.tv-ui.mobile-watch #scoreboard .crest{width:20px;height:20px}body.tv-ui.mobile-watch #scoreboard .team-name{font-size:11px}
+body.tv-ui #channels button{min-height:25px;padding:3px 7px;font-size:10px}body.tv-ui #channels{padding:2px;margin-bottom:3px}
+body.tv-ui #stage{cursor:pointer}body.tv-ui #stage .player-controls{position:absolute;left:0;right:0;bottom:0;z-index:8;background:#101a28eb;border-top:0;min-height:34px;padding:4px 8px}
+body.tv-ui #tv-exit-dialog{width:420px;max-width:calc(100vw - 30px);background:#182330;color:#eaf2fc;border:1px solid #4b6558;border-radius:14px;padding:22px!important;box-shadow:0 18px 60px #000a}
+body.tv-ui #tv-exit-dialog::backdrop{background:#000b}body.tv-ui #tv-exit-dialog p{line-height:1.6;color:#aebed2}
+@media(max-width:1050px){body.tv-ui{--tv-rail:76px}}
+@media(max-height:450px){body.tv-ui #mobile-tabs{padding:6px;gap:3px}body.tv-ui #mobile-tabs button{min-height:35px;flex-basis:38px;flex-direction:row;gap:4px}}
+
+body.tv-ui #tv-highlight-expand{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;z-index:1;background:transparent!important;border:0;border-radius:8px}
+body.tv-ui #tv-highlight-expand span{position:absolute;top:10px;right:10px;padding:5px 9px;border-radius:7px;background:#13201de8;color:#d8f8e8;font-size:11px}
+body.tv-ui.tv-highlights-fullscreen #tv-highlight-expand{display:none!important}

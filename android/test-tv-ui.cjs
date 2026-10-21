@@ -9,12 +9,13 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
   await page.evaluate(()=>{window.tvKeyboardCalls=[];const original=window.__TAURI__.core.invoke;window.__TAURI__.core.invoke=async(c,a)=>{if(a.command==='mobile_keyboard')window.tvKeyboardCalls.push(a.args.enabled);return original(c,a);};});
   await page.locator('#search').focus();assert(await page.locator('#search').evaluate(e=>e.readOnly));
   await page.keyboard.press('ArrowRight');assert.equal(await page.evaluate(()=>document.activeElement.id),'refresh');assert.equal(await page.evaluate(()=>window.tvKeyboardCalls.length),0);
-  await page.keyboard.press('ArrowLeft');assert.equal(await page.evaluate(()=>document.activeElement.id),'search');await page.keyboard.press('Enter');assert(!await page.locator('#search').evaluate(e=>e.readOnly));
+  await page.keyboard.press('ArrowLeft');assert(await page.evaluate(()=>!!document.activeElement.closest('#mobile-tabs')));await page.locator('#search').focus();await page.keyboard.press('Enter');assert(!await page.locator('#search').evaluate(e=>e.readOnly));
   await page.keyboard.type('Arsenal');await page.keyboard.press('Escape');assert(await page.locator('#search').evaluate(e=>e.readOnly));assert.deepEqual(await page.evaluate(()=>window.tvKeyboardCalls),[true,false]);
   await page.evaluate(()=>{document.querySelector('#search').value='';document.querySelector('#search').oninput();});
   // Real remote key events, no mouse clicks to navigate the cards.
   await page.locator('.card').first().focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement),true);
   await page.keyboard.press('ArrowDown');assert(await page.locator('.card').nth(4).evaluate(e=>e===document.activeElement));await page.keyboard.press('ArrowUp');assert(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement));
+  await page.keyboard.press('ArrowLeft');assert(await page.evaluate(()=>!!document.activeElement.closest('#mobile-tabs')));await page.keyboard.press('ArrowRight');assert(await page.evaluate(()=>!!document.activeElement.closest('#matches-sidebar')));
   const focusedFixture=await page.evaluate(()=>document.activeElement.getAttribute('aria-label'));await page.evaluate(()=>render());await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),focusedFixture);
   await page.keyboard.press('Enter');await page.waitForFunction(()=>document.body.classList.contains('mobile-watch'));
   await page.keyboard.press('Escape');assert(!await page.locator('body').evaluate(e=>e.classList.contains('mobile-watch')));
