@@ -20,7 +20,22 @@
  };
  for(const id of ['mobile-matches','mobile-live','mobile-watch']){const button=document.querySelector('#'+id),handler=button.onclick;button.onclick=()=>{closeSettings();handler();updateTvHeading();updateMobileNavigation(id==='mobile-watch'?'watch':'matches');};}
  // Hidden league controls must not retain an invisible filter on TV.
- matchLeague='';resultsLeague='';render();
+ matchLeague='';resultsLeague='';catalogDay='both';resultsDate=localDay();
+ // TV has no date/league filter controls: show recent scores automatically.
+ refreshResults=async function(){
+  const token=++resultsToken,today=localDay(),yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  const dates=[today,localDay(yesterday.getTime())];resultsDate=today;
+  $('results-status').textContent='Loading recent scores…';
+  try{
+   const response=await rpc('scores',{dates:[...new Set(dates.flatMap(resultsQueryDates))]});
+   if(token!==resultsToken)return {ok:false};
+   resultMatches=dates.flatMap(date=>historyMatches(response,date));updateResultsLeagues();
+   $('results-status').textContent=response.errors?.length?'Some score sources unavailable':resultMatches.length+' scores · Today / Yesterday';
+   if(selected?.id?.startsWith('result-')){selected=resultMatches.find(m=>m.id===selected.id)||selected;updateSelected();}
+   render();return {ok:true,partial:!!response.errors?.length};
+  }catch(e){if(token===resultsToken){$('results-status').textContent='Could not load scores. Press Refresh to retry.';render();}return {ok:false};}
+ };
+ render();
  document.querySelector('#reset-dialog').onclose=()=>focus(document.querySelector('#reset-settings'));
  const originalTvView=showMobileView;
  showMobileView=function(view){const changed=document.body.classList.contains('mobile-watch')!==(view==='watch');originalTvView(view);if(changed&&view==='watch')requestAnimationFrame(()=>focus(entry(document.querySelector('main>section'))));};

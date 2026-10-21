@@ -5,7 +5,16 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
  try{
   browser=await chromium.launch({executablePath:process.env.KAY_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({viewport:{width:1280,height:720}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{localStorage.setItem('live-sport.match-league',JSON.stringify('Unavailable old league'));localStorage.setItem('live-sport.results-league',JSON.stringify('Unavailable old league'));window.__TAURI__={event:{listen:async()=>()=>{}},core:{invoke:async(_,{command})=>command==='check_update'?{status:'available',current:'0.1.7',latest:'99.0.0',notes:'TV update fixture'}:command==='download_update'?{version:'99.0.0',path:'/cache/updates/KAYLiveSport-tv-arm64-debug.apk'}:command==='install_update'?{installerOpened:true}:command==='matches'?[['Arsenal','Chelsea'],['Liverpool','Manchester City'],['Real Madrid','Sevilla'],['Barcelona','Valencia'],['Bayern Munich','Dortmund'],['PSG','Marseille']].map(([home,away],i)=>({id:'tv-'+i,post:'1',sport:'1',home,away,league:'Premier League',live:false,finished:false,kickoff:Date.now()/1000+3600,channels:[],homeScore:'',awayScore:''})):{batches:[],errors:[]}}};});
-  await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('.card').first().waitFor();assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
+  await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('.card').first().waitFor();
+  assert.equal(await page.locator('#results-date').isVisible(),false);
+  assert.equal(await page.locator('#results-today').isVisible(),false);
+  assert.equal(await page.locator('#results-yesterday').isVisible(),false);
+  await page.evaluate(()=>{document.querySelector('#tv-highlights').click()});
+  assert.equal(await page.locator('.catalog-days').isVisible(),false);
+  await page.locator('#mobile-matches').click();
+  const recent=await page.evaluate(async()=>{const original=rpc;let requested;rpc=async(command,args)=>{if(command==='scores'){requested=args.dates;return {batches:[],errors:[]}}return original(command,args)};try{await refreshResults();const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);return {requested,expected:[...new Set([localDay(),localDay(yesterday.getTime())].flatMap(resultsQueryDates))],day:catalogDay}}finally{rpc=original}});
+  assert.deepEqual(recent.requested,recent.expected);assert.equal(recent.day,'both');
+assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
   await page.evaluate(()=>{window.tvKeyboardCalls=[];const original=window.__TAURI__.core.invoke;window.__TAURI__.core.invoke=async(c,a)=>{if(a.command==='mobile_keyboard')window.tvKeyboardCalls.push(a.args.enabled);return original(c,a);};});
   await page.locator('#search').focus();assert(await page.locator('#search').evaluate(e=>e.readOnly));
   await page.keyboard.press('ArrowRight');assert.equal(await page.evaluate(()=>document.activeElement.id),'refresh');assert.equal(await page.evaluate(()=>window.tvKeyboardCalls.length),0);

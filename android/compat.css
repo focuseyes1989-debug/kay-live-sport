@@ -8,4 +8,22 @@ html.kay-legacy-popover #settings-menu{z-index:2200}
 .kay-no-flex-gap body.tv-ui .team>*+*,.kay-no-flex-gap body.tv-ui #mobile-tabs button>*+*{margin-left:8px}
 .kay-no-flex-gap body.tv-ui #channels button{margin-right:8px;margin-bottom:6px}
 .kay-no-flex-gap body.tv-ui .player-controls>*+*{margin-left:10px}
-body.tv-ui :focus{outline:none!important;box-shadow:0 0 0 3px #69ffc0,0 0 0 6px #39dc9233!important}
+
+
+/* WebView 81 does not implement flex gap. Keep focus paint inside controls so
+   adjacent remote targets remain separate, including dialogs and the rail. */
+body.tv-ui :focus{outline:none!important;box-shadow:inset 0 0 0 2px #69ffc0!important}
+body.tv-ui .card:focus,body.tv-ui .catalog-card:focus{box-shadow:inset 0 0 0 2px #69ffc0!important}
+body.tv-ui #mobile-tabs{gap:0;padding:10px 6px}
+body.tv-ui #mobile-tabs button{margin:0 0 8px;flex-shrink:0}
+body.tv-ui #mobile-tabs button:last-child{margin-bottom:0}
+.kay-no-flex-gap body.tv-ui #mobile-tabs button>*+*{margin-left:0;margin-top:3px}
+body.tv-ui .dialog-actions{gap:0;flex-wrap:wrap}
+body.tv-ui .dialog-actions>button{margin:6px;min-width:76px}
+body.tv-ui .dialog-actions{margin:10px -6px -6px}
+.kay-no-flex-gap body.tv-ui .highlights-actions,.kay-no-flex-gap body.tv-ui .animation-speed-buttons{gap:0}
+.kay-no-flex-gap body.tv-ui .highlights-actions>button{margin:4px 8px 4px 0}
+.kay-no-flex-gap body.tv-ui .animation-speed-buttons>button{margin-right:8px}
+.kay-no-flex-gap body.tv-ui .brand>*+*,.kay-no-flex-gap body.tv-ui .notification-volume-inner>*+*,.kay-no-flex-gap body.tv-ui .lineup-player>*+*{margin-left:8px}
+.kay-no-flex-gap body.tv-ui .settings-row>span+*,.kay-no-flex-gap body.tv-ui .settings-update-row>button{margin-left:12px}
+@media(max-height:450px){body.tv-ui #mobile-tabs{padding:6px}body.tv-ui #mobile-tabs button{margin-bottom:6px}.kay-no-flex-gap body.tv-ui #mobile-tabs button>*+*{margin-top:0;margin-left:4px}}

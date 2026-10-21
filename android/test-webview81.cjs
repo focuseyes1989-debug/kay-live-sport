@@ -16,5 +16,12 @@ const fs=require('fs'),path=require('path'),http=require('http'),{spawn}=require
   const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(__dirname,'../dist/tv-webview81-'+width+'.png'),Buffer.from(shot.data,'base64'));
  }
 
+
+ // WebView 81 ignores flex gap: real geometry must still separate controls.
+ await evaluate(`document.body.classList.remove('tv-highlights-fullscreen');showMobileView('matches');document.querySelector('#tv-exit-dialog').showModal();document.querySelector('#tv-exit-cancel').focus()`);await delay(200);
+ const spacing=await evaluate(`(()=>{const nav=[...document.querySelectorAll('#mobile-tabs button')].filter(e=>e.getBoundingClientRect().height>0).map(e=>e.getBoundingClientRect());const buttons=[...document.querySelectorAll('#tv-exit-dialog button')];buttons[0].focus();const a=buttons[0].getBoundingClientRect(),b=buttons[1].getBoundingClientRect();return {rail:nav.slice(1).every((r,i)=>r.top-nav[i].bottom>=5),dialog:b.left-a.right,focus:getComputedStyle(buttons[0]).boxShadow}})()`);
+ assert(spacing.rail,JSON.stringify(spacing));assert(spacing.dialog>=10,JSON.stringify(spacing));assert(spacing.focus.includes('inset'),JSON.stringify(spacing));
+ await evaluate(`document.querySelector('#tv-exit-dialog').close()`);
+ console.log('Chromium 81: rail and dialog buttons have separate bounds and inset focus');
  assert.deepEqual(errors,[]);console.log('Chromium 81: data loaded, Android bridge parsed, Settings OK/Back, remote focus, Refresh and 540p/720p/1080p/4K player sizing and highlight fullscreen/Back passed');
  }catch(e){console.error("WebView errors:",errors);throw e;}finally{if(ws)ws.close();if(child)child.kill();server.close()}})().catch(e=>{console.error(e);process.exitCode=1});
