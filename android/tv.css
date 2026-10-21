@@ -52,3 +52,45 @@ body.tv-ui input[readonly]{cursor:pointer;caret-color:transparent}body.tv-ui inp
 body.tv-ui #highlights-panel{min-height:0;overflow:auto}
 body.tv-ui.player-fullscreen main>section{padding:0;overflow:visible}body.tv-ui.player-fullscreen #stage{min-height:0}
 @media(max-height:450px){body.tv-ui header{height:52px}body.tv-ui main,body.tv-ui.sidebar-hidden main{height:calc(100dvh - 106px)}body.tv-ui #mobile-tabs{height:42px;bottom:5px}body.tv-ui #mobile-tabs button{min-height:30px}body.tv-ui #settings-menu{top:56px;max-height:calc(100dvh - 66px)}body.tv-ui #stage{min-height:110px}body.tv-ui #scoreboard{min-height:46px}}
+
+/* TV viewport uses CSS pixels, independent of panel resolution and phone rules. */
+body.tv-ui{width:100%;height:var(--app-height,100vh);padding:0 10px;font-size:12px}
+body.tv-ui:not(.player-fullscreen) header{height:50px;padding:5px 8px;gap:10px;display:flex}
+body.tv-ui header .brand{min-width:180px}body.tv-ui header h1{font-size:14px}body.tv-ui header .eyebrow{font-size:6px}body.tv-ui header h1 .edition-label{font-size:11px}
+body.tv-ui header #search{height:32px;min-height:32px;font-size:12px}body.tv-ui header button{width:32px;min-height:32px;padding:6px}
+body.tv-ui:not(.player-fullscreen) main,body.tv-ui.sidebar-hidden:not(.player-fullscreen) main{width:100%!important;max-width:none;margin:0!important;height:calc(var(--app-height,100vh) - 100px);grid-template-columns:clamp(210px,24vw,300px) minmax(0,1fr)!important}
+body.tv-ui:not(.player-fullscreen) main>section{height:100%;max-width:none;width:100%;margin:0;padding:7px 9px;overflow:hidden}
+body.tv-ui .section-top{display:none!important}body.tv-ui #title{font-size:14px!important;white-space:nowrap!important;margin:0 0 3px}body.tv-ui #subtitle{font-size:10px;margin-bottom:5px}
+body.tv-ui button,body.tv-ui input,body.tv-ui select{min-height:30px;font-size:12px;padding:5px 8px}
+body.tv-ui #matches-sidebar,body.tv-ui.sidebar-hidden #matches-sidebar{padding:7px;height:100%;border-right:1px solid var(--line)}
+body.tv-ui .card{padding:8px;margin-bottom:7px}body.tv-ui .card .team-name{font-size:12px}body.tv-ui .card .crest{width:22px;height:22px}body.tv-ui .card .league{font-size:10px}body.tv-ui .card .score{font-size:18px}body.tv-ui .card .card-foot{margin-top:6px;padding-top:5px;font-size:9px}
+body.tv-ui #channels{min-height:0;margin-bottom:4px}body.tv-ui #channels button{min-height:28px;padding:4px 8px;font-size:11px}body.tv-ui #scoreboard{min-height:48px;padding:4px 8px;margin-bottom:5px}
+body.tv-ui #stage{min-height:0;flex:1}body.tv-ui .player-controls{flex-wrap:nowrap;padding:5px 7px;gap:7px}body.tv-ui .player-controls button,body.tv-ui .player-controls select{min-height:28px;padding:4px 7px;font-size:11px}
+body.tv-ui #mobile-tabs{position:fixed!important;top:auto!important;left:50%!important;bottom:6px!important;transform:translateX(-50%);width:580px;max-width:85%;height:38px!important;padding:3px 5px;margin:0!important;gap:4px;border-radius:14px}
+body.tv-ui #mobile-tabs button{min-height:28px;font-size:11px;padding:3px 8px}body.tv-ui #mobile-tabs button span{font-size:11px}body.tv-ui #mobile-tabs button svg{width:17px;height:17px}
+body.tv-ui #settings-menu{top:54px!important;right:14px!important;width:300px;max-height:calc(var(--app-height,100vh) - 66px);font-size:12px;padding:10px}
+body.tv-ui dialog{font-size:12px;padding:16px!important;max-height:calc(var(--app-height,100vh) - 24px)}body.tv-ui dialog h2{font-size:18px}body.tv-ui .dialog-actions button{min-height:32px}
+body.tv-ui :focus{outline-width:2px!important;outline-offset:1px!important;box-shadow:0 0 0 2px #69ffc0,0 0 0 4px #39dc9233!important}
+/* WebView 81 has no aspect-ratio: explicit flexible height fills the player. */
+body.tv-ui main>section.has-highlights{display:flex!important;overflow:hidden!important}
+body.tv-ui #highlights-panel{display:flex;flex-direction:column;flex:1;min-height:0;margin:2px 0 0;padding:8px;overflow:auto}
+body.tv-ui .highlights-heading{flex-shrink:0}body.tv-ui .highlights-heading h3{font-size:12px}body.tv-ui #highlights-panel>p{font-size:10px;line-height:1.3;margin:4px 0;flex-shrink:0}
+body.tv-ui .highlights-player{display:flex;flex-direction:column;flex:1;min-height:120px;width:100%;position:relative}
+body.tv-ui .highlights-frame{flex:1;width:100%;height:100%;min-height:0;aspect-ratio:auto;margin:5px 0}
+body.tv-ui .highlights-card{flex-shrink:0;padding:5px 0}body.tv-ui .highlights-card strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+body.tv-ui .highlights-actions button{min-height:28px;font-size:11px}body.tv-ui .highlights-actions{flex-wrap:nowrap}
+body.tv-ui .catalog-thumb{height:112px;aspect-ratio:auto}body.tv-ui .catalog-thumb img{width:100%;height:100%;object-fit:cover}body.tv-ui .catalog-card strong{font-size:11px;padding:6px 8px 3px}body.tv-ui .catalog-card small{font-size:10px;padding:0 8px 6px}
+body.tv-ui.tv-highlights-fullscreen{padding:0}body.tv-ui.tv-highlights-fullscreen header,body.tv-ui.tv-highlights-fullscreen #mobile-tabs{display:none!important}
+body.tv-ui.tv-highlights-fullscreen #highlights-panel{position:fixed;top:0;right:0;bottom:0;left:0;z-index:4000;border:0;border-radius:0;margin:0;padding:5px;background:#000;overflow:hidden}
+body.tv-ui.tv-highlights-fullscreen #highlights-panel>p,body.tv-ui.tv-highlights-fullscreen .highlights-card,body.tv-ui.tv-highlights-fullscreen #highlights-panel>button{display:none}
+body.tv-ui.tv-highlights-fullscreen .highlights-player{min-height:0;flex:1}body.tv-ui.tv-highlights-fullscreen .highlights-frame{height:100%;margin:0;border-radius:0}
+body.tv-ui.player-fullscreen #stage{height:var(--app-height,100vh)!important;width:var(--app-width,100vw)!important;top:0!important;left:0!important;right:0!important;bottom:0!important;min-height:0}
+@media(max-height:450px){body.tv-ui #subtitle,body.tv-ui #channel-label,body.tv-ui #quality-info{display:none!important}body.tv-ui #scoreboard{min-height:40px}body.tv-ui .highlights-player{min-height:90px}body.tv-ui #highlights-panel>p{display:none}}
+
+body.tv-ui #highlights-panel.tv-highlight-playing>p,body.tv-ui #highlights-panel.tv-highlight-playing>button{display:none}
+body.tv-ui .highlights-card.active strong{display:none}
+
+body.tv-ui header #search{padding:5px 30px 5px 34px}
+body.tv-ui.tv-highlights-fullscreen #highlights-panel{padding:0}
+body.tv-ui.tv-highlights-fullscreen .highlights-heading{position:absolute;top:8px;right:8px;z-index:2}
+body.tv-ui.tv-highlights-fullscreen .highlights-heading h3,body.tv-ui.tv-highlights-fullscreen .highlights-heading button:not(#tv-highlights-fullscreen){display:none}

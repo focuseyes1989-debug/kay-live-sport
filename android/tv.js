@@ -16,7 +16,27 @@
  document.querySelector('#mobile-search').onclick=()=>{showMobileView('matches');updateMobileNavigation('search');beginEdit(document.querySelector('#search'));};
  document.addEventListener('focusin',event=>{const e=event.target,z=zone(e);if(z)memory[z.id||z.tagName]=e;lastFocus=focusKey(e);});
  function entry(root){const remembered=memory[root?.id||root?.tagName];if(remembered?.isConnected&&visible(remembered))return remembered;return items(root).find(e=>e.matches('.card.active,#channels button.active'))||items(root)[0];}
+ let highlightsFullscreen=false;
+ function highlightFullscreen(enabled){
+  highlightsFullscreen=enabled;document.body.classList.toggle('tv-highlights-fullscreen',enabled);
+  const button=document.querySelector('#tv-highlights-fullscreen');if(button){button.textContent=enabled?'Exit fullscreen':'Fullscreen';button.setAttribute('aria-pressed',String(enabled));}
+  invoke('mobile_fullscreen',{enabled}).catch(()=>{});
+ }
+ const renderTvHighlights=renderHighlights;
+ renderHighlights=function(...args){
+  if(highlightsFullscreen)highlightFullscreen(false);
+  renderTvHighlights(...args);
+  if(!document.querySelector('#highlights-panel .highlights-card'))return;
+  const button=document.createElement('button');button.id='tv-highlights-fullscreen';button.type='button';button.textContent='Fullscreen';button.setAttribute('aria-pressed','false');button.onclick=()=>{if(!document.querySelector('.highlights-frame'))document.querySelector('.highlights-actions button')?.click();highlightFullscreen(!highlightsFullscreen);};
+  document.querySelector('.highlights-heading').append(button);
+ };
+ const highlightPanel=document.querySelector('#highlights-panel');
+ new MutationObserver(()=>{
+  highlightPanel.classList.toggle('tv-highlight-playing',!!highlightPanel.querySelector('iframe'));
+  if(highlightsFullscreen&&highlightPanel.hidden)highlightFullscreen(false);
+ }).observe(highlightPanel,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
  window.kayTvBack=()=>{
+  if(highlightsFullscreen){highlightFullscreen(false);focus(document.querySelector('#tv-highlights-fullscreen'));return true;}
   if(endEdit())return true;
   if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});return true;}
   if(document.body.classList.contains('player-fullscreen')){setFullscreen(false);return true;}

@@ -6,6 +6,6 @@ stage.events.pointermove();assert(!stage.classList.contains('controls-hidden'));
 bar.events.mouseenter();timer();assert(!stage.classList.contains('controls-hidden'));bar.events.mouseleave();timer();assert(stage.classList.contains('controls-hidden'));
 video.paused=true;video.events.pause();timer();assert(!stage.classList.contains('controls-hidden'));video.paused=false;video.events.play();timer();assert(stage.classList.contains('controls-hidden'));
 doc.activeElement='control';doc.events.keydown();timer();assert(!stage.classList.contains('controls-hidden'));stage.events.pointermove();timer();assert(stage.classList.contains('controls-hidden'));
-recovery.hidden=false;stage.events.pointermove();timer();assert(!stage.classList.contains('controls-hidden'));recovery.hidden=true;
+recovery.hidden=false;stage.events.pointermove();timer();assert(!stage.classList.contains('controls-hidden'));recovery.getAttribute=()=> 'connected';stage.events.pointermove();timer();assert(stage.classList.contains('controls-hidden'));recovery.hidden=true;
 stage.classList.remove('is-fullscreen');context.setFullscreenControls();assert(!stage.classList.contains('controls-hidden'));assert.equal(timer,null);
 console.log('Fullscreen controls passed: idle hide, mouse reveal, hover, pause, keyboard focus, recovery visibility, windowed cleanup.');

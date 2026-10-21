@@ -75,9 +75,15 @@ class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
    val newCode=if(Build.VERSION.SDK_INT>=28) apk.longVersionCode else apk.versionCode.toLong()
    val oldCode=if(Build.VERSION.SDK_INT>=28) installed.longVersionCode else installed.versionCode.toLong()
    require(newCode>oldCode) { "APK is not newer than the installed app" }
-   val theirs=if(Build.VERSION.SDK_INT>=28) apk.signingInfo?.apkContentsSigners else apk.signatures
-   val ours=if(Build.VERSION.SDK_INT>=28) installed.signingInfo?.apkContentsSigners else installed.signatures
-   require(!ours.isNullOrEmpty() && !theirs.isNullOrEmpty() && ours.toSet()==theirs.toSet()) { "Signing key differs. Your settings are protected; update cancelled." }
+   // Some older TV package parsers omit SigningInfo for APK archives. Request
+   // legacy certificate data separately when modern signers are unavailable.
+   val theirs=UpdateSignerChecks.certificates(
+    if(Build.VERSION.SDK_INT>=28) apk.signingInfo?.apkContentsSigners?.map { it.toByteArray() } else null
+   ) { pm.getPackageArchiveInfo(file.path,PackageManager.GET_SIGNATURES)?.signatures?.map { it.toByteArray() } }
+   val ours=UpdateSignerChecks.certificates(
+    if(Build.VERSION.SDK_INT>=28) installed.signingInfo?.apkContentsSigners?.map { it.toByteArray() } else null
+   ) { pm.getPackageInfo(activity.packageName,PackageManager.GET_SIGNATURES).signatures?.map { it.toByteArray() } }
+   UpdateSignerChecks.verify(ours,theirs)
    activity.runOnUiThread {
     try {
      val result=JSObject()

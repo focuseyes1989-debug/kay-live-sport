@@ -25,7 +25,7 @@ function renderHighlights(data,message){
  const heading=node('div','','highlights-heading');heading.append(node('h3','Match highlights'));
  const retry=node('button','Refresh highlights');retry.type='button';retry.onclick=()=>refreshHighlights(true);heading.append(retry);highlightsPanel.append(heading);
  const status=node('p',message||'Highlights curated by MatchHighlights from rights-holder uploads.');status.setAttribute('role','status');highlightsPanel.append(status);
- const player=node('div');highlightsPanel.append(player);
+ const player=node('div','','highlights-player');highlightsPanel.append(player);
  for(const item of data?.videos||[]){
   if(!/^[A-Za-z0-9_-]{11}$/.test(item.videoId)||!safeHighlightLink(item.url))continue;
   const card=node('div','','highlights-card');card.append(node('strong',item.title));

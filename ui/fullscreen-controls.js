@@ -10,7 +10,7 @@ function showFullscreenControls() {
   if (!fullscreenStage.classList.contains('is-fullscreen')) return;
   fullscreenControlsTimer = setTimeout(() => {
     if (!fullscreenStage.classList.contains('is-fullscreen') || video.paused
-        || fullscreenBarHovered || !$('recovery-bar').hidden
+        || fullscreenBarHovered || (!$('recovery-bar').hidden && $('recovery-bar').getAttribute?.('data-kind') !== 'connected')
         || (fullscreenKeyboardMode && fullscreenBar.contains(document.activeElement))) return;
     fullscreenStage.classList.add('controls-hidden');
   }, 3000);

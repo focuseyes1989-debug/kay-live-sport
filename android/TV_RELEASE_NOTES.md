@@ -1,23 +1,19 @@
-## KAY LIVE SPORT TV v0.1.10 Preview
+## KAY LIVE SPORT TV v0.1.13 Preview
 
-Fixes startup and controls on older TV WebViews and refines the remote-first TV interface.
+Compact TV layout and update installer compatibility for ARM32 and ARM64 devices.
 
-- Supports WebView 81: removes unsupported Android bridge syntax and adds replaceChildren/replaceAll and Settings popover fallbacks.
-- Fixes match data stuck at Loading, nonresponsive Settings/Refresh and hidden components appearing on screen.
-- Sizes the layout using the actual viewport, including 540p, 720p and 1080p, without requiring dynamic viewport unit support.
-- Uses a compact header, match cards, commentary controls and navigation bar to give the player more room.
-- Keeps search fields read-only while navigating; OK/Enter opens editing and the keyboard. Enter/Back returns to remote navigation.
-- Adds native keyboard show/hide support and handles IME dismissal.
-- Uses separate header/sidebar/player/navigation focus zones, throttles held direction keys and retains the focused fixture during background score refreshes.
-- Retains architecture-aware TV updates, Try stream and saved settings.
+- Smaller header, buttons, navigation, match cards and commentary controls. The sidebar is capped so large displays leave more room for video.
+- Highlights use the available player height on older WebViews without relying on aspect-ratio. Adds a remote-accessible Fullscreen / Exit button and Back support.
+- Adds legacy certificate lookup when Android does not return modern SigningInfo. Unreadable certificates and actual signing-key mismatches have separate errors; unknown or different keys remain blocked.
+- Includes compact Connecting/Reconnecting, Error with Retry, and Connected player messages. Connected appears after video progress and dismisses after three seconds.
 
-### Downloads
+### APKs
 
-- KAYLiveSport-tv-arm32-debug.apk: ARM32 / armeabi-v7a; try this first on Xiaomi TV Stick 4K.
-- KAYLiveSport-tv-arm64-debug.apk: ARM64 / arm64-v8a devices.
+- KAYLiveSport-tv-arm32-debug.apk: ARM32 / armeabi-v7a; use this for the existing Xiaomi TV Stick ARM32 installation.
+- KAYLiveSport-tv-arm64-debug.apk: ARM64 / arm64-v8a.
 
-Android 8+ preview APKs. SHA256 checksums and third-party notices are included. Install over the existing app without uninstalling to retain settings. If an old build cannot load on WebView 81, install this APK manually once.
+Both use application ID com.kaylivesport.mobile and the same signing certificate as the published TV v0.1.10 and v0.1.11 APKs. Install over the existing app without uninstalling or clearing data to retain settings.
 
-### Validation
+If an older in-app updater still reports Signing key differs, transfer this official APK using Send to TV and open it with the Android installer to update over the existing app. The old updater cannot repair itself before installation. If Android itself rejects the update, keep the installed app and its data for diagnosis.
 
-Actual Chromium 81 tests passed for script parsing, fixture data loading, Settings OK/Back, Refresh, search keyboard activation requests, remote focus and 540p/720p/1080p layout bounds. Modern browser tests also cover focus retention after list replacement, TV update UI and phone UI compatibility. ARM32/ARM64 APK builds, signatures, alignment and checksums are verified. Physical Mi Stick remote/IME behavior still needs confirmation on the device.
+Validation: shared UI tests, four certificate fallback/mismatch unit tests, remote Settings/navigation tests, and Chromium 81 layout checks at 960x540, 1280x720, 1920x1080 and 3840x2160 including highlights fullscreen and Back. APK signatures, version, architecture and alignment verified. These are runtime/layout checks; the updated APK has not been tested on the physical Mi Stick.

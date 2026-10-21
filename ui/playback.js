@@ -5,6 +5,7 @@ let switchTimer = null;
 let activeAttempt = null;
 let wantPlayback = false;
 let flvPlayer = null;
+let playerNoticeTimer = null;
 let kickoffAutoplayEnabled = true, kickoffAutoplayRevision = 0;
 try { const saved=JSON.parse(localStorage.getItem('live-sport.kickoff-autoplay')); if(typeof saved==='boolean')kickoffAutoplayEnabled=saved; } catch {}
 let retryInProgress = false,retryNotificationTimer=null,retryNotificationsEnabled=true;
@@ -43,20 +44,34 @@ const START_TIMEOUT = 30000;
 const STALL_TIMEOUT = 20000;
 const HEALTHY_RESET = 30000;
 
-function recoveryNotice(message, canRetry = false) {
+function hidePlayerNotice(){
+  clearTimeout(playerNoticeTimer);playerNoticeTimer=null;
+  $('recovery-bar').hidden=true;
+  $('stage').classList.toggle('has-player-notice',false);
+}
+function recoveryNotice(message, canRetry = false, kind = canRetry ? 'error' : 'connecting') {
+  clearTimeout(playerNoticeTimer);playerNoticeTimer=null;
   $('message').textContent = message;
   $('recovery-status').textContent = message;
-  $('recovery-bar').hidden = false;
+  const box=$('recovery-bar');
+  box.setAttribute?.('data-kind',kind);
+  box.setAttribute?.('aria-busy',String(kind==='connecting'));
+  $('recovery-title').textContent=kind==='connected'?'Connected':kind==='error'?'Connection error':kind==='info'?'Playback paused':retryInProgress?'Reconnecting':'Connecting';
+  box.hidden=false;
+  $('stage').classList.toggle('has-player-notice',true);
   $('player-retry').hidden = !canRetry;
-  // Keep the fullscreen exit control reachable, even when every link fails.
   if (!$('video').hidden) $('player-controls').hidden = false;
+  if(kind==='connected'){
+    const token=playToken;
+    playerNoticeTimer=setTimeout(()=>{if(token===playToken)hidePlayerNotice();},3000);
+  }
 }
 
 function stop() {
   clearTimeout(switchTimer);
   switchTimer = null;
   activeAttempt = null;
-  $('recovery-bar').hidden = true;
+  hidePlayerNotice();
   $('player-retry').hidden = true;
   const v = $('video');
   v.onplaying = v.onerror = v.ontimeupdate = v.onended = null;
@@ -123,7 +138,7 @@ async function tryScheduledStream(){
   if(!match||match.live||match.finished||!match.channels?.length||$('try-stream').disabled)return;
   const key=waitingFixtureKey(match),token=playToken;
   $('try-stream').disabled=true;$('try-stream').textContent='Connecting…';
-  $('message').textContent='Refreshing commentator links · source still reports Scheduled.';
+  recoveryNotice('Refreshing commentator links · source still reports Scheduled.');
   try{
     const freshMatches=await rpc('matches');
     if(token!==playToken||!selected||waitingFixtureKey(selected)!==key)return;
@@ -135,7 +150,7 @@ async function tryScheduledStream(){
     if(fresh.finished)throw Error('This match has finished.');
     const index=matches.findIndex(m=>waitingFixtureKey(m)===key);if(index>=0)matches[index]=fresh;
     choose(fresh,null,false,true);
-  }catch(e){if(token===playToken&&selected&&waitingFixtureKey(selected)===key)$('message').textContent='Could not open stream: '+e.message;}
+  }catch(e){if(token===playToken&&selected&&waitingFixtureKey(selected)===key)recoveryNotice('Could not open stream: '+e.message,true);}
   finally{if(token===playToken){$('try-stream').disabled=false;$('try-stream').textContent='▶ Try stream';}}
 }
 $('try-stream').onclick=tryScheduledStream;
@@ -201,6 +216,7 @@ function playbackProgress(attempt) {
   const now = Date.now();
   attempt.lastTime = v.currentTime;
   attempt.progressAt = now;
+  const firstFrame=!attempt.started;
   attempt.started = true;
   saveStreamCache(attempt);
   if (!attempt.saved && typeof rememberPlayback === 'function') {
@@ -213,7 +229,7 @@ function playbackProgress(attempt) {
   }
   finishRetryOutcome(true);$('player-retry').hidden=true;
   $('message').textContent = `● Playing live · ${channel.name || 'Commentator'}`;
-  $('recovery-bar').hidden = true;
+  if(firstFrame)recoveryNotice(`Playing live · ${channel.name || 'Commentator'}`,false,'connected');
   $('retry').hidden = true;
 }
 
@@ -224,7 +240,7 @@ async function startAttemptVideo(attempt) {
     if (!attemptIsCurrent(attempt)) return;
     if (e.name === 'NotAllowedError') {
       setPlaybackIntent(false);finishRetryOutcome(false,'Automatic playback was blocked. Press Play to start.');$('retry').hidden=true;$('player-retry').hidden=true;
-      $('message').textContent = 'Press Play to start watching.';
+      recoveryNotice('Press Play to start watching.',false,'info');
     } else failedStream(attempt, 'Video could not start.');
   }
 }
@@ -328,7 +344,7 @@ async function play(c, automatic = false, routes = null, routeIndex = 0, fromCac
 function retryPlayback() {
   if(retryInProgress||kickoffReloadBusy)return;
   retryInProgress=true;updateRetryState(true);
-  $('message').textContent='Reconnecting · refreshing commentator links…';
+  recoveryNotice('Reconnecting · refreshing commentator links…');
   if(selected?.live&&!selected.finished){waitingFixture=waitingFixtureKey(selected);waitingManualLive=true;nextKickoffReload=0;return checkSelectedKickoff();}
   const available = selected?.channels || [];
   if (available.length) play(available.find(c => c.id === channel?.id) || available[0]);
@@ -354,19 +370,19 @@ async function checkSelectedKickoff(){
  const key=waitingFixture,token=playToken,revision=kickoffAutoplayRevision;
  kickoffReloadBusy=true;nextKickoffReload=Date.now()+15000;
  $('retry').hidden=false;$('retry').disabled=true;
- $('message').textContent=retryInProgress?'Reconnecting · refreshing commentator links…':'Match is live · refreshing commentators…';
+ recoveryNotice(retryInProgress?'Reconnecting · refreshing commentator links…':'Match is live · refreshing commentators…');
  try{
   const freshMatches=await rpc('matches');
   if((!kickoffAutoplayEnabled&&!waitingManualLive)||revision!==kickoffAutoplayRevision||token!==playToken||waitingFixture!==key||!selected||waitingFixtureKey(selected)!==key)return;
   const fixtures=freshMatches.filter(m=>waitingFixtureKey(m)===key&&!m.finished);
-  if(fixtures.length!==1||!fixtures[0].channels?.length){$('message').textContent='Match is live · waiting for commentator links. Retrying automatically…';return;}
+  if(fixtures.length!==1||!fixtures[0].channels?.length){recoveryNotice('Match is live · waiting for commentator links. Retrying automatically…',true);return;}
   const fresh=fixtures[0];
   // The listing can lag behind the confirmed score feed. Keep its live state
   // and scores while using freshly retrieved posts and commentator IDs.
   for(const field of ['live','finished','status','minute','homeScore','awayScore','scoreSource','scoreChecked'])fresh[field]=selected[field];
   const index=matches.findIndex(m=>waitingFixtureKey(m)===key);if(index>=0)matches[index]=fresh;
   choose(fresh,null,retryInProgress);
- }catch(e){if(token===playToken&&waitingFixture===key)$('message').textContent='Could not refresh commentators. Retrying automatically…';}
+ }catch(e){if(token===playToken&&waitingFixture===key)recoveryNotice('Could not refresh commentators. Retrying automatically…',true);}
  finally{kickoffReloadBusy=false;if(waitingFixture===key){finishRetryOutcome(false,'No working commentator link was found. Please try again.');$('retry').hidden=false;}else if(retryInProgress)updateRetryState(true);else $('retry').disabled=false;}
 }
 
