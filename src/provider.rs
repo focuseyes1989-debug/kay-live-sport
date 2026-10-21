@@ -192,6 +192,7 @@ pub(crate) fn resolve(c: &Client, args: &Value) -> Result<Value, String> {
     }
     let response = c
         .post(format!("{SITE}/wp-admin/admin-ajax.php"))
+        .timeout(Duration::from_secs(5))
         .header("Referer", SITE)
         .form(&[
             ("action", "soco_get_stream"),
@@ -208,6 +209,7 @@ pub(crate) fn resolve(c: &Client, args: &Value) -> Result<Value, String> {
     } else {
         let rows: Value = c
             .get("https://biz.vnres.co/api/live/livingRoom")
+            .timeout(Duration::from_secs(8))
             .send()
             .and_then(|r| r.error_for_status())
             .and_then(|r| r.json())
@@ -222,7 +224,36 @@ pub(crate) fn resolve(c: &Client, args: &Value) -> Result<Value, String> {
     if u.scheme() != "https" {
         return Err("Provider returned an unsupported stream URL.".into());
     }
-    // Signed URLs must stay intact: changing the extension can invalidate
-    // the provider's signature and select a format that is not published.
-    Ok(json!({"url":u.as_str(),"format":if u.path().ends_with(".flv") {"flv"} else {"hls"}}))
+    Ok(stream_sources(&stream))
+}
+
+fn stream_sources(stream: &str) -> Value {
+    let u = url::Url::parse(stream).expect("validated stream URL");
+    let mut sources = Vec::new();
+    // This exact alternate route is published by the provider's match player.
+    // Preserve the signed query byte-for-byte, including its encoding.
+    let host = u.host_str().unwrap_or_default();
+    let numbered_pull = host.strip_prefix("pull").and_then(|h| h.strip_suffix(".scstream.net"))
+        .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
+    if numbered_pull && u.path().ends_with(".flv") && u.port().is_none() && u.username().is_empty() && u.password().is_none() {
+        let mut alternate = u.clone();
+        alternate.set_host(Some("pull.niues.live")).unwrap();
+        alternate.set_path(&format!("{}.m3u8", u.path().trim_end_matches(".flv")));
+        sources.push(json!({"url":alternate.as_str(),"format":"hls","label":"Alternate HLS"}));
+    }
+    sources.push(json!({"url":stream,"format":if u.path().ends_with(".flv") {"flv"} else {"hls"},"label":"Original"}));
+    json!({"url":sources[0]["url"],"format":sources[0]["format"],"sources":sources})
+}
+
+#[cfg(test)]
+mod stream_tests {
+    use super::*;
+    #[test]
+    fn official_alternate_preserves_signature() {
+        let result=stream_sources("https://pull06.scstream.net/live/test.flv?auth_key=a%2Fb&token=x+y");
+        assert_eq!(result["sources"][0]["url"],"https://pull.niues.live/live/test.m3u8?auth_key=a%2Fb&token=x+y");
+        assert_eq!(result["sources"][1]["url"],"https://pull06.scstream.net/live/test.flv?auth_key=a%2Fb&token=x+y");
+        assert_eq!(stream_sources("https://pull06.scstream.net.evil.test/a.flv")["sources"].as_array().unwrap().len(),1);
+        assert_eq!(stream_sources("https://other.test/a.flv")["sources"].as_array().unwrap().len(),1);
+    }
 }

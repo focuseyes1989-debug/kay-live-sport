@@ -161,6 +161,8 @@ function attemptIsCurrent(attempt) {
 function failedStream(attempt, reason) {
   if (!attemptIsCurrent(attempt)) return;
   const shouldRecover = wantPlayback;
+  const routes=attempt.routes, routeIndex=(attempt.routeIndex||0)+1;
+  const nextRoute=routes && routeIndex<routes.length;
   const next = selected?.channels.find(c => !attemptedChannels.has(c.id));
   ++playToken;
   stop();
@@ -170,7 +172,7 @@ function failedStream(attempt, reason) {
     $('retry').hidden = false;
     return;
   }
-  if (!next) {
+  if (!nextRoute && !next) {
     finishRetryOutcome(false);
     wantPlayback = false;
     recoveryNotice('All commentator links have been tried. No working stream is available. Press Retry all channels to try again.', true);
@@ -178,6 +180,11 @@ function failedStream(attempt, reason) {
     return;
   }
   const token = playToken;
+  if(nextRoute){
+    recoveryNotice(`${reason} Trying another stream route…`);
+    switchTimer=setTimeout(()=>{switchTimer=null;if(token===playToken)play(channel,true,routes,routeIndex,attempt.fromCache);},500);
+    return;
+  }
   recoveryNotice(`${reason} Switching to ${next.name || 'another commentator'}… (${attemptedChannels.size + 1}/${selected.channels.length})`);
   switchTimer = setTimeout(() => {
     switchTimer = null;
@@ -195,6 +202,7 @@ function playbackProgress(attempt) {
   attempt.lastTime = v.currentTime;
   attempt.progressAt = now;
   attempt.started = true;
+  saveStreamCache(attempt);
   if (!attempt.saved && typeof rememberPlayback === 'function') {
     rememberPlayback(selected, channel);
     attempt.saved = true;
@@ -221,7 +229,28 @@ async function startAttemptVideo(attempt) {
   }
 }
 
-async function play(c, automatic = false) {
+// Cache only routes that actually produced frames. Five minutes is a recovery
+// window, not an offline source directory; signed links can expire sooner.
+function readStreamCache(key){
+  try{
+    const entry=JSON.parse(localStorage.getItem('live-sport.stream-cache')||'{}')[key];
+    if(entry && Date.now()>=entry.at && Date.now()-entry.at<300000 && Array.isArray(entry.sources))return entry.sources;
+  }catch{}
+  return null;
+}
+function saveStreamCache(attempt){
+  if(attempt.cached || attempt.fromCache || !attempt.routes)return;
+  attempt.cached=true;
+  try{
+    const cache=JSON.parse(localStorage.getItem('live-sport.stream-cache')||'{}');
+    cache[attempt.cacheKey]={at:Date.now(),sources:attempt.routes};
+    const keys=Object.keys(cache).sort((a,b)=>cache[b].at-cache[a].at);
+    for(const key of keys.slice(40))delete cache[key];
+    localStorage.setItem('live-sport.stream-cache',JSON.stringify(cache));
+  }catch{}
+}
+
+async function play(c, automatic = false, routes = null, routeIndex = 0, fromCache = false) {
   waitingFixture = null;waitingManualLive=false;
   if (!automatic) attemptedChannels.clear();
   const token = ++playToken;
@@ -240,7 +269,16 @@ async function play(c, automatic = false) {
   v.onerror = () => failedStream(attempt, 'Video could not be decoded.');
   v.onended = () => failedStream(attempt, 'Stream ended.');
   try {
-    const r = await rpc('resolve', { post: selected.post, channel: c.id });
+    attempt.cacheKey=selected.post+'|'+c.id;
+    if(!routes){
+      try{const result=await rpc('resolve',{post:selected.post,channel:c.id});routes=result.sources||[result];}
+      catch(error){routes=readStreamCache(attempt.cacheKey);if(!routes)throw error;fromCache=true;}
+    }
+    if(!attemptIsCurrent(attempt))return;
+    routes=routes.filter(r=>r && typeof r.url==='string' && /^https:\/\//i.test(r.url));
+    if(!routes[routeIndex])throw Error('No stream route is available.');
+    attempt.routes=routes;attempt.routeIndex=routeIndex;attempt.fromCache=fromCache;
+    const r=routes[routeIndex];
     if (!attemptIsCurrent(attempt)) return;
     attempt.progressAt = Date.now();
     v.hidden = false;

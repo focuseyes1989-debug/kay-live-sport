@@ -1765,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "kay-live-sport-mobile"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "reqwest 0.12.28",
  "scraper",

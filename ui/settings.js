@@ -1,4 +1,5 @@
 const SAVED_SETTINGS = [
+  'live-sport.stream-cache',
   'live-sport.sidebar-hidden', 'live-sport.match-filter', 'live-sport.match-search',
   'live-sport.audio', 'live-sport.quality-height', 'live-sport.last-playback', 'live-sport.live-notifications', 'live-sport.goal-notifications', 'live-sport.notification-sound', 'live-sport.notification-volume', 'live-sport.results-date', 'live-sport.results-league', 'live-sport.match-league', 'live-sport.kickoff-autoplay', 'live-sport.refresh-notifications', 'live-sport.update-notifications', 'live-sport.animations', 'live-sport.animation-speed', 'live-sport.retry-notifications', 'live-sport.settings-sections', 'live-sport.time-format'
 ];

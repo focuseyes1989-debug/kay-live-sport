@@ -1,12 +1,11 @@
-## KAY LIVE SPORT v0.1.9
+## KAY LIVE SPORT v0.1.11
 
-Scheduled matches with commentator links now have a Try stream button on Windows, TV and Phone/Tablet.
+Adds stream route fallback on Windows, Android TV and Phone/Tablet.
 
-- Refreshes commentator links before attempting playback without changing the source match status to Live.
-- Shows the player and commentator choices while hiding the pre-match lineup overlay during manual playback.
-- Keeps normal stream failover and reconnect behavior, and rejects stale requests after switching matches.
-- Hides Try stream for finished matches, live matches and fixtures without commentator links.
-- Fixes Android match-selection forwarding so manual playback and reconnect arguments reach the shared player.
+- Tries the provider-published alternate HLS CDN, then the original stream, before switching commentator.
+- Remembers routes that produced video for up to five minutes to recover from temporary resolver outages. Cached playback does not extend the cache lifetime; Reset settings clears it.
+- Uses bounded resolver timeouts, preserves signed stream queries and cancels stale recovery attempts after manual selection.
+- Includes the TV WebView 81 compatibility and compact remote navigation improvements.
 
 ### Downloads
 
@@ -15,6 +14,8 @@ Scheduled matches with commentator links now have a Try stream button on Windows
 - KAYLiveSport-tv-arm32-debug.apk: KAY LIVE SPORT TV, ARM32 / armeabi-v7a.
 - KAYLiveSport-tv-arm64-debug.apk: KAY LIVE SPORT TV, ARM64 / arm64-v8a.
 
-Android APKs are Android 8+ previews. Install over the existing app without uninstalling to retain settings. TV and Phone/Tablet share the existing application ID and signing key; select the edition and architecture you want on that device. Android update discovery uses companion android-v0.1.9; TV selects its matching TV APK.
+Install the Android APK over the existing app without uninstalling to retain settings. TV and Phone/Tablet share the existing application ID and signing key; choose the edition and architecture for your device. Android in-app update discovery uses companion android-v0.1.11 with the same APKs.
 
-Validation covers manual scheduled playback, fresh commentator links, unchanged status, failures/stale selections, existing recovery/autostart/lineups, and Windows/Phone/TV UI integration. Source stream availability is still controlled by the broadcaster.
+Validation: Rust and shared UI tests, route exhaustion and cancellation, cache expiry and non-renewal, Android APK signatures and TV UI on Chromium 81. Physical Mi Stick playback has not been verified.
+
+Network limitation: alternate CDN fallback does not guarantee VPN-free playback. On the tested Redmi network with VPN disabled, the alternate CDN timed out as well. If both the resolver and media servers are unreachable, the app cannot create a working stream route; a valid recent cache only helps temporarily. No PC/server helper is required.
