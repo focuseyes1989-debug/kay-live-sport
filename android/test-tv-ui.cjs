@@ -12,6 +12,16 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
   await page.evaluate(()=>{document.querySelector('#tv-highlights').click()});
   assert.equal(await page.locator('.catalog-days').isVisible(),false);
   await page.locator('#mobile-matches').click();
+  await page.evaluate(()=>{
+   localStorage.setItem('live-sport.match-search','old search');localStorage.setItem('live-sport.match-filter','live');
+   localStorage.setItem('live-sport.last-playback',JSON.stringify({id:'tv-0',channel:'1'}));
+   localStorage.setItem('live-sport.video-fit','fill');localStorage.setItem('live-sport.quality-height','720');
+   localStorage.setItem('live-sport.notification-volume','37');localStorage.setItem('live-sport.time-format','"12"');
+   localStorage.setItem('live-sport.kickoff-autoplay','false');localStorage.setItem('live-sport.animations','false');
+  });
+  await page.reload();await page.locator('.card').first().waitFor();
+  const restored=await page.evaluate(()=>({search:$('search').value,filter,selected,watch:document.body.classList.contains('mobile-watch'),fit:localStorage.getItem('live-sport.video-fit'),quality:localStorage.getItem('live-sport.quality-height'),volume:notificationSoundVolume,time:timeFormat,autoplay:kickoffAutoplayEnabled,animations:animationsEnabled}));
+  assert.deepEqual(restored,{search:'',filter:'all',selected:null,watch:false,fit:'fit',quality:null,volume:37,time:'12',autoplay:false,animations:false});
   const recent=await page.evaluate(async()=>{const original=rpc;let requested;rpc=async(command,args)=>{if(command==='scores'){requested=args.dates;return {batches:[],errors:[]}}return original(command,args)};try{await refreshResults();const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);return {requested,expected:[...new Set([localDay(),localDay(yesterday.getTime())].flatMap(resultsQueryDates))],day:catalogDay}}finally{rpc=original}});
   assert.deepEqual(recent.requested,recent.expected);assert.equal(recent.day,'both');
 assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
