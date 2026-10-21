@@ -1,3 +1,4 @@
+mod myanmar_tv;
 mod updater;
 #[cfg(target_os = "android")]
 use tauri::Manager;
@@ -20,6 +21,13 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
             "check_update" | "download_update" | "install_update" | "cancel_download_update"
         ) {
             return updater::request(&app, &command, &args);
+        }
+        if command == "open_myanmar_tv" {
+            if !cfg!(kay_tv) || !myanmar_tv::allowed_page(args["url"].as_str().unwrap_or("")) {return Err("Invalid Myanmar TV page".into())}
+            #[cfg(target_os = "android")]
+            return app.state::<tauri::plugin::PluginHandle<tauri::Wry>>().run_mobile_plugin("openMyanmarTv", args).map_err(|e|e.to_string());
+            #[cfg(not(target_os = "android"))]
+            return Ok(serde_json::json!({"opened":false}));
         }
         if command == "open_highlight" {
             if !highlights::allowed_url(args["url"].as_str().unwrap_or("")) {return Err("Invalid highlights link".into())}
@@ -53,6 +61,8 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
         }
         let client = provider::client()?;
         match command.as_str() {
+            "myanmar_channels" if cfg!(kay_tv) => myanmar_tv::catalog(&client),
+            "myanmar_resolve" if cfg!(kay_tv) => myanmar_tv::resolve(&client,&args),
             "matches" => provider::matches(&client),
             "resolve" => provider::resolve(&client, &args),
             "scores" => scores::fetch(&client, &args),

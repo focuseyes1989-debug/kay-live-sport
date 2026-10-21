@@ -177,3 +177,14 @@ body.tv-ui[data-tv-page="matches"] .card .crest,body.tv-ui[data-tv-page="live"] 
 body.tv-ui[data-tv-page="matches"] .card .teams,body.tv-ui[data-tv-page="live"] .card .teams{grid-template-columns:minmax(0,1fr) 44px;gap:6px}
 body.tv-ui[data-tv-page="matches"] .card .score,body.tv-ui[data-tv-page="live"] .card .score{font-size:19px}
 body.tv-ui[data-tv-page="matches"] .card .card-foot,body.tv-ui[data-tv-page="live"] .card .card-foot{font-size:9px;flex-wrap:wrap;line-height:1.5}
+
+body.tv-ui[data-tv-page="myanmar"] #list{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+body.tv-ui .myanmar-status{grid-column:1/-1;margin:0 0 4px}
+body.tv-ui .myanmar-card{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:148px;padding:14px;text-align:center}
+body.tv-ui .myanmar-card img{width:72px;height:60px;object-fit:contain;margin-bottom:10px}
+body.tv-ui .myanmar-card strong{font-size:13px;line-height:1.4;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+body.tv-ui .myanmar-card .meta{font-size:10px;margin-top:6px}
+body.tv-ui #myanmar-source{align-self:flex-start;margin-top:6px;font-size:11px;min-height:28px}
+body.tv-ui #myanmar-source[hidden]{display:none!important}
+
+body.tv-ui .myanmar-logo-fallback{width:60px;height:60px;line-height:60px;margin-bottom:10px;border-radius:12px;background:#204936;color:#8ff3c4;font-size:20px;font-weight:700}

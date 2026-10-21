@@ -12,25 +12,26 @@
  const settingsNav=document.createElement('button');settingsNav.id='tv-settings';settingsNav.type='button';settingsNav.innerHTML=headerSettings.innerHTML+'<span>Settings</span>';settingsNav.setAttribute('aria-label','Settings');settingsNav.onclick=openSettings;tvNav.append(settingsNav);
  for(const [id,label,content] of [['tv-scores','Scores','scores'],['tv-highlights','Highlights','highlights']]){
   const button=document.createElement('button');button.id=id;button.type='button';button.innerHTML=document.querySelector(content==='highlights'?'#mobile-watch svg':'#mobile-results svg').outerHTML+'<span>'+label+'</span>';button.setAttribute('aria-label',label);
-  button.onclick=()=>{closeSettings();resultsContent=content;setMatchFilter('results',true);showMobileView('matches');render();if(content==='highlights')refreshHighlightsCatalog();updateMobileNavigation('matches');updateTvHeading();focus(entry(document.querySelector('#matches-sidebar')));};tvNav.insertBefore(button,document.querySelector('#mobile-watch'));
+  button.onclick=()=>{myanmarPage=false;closeSettings();resultsContent=content;setMatchFilter('results',true);showMobileView('matches');render();if(content==='highlights')refreshHighlightsCatalog();updateMobileNavigation('matches');updateTvHeading();focus(entry(document.querySelector('#matches-sidebar')));};tvNav.insertBefore(button,document.querySelector('#mobile-watch'));
  }
+ const myanmarNav=document.createElement('button');myanmarNav.id='tv-myanmar';myanmarNav.type='button';myanmarNav.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5H21V18H3Z M8 22H16 M12 18V22 M7 1L12 5 17 1"/></svg><span>Myanmar TV</span>';myanmarNav.setAttribute('aria-label','Myanmar TV');myanmarNav.onclick=()=>{closeSettings();myanmarPage=true;showMobileView('matches');render();refreshMyanmar();updateTvHeading();updateMobileNavigation('matches');focus(entry(document.querySelector('#matches-sidebar')));};tvNav.insertBefore(myanmarNav,document.querySelector('#mobile-watch'));
  const baseNavigation=updateMobileNavigation;
- updateMobileNavigation=function(view){baseNavigation(view);const id=!settingsPage.hidden?'tv-settings':document.body.classList.contains('mobile-watch')?'mobile-watch':filter==='results'?(resultsContent==='highlights'?'tv-highlights':'tv-scores'):filter==='live'?'mobile-live':'mobile-matches';
+ updateMobileNavigation=function(view){baseNavigation(view);const id=!settingsPage.hidden?'tv-settings':document.body.classList.contains('mobile-watch')?'mobile-watch':myanmarPage?'tv-myanmar':filter==='results'?(resultsContent==='highlights'?'tv-highlights':'tv-scores'):filter==='live'?'mobile-live':'mobile-matches';
   for(const button of tvNav.children){const active=button.id===id;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}
  };
- for(const id of ['mobile-matches','mobile-live','mobile-watch']){const button=document.querySelector('#'+id),handler=button.onclick;button.onclick=()=>{closeSettings();handler();updateTvHeading();updateMobileNavigation(id==='mobile-watch'?'watch':'matches');};}
+ for(const id of ['mobile-matches','mobile-live','mobile-watch']){const button=document.querySelector('#'+id),handler=button.onclick;button.onclick=()=>{if(id!=='mobile-watch')myanmarPage=false;closeSettings();handler();updateTvHeading();updateMobileNavigation(id==='mobile-watch'?'watch':'matches');};}
  // Hidden league controls must not retain an invisible filter on TV.
  matchLeague='';resultsLeague='';catalogDay='both';resultsDate=localDay();
  // TV has no date/league filter controls: show recent scores automatically.
  refreshResults=async function(){
   const token=++resultsToken,today=localDay(),yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
   const dates=[today,localDay(yesterday.getTime())];resultsDate=today;
-  $('results-status').textContent='Loading recent scores…';
+  $('results-status').textContent='Loading recent scoresâ€¦';
   try{
    const response=await rpc('scores',{dates:[...new Set(dates.flatMap(resultsQueryDates))]});
    if(token!==resultsToken)return {ok:false};
    resultMatches=dates.flatMap(date=>historyMatches(response,date));updateResultsLeagues();
-   $('results-status').textContent=response.errors?.length?'Some score sources unavailable':resultMatches.length+' scores · Today / Yesterday';
+   $('results-status').textContent=response.errors?.length?'Some score sources unavailable':resultMatches.length+' scores Â· Today / Yesterday';
    if(selected?.id?.startsWith('result-')){selected=resultMatches.find(m=>m.id===selected.id)||selected;updateSelected();}
    render();return {ok:true,partial:!!response.errors?.length};
   }catch(e){if(token===resultsToken){$('results-status').textContent='Could not load scores. Press Refresh to retry.';render();}return {ok:false};}
@@ -64,7 +65,7 @@
  const visible=e=>!e.disabled&&e.tabIndex>=0&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[aria-hidden="true"]');
  const zone=e=>e?.closest('dialog[open]')||e?.closest('#tv-settings-page')||e?.closest('header')||e?.closest('#mobile-tabs')||e?.closest('#matches-sidebar')||e?.closest('main>section');
  function items(root){return [...(root||document).querySelectorAll(selector)].filter(visible);}
- function focusKey(e){const card=e?.closest('.card,.catalog-card');return card?'card:'+(card.getAttribute('aria-label')||'').split(',')[0]:e?.id||null;}
+ function focusKey(e){const card=e?.closest('.card,.catalog-card');if(card)return card.dataset.fixtureId?'fixture:'+card.dataset.fixtureId:card.dataset.videoId?'video:'+card.dataset.videoId:'card:'+(card.getAttribute('aria-label')||'').split(',')[0];if(e?.closest('#channels'))return 'channel:'+e.textContent.trim();return e?.id||null;}
  function focus(e){if(!e||!visible(e))return;e.focus({preventScroll:true});e.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}
  function keyboard(enabled){invoke('mobile_keyboard',{enabled}).catch(()=>{});}
  function endEdit(){if(!editing)return false;const input=editing;editing=null;input.readOnly=true;input.setAttribute('inputmode','none');input.classList.remove('tv-editing');input.blur();keyboard(false);focus(input);return true;}
@@ -139,10 +140,25 @@
   if(z===sidebar){const next=nearest(active,items(sidebar),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#search'):null));return;}
   if(z===player){const next=nearest(active,items(player),key);focus(next||(key==='ArrowLeft'?entry(nav):key==='ArrowUp'?document.querySelector('#search'):key==='ArrowDown'?document.querySelector('#mobile-watch'):null));}
  },true);
- // Score refreshes replace cards: restore the same fixture instead of jumping to the first one.
- let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(document.activeElement!==document.body)return;const target=items(document).find(e=>focusKey(e)===lastFocus);focus(target||entry(document.querySelector('#matches-sidebar')));},60);}).observe(document.querySelector('main'),{childList:true,subtree:true});
+ // Restore the same fixture synchronously before the next remote key event.
+ const renderWithTvFocus=render;
+ render=function(...args){
+  const active=document.activeElement,list=document.querySelector('#list'),owned=active?.closest('#list')===list,key=owned?focusKey(active):null;
+  const index=owned?items(list).indexOf(active):-1,sidebar=document.querySelector('#matches-sidebar'),scroll=sidebar.scrollTop;
+  const result=renderWithTvFocus(...args);
+  if(owned&&!active.isConnected&&document.activeElement===document.body){
+   sidebar.scrollTop=scroll;const candidates=items(list);
+   focus(candidates.find(e=>focusKey(e)===key)||candidates[Math.min(index,candidates.length-1)]);
+  }
+  return result;
+ };
+ let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{
+  if(document.activeElement!==document.body)return;
+  const target=items(document).find(e=>focusKey(e)===lastFocus);if(target)focus(target);
+ },0);}).observe(document.querySelector('main'),{childList:true,subtree:true});
+
  const browseHeading=document.querySelector('.list-heading h2');
- function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;document.body.dataset.tvPage=current==='live'?'live':current==='results'?resultsContent:'matches';browseHeading.textContent=current==='live'?'Live now':current==='results'?(resultsContent==='highlights'?'Highlights':'Scores'):'All matches';}
+ function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;document.body.dataset.tvPage=myanmarPage?'myanmar':current==='live'?'live':current==='results'?resultsContent:'matches';browseHeading.textContent=myanmarPage?'Myanmar TV':current==='live'?'Live now':current==='results'?(resultsContent==='highlights'?'Highlights':'Scores'):'All matches';}
  new MutationObserver(updateTvHeading).observe(document.querySelector('.filters'),{subtree:true,attributes:true,attributeFilter:['class']});updateTvHeading();updateMobileNavigation(document.body.classList.contains('mobile-watch')?'watch':'matches');
  focus(document.querySelector('#mobile-matches'));
 })();

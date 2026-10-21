@@ -37,6 +37,14 @@ class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
   }
  }
  @Command
+ fun openMyanmarTv(invoke: Invoke) {
+  try {
+   val uri=Uri.parse(invoke.parseArgs(HighlightArgs::class.java).url)
+   require(uri.scheme=="https" && uri.host=="www.myanmartvchannels.com" && uri.userInfo==null && uri.port==-1 && uri.path?.startsWith("/channels/")==true) { "Invalid Myanmar TV link" }
+   activity.runOnUiThread {try {activity.startActivity(Intent(Intent.ACTION_VIEW,uri));val result=JSObject();result.put("opened",true);invoke.resolve(result)}catch(e:Exception){invoke.reject("No browser available to open this channel")}}
+  }catch(e:Exception){invoke.reject(e.message ?: "Could not open channel")}
+ }
+ @Command
  fun openHighlight(invoke: Invoke) {
   try {
    val uri=Uri.parse(invoke.parseArgs(HighlightArgs::class.java).url)

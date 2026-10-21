@@ -47,6 +47,16 @@ assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
   await page.keyboard.press('ArrowDown');assert(await page.locator('.card').nth(5).evaluate(e=>e===document.activeElement));await page.keyboard.press('ArrowUp');assert(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement));
   await page.keyboard.press('ArrowLeft');assert(await page.evaluate(()=>!!document.activeElement.closest('#mobile-tabs')));await page.keyboard.press('ArrowRight');assert(await page.evaluate(()=>!!document.activeElement.closest('#matches-sidebar')));
   const focusedFixture=await page.evaluate(()=>document.activeElement.getAttribute('aria-label'));await page.evaluate(()=>render());await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),focusedFixture);
+  const focusRefresh=await page.evaluate(()=>{
+   const current=document.activeElement.dataset.fixtureId,match=matches.find(m=>m.id===current),original=match.home;
+   match.home+=' Updated';match.live=!match.live;render();
+   const immediate=document.activeElement.dataset.fixtureId;
+   match.home=original;match.live=true;render();
+   document.querySelector('#tv-settings').focus();render();const rail=document.activeElement.id;
+   document.querySelector('[data-fixture-id="'+current+'"]').focus();
+   return {current,immediate,rail};
+  });
+  assert.equal(focusRefresh.current,focusRefresh.immediate);assert.equal(focusRefresh.rail,'tv-settings');
   await page.keyboard.press('Enter');await page.waitForFunction(()=>document.body.classList.contains('mobile-watch'));
   await page.keyboard.press('Escape');assert(!await page.locator('body').evaluate(e=>e.classList.contains('mobile-watch')));
   await page.locator('#tv-settings').focus();await page.keyboard.press('Enter');await page.locator('#tv-settings-page').waitFor();await page.screenshot({path:path.join(__dirname,'../dist/tv-settings-page.png')});

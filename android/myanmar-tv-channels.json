@@ -1,0 +1,92 @@
+[
+  {
+    "id": "5plus",
+    "name": "5 Plus",
+    "stream": ""
+  },
+  {
+    "id": "channel7",
+    "name": "Channel 7",
+    "stream": "https://live.pyoneplay.com/live/01m2sr3kyn6bztz3xk02w3t7pn/index.m3u8"
+  },
+  {
+    "id": "channelk",
+    "name": "Channel K",
+    "stream": ""
+  },
+  {
+    "id": "channelme",
+    "name": "Channel ME",
+    "stream": "https://mrtvott.com/cache/MRTV-Ent-HD/master.m3u8"
+  },
+  {
+    "id": "dvb",
+    "name": "DVB TV",
+    "stream": "https://live-stream.dvb.no/hls/stream.m3u8"
+  },
+  {
+    "id": "farmer",
+    "name": "Farmer Channel",
+    "stream": "https://mrtvott.com/cache/MRTV-FARMER/master.m3u8"
+  },
+  {
+    "id": "fortune",
+    "name": "Fortune TV",
+    "stream": ""
+  },
+  {
+    "id": "heyplay",
+    "name": "HEY Play",
+    "stream": ""
+  },
+  {
+    "id": "hluttaw",
+    "name": "Hluttaw Channel",
+    "stream": "https://mrtvott.com/cache/MRTV-HLUTTAW/master.m3u8"
+  },
+  {
+    "id": "mchannel",
+    "name": "M Channel",
+    "stream": ""
+  },
+  {
+    "id": "mahar",
+    "name": "Mahar",
+    "stream": "https://ygncdn.com/live/mahar/playlist.m3u8"
+  },
+  {
+    "id": "maharbawdi",
+    "name": "Mahar BawDi",
+    "stream": "https://live.pyoneplay.com/live/01m2tfrqkdceydf6g6f48pdrmn/index.m3u8"
+  },
+  {
+    "id": "maharesports",
+    "name": "Mahar Esports",
+    "stream": "https://ygncdn.com/live/maharesports/playlist.m3u8"
+  },
+  {
+    "id": "mitv",
+    "name": "MITV",
+    "stream": "https://mrtvott.com/cache/MITV/master.m3u8"
+  },
+  {
+    "id": "mrtv",
+    "name": "MRTV",
+    "stream": "https://mrtvott.com/cache/MRTV-HD/master.m3u8"
+  },
+  {
+    "id": "mrtvnews",
+    "name": "MRTV News",
+    "stream": "https://mrtvott.com/cache/MRTV-NEWS-HD/master.m3u8"
+  },
+  {
+    "id": "mrtv4",
+    "name": "MRTV-4",
+    "stream": "https://live.pyoneplay.com/live/01m2sn12yc6v2enx392qj2ekqt/index.m3u8"
+  },
+  {
+    "id": "nrc",
+    "name": "NRC",
+    "stream": "https://mrtvott.com/cache/MRTV-NRC-HD/master.m3u8"
+  }
+]
