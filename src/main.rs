@@ -126,6 +126,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ("text/css",include_bytes!("../ui/myanmar-tv.css").to_vec())
             } else if request.uri().path() == "/lazy-loading.js" {
                 ("text/javascript",include_bytes!("../ui/lazy-loading.js").to_vec())
+            } else if request.uri().path() == "/loading-progress.js" {
+                ("text/javascript",include_bytes!("../ui/loading-progress.js").to_vec())
             } else if request.uri().path() == "/mpegts.js" {
                 ("text/javascript", include_bytes!("../ui/mpegts.js").to_vec())
             } else if request.uri().path() == "/live-notifications.js" {

@@ -1,19 +1,18 @@
-## KAY LIVE SPORT Windows v0.1.13 / Android v0.1.24
+## KAY LIVE SPORT Windows v0.1.14 / Android v0.1.25
 
-- Replaces MatchHighlights with a direct HooFoot highlights catalog, grouped by league with Today / Yesterday controls. Dates reflect the source match date and the device calendar.
-- Tries ESPN official embedded recaps/highlights first. When no matching official video is available, opens the HooFoot fallback in the device browser. The fallback button remains available for player errors or regional restrictions. Official embeds can contain ads; native KAY-player playback of all highlights is not included.
-- Retains usable catalog results when a slow source response is interrupted, with a partial-results notice.
-- Removes seven unavailable Myanmar TV channels (5 Plus, Channel K, Fortune TV, HEY Play, M Channel, Mahar and Mahar Esports). The remaining 11 channels passed playlist and media-segment checks at verification time. Refresh cannot restore the removed entries.
-- Adds a compact icon-only Windows navigation sidebar with tooltips and active-state highlighting.
-- Removes the Search navigation item from Phone/Tablet; the header search box remains available.
-- Improves Myanmar TV fallback routes and retry error messages.
+Adds compact page-data loading progress on Windows, Phone/Tablet and TV.
 
-### Downloads and updates
+- Shows the data being fetched (matches, scores, highlights, Myanmar TV channels or line-ups), with completed and pending request counts.
+- Uses an indeterminate progress bar while response sizes are unknown. The bar completes when requests settle; it does not invent a download percentage.
+- Shows completion or partial/error feedback and dismisses it automatically. Cached page entries do not trigger unnecessary loading requests.
+- Keeps concurrent and sequential loading stages together without adding background data polling. The indicator does not capture mouse or remote focus and is hidden in fullscreen playback.
 
-Windows: KAYLiveSport-windows-x64.exe (WebView2 required).
-Phone/Tablet: KAYLiveSport-android-arm64-debug.apk or KAYLiveSport-android-arm32-debug.apk.
-TV: KAYLiveSport-tv-arm32-debug.apk or KAYLiveSport-tv-arm64-debug.apk.
+### Downloads
 
-Select the existing edition and architecture and install over the existing app to preserve settings. Android artifacts retain the existing package ID and signing certificate. Companion Android update release: android-v0.1.24. The Android packages remain preview/debug builds.
+- Windows x64: KAYLiveSport-windows-x64.exe (WebView2 required).
+- Phone/Tablet: KAYLiveSport-android-arm64-debug.apk or KAYLiveSport-android-arm32-debug.apk.
+- TV: KAYLiveSport-tv-arm32-debug.apk or KAYLiveSport-tv-arm64-debug.apk.
 
-Validation: Rust tests and all shared UI tests passed. Windows, Phone/Tablet and TV UI integration tests passed for highlights selection, official-player rendering, browser fallback, date grouping, Myanmar TV and lazy loading. Official-video lookup was checked against ESPN's public API. Redmi verified live playback and HooFoot browser playback in earlier test builds; official embed playback on hardware remains unconfirmed. APK signature/version/alignment and release asset checksums are checked for the final builds. Stream availability and region restrictions remain controlled by providers.
+Install the matching edition and architecture over the existing app to preserve settings. Android packages retain the existing application ID and signing certificate and remain preview/debug builds. Companion Android update release: android-v0.1.25.
+
+Validation: shared Rust/UI tests, three-edition progress integration tests (concurrent loading, completion counts, failures and unchanged RPC results), Myanmar TV and lazy-loading regression tests, native builds, APK version/signature/alignment and uploaded SHA-256 checksums. Physical-device verification of this new indicator is not included.
