@@ -1,0 +1,21 @@
+const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
+(async()=>{const root=path.join(__dirname,'www'),server=http.createServer((req,res)=>{const file=path.join(root,req.url==='/'?'index.html':req.url.split('?')[0]);if(!file.startsWith(root)||!fs.existsSync(file)){res.writeHead(404);return res.end()}res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync(file))});await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;try{
+ browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({viewport:{width:1280,height:720}});await page.clock.install();
+ await page.addInitScript(()=>{window.lazyCalls=[];window.__TAURI__={core:{invoke:async(_,{command,args})=>{window.lazyCalls.push(command);if(command==='matches')return [{id:'lazy',post:'1',home:'Home',away:'Away',sport:'1',league:'Test League',live:false,finished:false,kickoff:Date.now()/1000+10,channels:[]}];if(command==='highlights_catalog')return {videos:[]};if(command==='myanmar_channels')return {channels:[],cached:true};return {batches:[],errors:[]}}}}});
+ await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>scoreUpdated>0&&!document.querySelector('#refresh').disabled);
+ const counts=()=>page.evaluate(()=>window.lazyCalls.filter(c=>['matches','scores','highlights','lineups','highlights_catalog','myanmar_channels'].includes(c)));
+ const initial=await counts();assert.equal(initial.filter(c=>c==='matches').length,1);
+ await page.clock.fastForward(90000);assert.deepEqual(await counts(),initial,'idle TV and due kickoff must not fetch data');
+ await page.locator('#tv-settings').click();assert.deepEqual(await counts(),initial,'Settings must not load sports');
+ await page.locator('#tv-highlights').click();await page.waitForFunction(()=>window.lazyCalls.includes('highlights_catalog'));let calls=await counts();assert.equal(calls.filter(c=>c==='scores').length,initial.filter(c=>c==='scores').length,'Highlights must not request scores');
+ await page.locator('#tv-highlights').click();assert.equal((await counts()).filter(c=>c==='highlights_catalog').length,1,'Fresh Highlights cache reused');
+ await page.locator('#tv-scores').click();await page.waitForFunction(()=>!document.querySelector('#results-status').textContent.includes('Loading'));calls=await counts();const scores=calls.filter(c=>c==='scores').length;
+ await page.locator('#tv-scores').click();assert.equal((await counts()).filter(c=>c==='scores').length,scores,'Fresh Scores cache reused');
+ await page.locator('#refresh').click();await page.waitForFunction(()=>!document.querySelector('#refresh').disabled);assert.equal((await counts()).filter(c=>c==='scores').length,scores+1,'Manual Scores refresh forces a request');
+ await page.locator('#mobile-matches').click();await page.waitForFunction(()=>window.lazyCalls.filter(c=>c==='matches').length===2&&!document.querySelector('#refresh').disabled);
+ await page.locator('#mobile-live').click();assert.equal((await counts()).filter(c=>c==='matches').length,2,'Matches/Live share fresh cache');
+ await page.locator('#tv-myanmar').click();await page.waitForFunction(()=>window.lazyCalls.includes('myanmar_channels'));await page.locator('#tv-myanmar').click();assert.equal((await counts()).filter(c=>c==='myanmar_channels').length,1);
+ const beforeIdle=await counts();await page.clock.fastForward(90000);assert.deepEqual(await counts(),beforeIdle,'No data polling after page entry');
+ await page.locator('#refresh').click();await page.waitForFunction(()=>window.lazyCalls.filter(c=>c==='myanmar_channels').length===2);
+ console.log('TV lazy loading: idle/due kickoff send no requests, page-specific requests, cache reuse, stale fixture entry and manual refresh passed');
+ }finally{if(browser)await browser.close();server.close()}})().catch(e=>{console.error(e);process.exitCode=1});

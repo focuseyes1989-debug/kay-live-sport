@@ -1,12 +1,15 @@
-## KAY LIVE SPORT TV v0.1.21 Preview
+## KAY LIVE SPORT TV v0.1.22 Preview
 
-Stable remote focus during refresh and a new Myanmar TV page.
+TV loads data on page entry instead of continuously polling in the background.
 
-- Restores focused fixture cards synchronously by fixture ID when data refresh replaces or reorders cards. If a fixture disappears, selects a nearby remaining card. Background refresh no longer falls back to the match list from Watch/Settings.
-- Adds Myanmar TV to the TV navigation rail, with 18 channels from https://www.myanmartvchannels.com/channels/, bundled channel logos, four-column cards and search.
-- Plays available public HLS streams in the app player, using its fullscreen, Back and Retry controls. A restricted source-page button opens the channel website when a browser session is needed.
-- Refreshes the public channel directory when reachable and uses a bundled directory otherwise. Some channels require source authentication/session or may be unavailable on the current network; channel listing is not a guarantee of playback.
-- Retains four-column Matches/Live, 15-second refresh and Settings-only startup persistence.
+- Removes the 15-second match/score refresh timer and periodic lineup/highlights network refreshes on TV.
+- Matches and Live share a short-lived cache; opening either page refreshes stale data. Scores refreshes on entry when its cache is stale. Highlights and Myanmar TV reuse their existing caches.
+- Settings does not fetch sports data. Opening Highlights no longer requests score results unnecessarily.
+- Manual Refresh forces a request for the current page. Duplicate in-flight page requests are reused.
+- Retains the local clock/countdown display and stream playback/reconnection checks. Kickoff countdowns no longer trigger background data refreshes on TV.
+- Live scores and goal/live notifications update when page-entry or manual refresh obtains new data; continuous background score/goal updates are intentionally disabled.
+- Windows and Phone/Tablet polling behavior is unchanged.
+- Includes stable refresh focus, Myanmar TV, four-column Matches/Live and Settings-only startup persistence.
 
 ### APKs
 
@@ -15,4 +18,4 @@ Stable remote focus during refresh and a new Myanmar TV page.
 
 Install over the existing app without uninstalling or clearing data. Settings-page preferences are retained; playback and browsing state reset on startup. Application ID and signing certificate are unchanged. If an older updater reports Signing key differs, transfer the official matching APK with Send to TV and install over the existing app.
 
-Validation: synchronous focus retention after fixture label/order changes, rail focus, remote navigation, Settings retention/reset, fullscreen/Back and Exit; Myanmar TV directory/search/cards, shared playback routing, Retry and source fallback; Rust directory parsing and URL restrictions; WebView 81 layouts through 4K. DVB public HLS playback progressed at 1280x720 in the browser test. Both native APK builds, versions, architectures, signatures and alignment verified. Physical Mi Stick playback has not been verified for this release.
+Validation: simulated idle time and due kickoffs produce no data requests; page-specific requests, fresh-cache reuse, stale-cache page entry and manual refresh; unchanged Phone/Tablet timers; TV remote navigation, focus retention, Settings retention/reset, Myanmar TV controls, fullscreen/Back and Exit; WebView 81 layouts through 4K. Both APK versions, architectures, signatures and alignment verified. Physical Mi Stick performance has not been benchmarked for this release.
