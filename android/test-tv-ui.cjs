@@ -22,6 +22,17 @@ const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http
   await page.reload();await page.locator('.card').first().waitFor();
   const restored=await page.evaluate(()=>({search:$('search').value,filter,selected,watch:document.body.classList.contains('mobile-watch'),fit:localStorage.getItem('live-sport.video-fit'),quality:localStorage.getItem('live-sport.quality-height'),volume:notificationSoundVolume,time:timeFormat,autoplay:kickoffAutoplayEnabled,animations:animationsEnabled}));
   assert.deepEqual(restored,{search:'',filter:'all',selected:null,watch:false,fit:'fit',quality:null,volume:37,time:'12',autoplay:false,animations:false});
+  for(const width of [806,960,1280,1920]){
+   await page.setViewportSize({width,height:720});
+   for(const mode of ['all','live']){
+    await page.evaluate(mode=>{matches.forEach(m=>m.live=true);setMatchFilter(mode);showMobileView('matches')},mode);
+    await page.waitForFunction(mode=>document.body.dataset.tvPage===(mode==='live'?'live':'matches'),mode);
+    const boxes=await page.locator('#list>.card').evaluateAll(es=>es.slice(0,4).map(e=>{const r=e.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right,width:r.width,scroll:e.scrollWidth,client:e.clientWidth}}));
+    assert.equal(boxes.length,4);assert(boxes.every(b=>Math.abs(b.top-boxes[0].top)<1&&b.right<=width&&b.scroll<=b.client+1));
+    assert(boxes.slice(1).every((b,i)=>b.left-boxes[i].right>=10));
+   }
+  }
+  await page.setViewportSize({width:1280,height:720});await page.locator('#mobile-matches').click();
   const recent=await page.evaluate(async()=>{const original=rpc;let requested;rpc=async(command,args)=>{if(command==='scores'){requested=args.dates;return {batches:[],errors:[]}}return original(command,args)};try{await refreshResults();const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);return {requested,expected:[...new Set([localDay(),localDay(yesterday.getTime())].flatMap(resultsQueryDates))],day:catalogDay}}finally{rpc=original}});
   assert.deepEqual(recent.requested,recent.expected);assert.equal(recent.day,'both');
 assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
@@ -33,7 +44,7 @@ assert(await page.locator('body').evaluate(e=>e.classList.contains('tv-ui')));
   await page.evaluate(()=>{document.querySelector('#search').value='';document.querySelector('#search').oninput();});
   // Real remote key events, no mouse clicks to navigate the cards.
   await page.locator('.card').first().focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement),true);
-  await page.keyboard.press('ArrowDown');assert(await page.locator('.card').nth(4).evaluate(e=>e===document.activeElement));await page.keyboard.press('ArrowUp');assert(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement));
+  await page.keyboard.press('ArrowDown');assert(await page.locator('.card').nth(5).evaluate(e=>e===document.activeElement));await page.keyboard.press('ArrowUp');assert(await page.locator('.card').nth(1).evaluate(e=>e===document.activeElement));
   await page.keyboard.press('ArrowLeft');assert(await page.evaluate(()=>!!document.activeElement.closest('#mobile-tabs')));await page.keyboard.press('ArrowRight');assert(await page.evaluate(()=>!!document.activeElement.closest('#matches-sidebar')));
   const focusedFixture=await page.evaluate(()=>document.activeElement.getAttribute('aria-label'));await page.evaluate(()=>render());await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),focusedFixture);
   await page.keyboard.press('Enter');await page.waitForFunction(()=>document.body.classList.contains('mobile-watch'));

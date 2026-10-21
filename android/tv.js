@@ -142,7 +142,7 @@
  // Score refreshes replace cards: restore the same fixture instead of jumping to the first one.
  let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(document.activeElement!==document.body)return;const target=items(document).find(e=>focusKey(e)===lastFocus);focus(target||entry(document.querySelector('#matches-sidebar')));},60);}).observe(document.querySelector('main'),{childList:true,subtree:true});
  const browseHeading=document.querySelector('.list-heading h2');
- function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;browseHeading.textContent=current==='live'?'Live now':current==='results'?(resultsContent==='highlights'?'Highlights':'Scores'):'All matches';}
+ function updateTvHeading(){const current=document.querySelector('.filters .active')?.dataset.filter;document.body.dataset.tvPage=current==='live'?'live':current==='results'?resultsContent:'matches';browseHeading.textContent=current==='live'?'Live now':current==='results'?(resultsContent==='highlights'?'Highlights':'Scores'):'All matches';}
  new MutationObserver(updateTvHeading).observe(document.querySelector('.filters'),{subtree:true,attributes:true,attributeFilter:['class']});updateTvHeading();updateMobileNavigation(document.body.classList.contains('mobile-watch')?'watch':'matches');
  focus(document.querySelector('#mobile-matches'));
 })();

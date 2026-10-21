@@ -168,3 +168,12 @@ body.tv-ui.tv-highlights-fullscreen #tv-highlight-expand{display:none!important}
 
 /* TV pages show recent content directly without filter controls. */
 body.tv-ui #results-controls>label,body.tv-ui #results-controls>input,body.tv-ui #results-controls>div,body.tv-ui .catalog-days{display:none!important}
+
+/* Four compact fixture cards per row on Matches and Live TV pages. */
+body.tv-ui[data-tv-page="matches"] #list,body.tv-ui[data-tv-page="live"] #list{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+body.tv-ui[data-tv-page="matches"] .card,body.tv-ui[data-tv-page="live"] .card{min-height:136px;padding:11px;min-width:0}
+body.tv-ui[data-tv-page="matches"] .card .team-name,body.tv-ui[data-tv-page="live"] .card .team-name{font-size:12px}
+body.tv-ui[data-tv-page="matches"] .card .crest,body.tv-ui[data-tv-page="live"] .card .crest{width:24px;height:24px}
+body.tv-ui[data-tv-page="matches"] .card .teams,body.tv-ui[data-tv-page="live"] .card .teams{grid-template-columns:minmax(0,1fr) 44px;gap:6px}
+body.tv-ui[data-tv-page="matches"] .card .score,body.tv-ui[data-tv-page="live"] .card .score{font-size:19px}
+body.tv-ui[data-tv-page="matches"] .card .card-foot,body.tv-ui[data-tv-page="live"] .card .card-foot{font-size:9px;flex-wrap:wrap;line-height:1.5}
