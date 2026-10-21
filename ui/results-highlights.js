@@ -19,7 +19,7 @@ function catalogPublicationDay(item,now=Date.now()){
  const today=new Date(now);today.setHours(0,0,0,0);const yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);
  return published>=today.getTime()?'today':published>=yesterday.getTime()?'yesterday':'';
 }
-function usableCatalogVideo(item){return /^[A-Za-z0-9_-]{11}$/.test(item?.videoId)&&safeHighlightLink(item.url)&&typeof item.title==='string'&&!!catalogPublicationDay(item);}
+function usableCatalogVideo(item){return typeof item?.videoId==='string'&&safeHighlightLink(item.url)&&typeof item.title==='string'&&!!catalogPublicationDay(item);}
 function catalogRows(){
  const query=$('search').value.trim().toLocaleLowerCase();const seen=new Set();
  return catalogVideos.filter(item=>{if(!usableCatalogVideo(item)||seen.has(item.videoId))return false;seen.add(item.videoId);return (catalogDay==='both'||catalogPublicationDay(item)===catalogDay)&&(!query||(item.title+' '+(item.league||'')).toLocaleLowerCase().includes(query));}).sort((a,b)=>Date.parse(b.published)-Date.parse(a.published));
@@ -38,25 +38,15 @@ function catalogGroups(rows){
  for(const [id,items] of byLeague){groups.push({id,title:id==='other'?'Other Highlights':String(items[0].league)+' Highlights',items});}
  return groups;
 }
-function clearCatalogSelection(){
- if(!catalogSelection)return;catalogSelection=null;++highlightsRequest;highlightsKey='';highlightsPanel.replaceChildren();highlightsPanel.hidden=true;highlightsPanel.parentElement.classList.remove('has-highlights');
- $('title').textContent='Every moment. Every match.';$('subtitle').textContent='Pick your match. Follow the score. Watch it live.';
- $('stage').hidden=false;setEmptyPlaybackState('Choose a match or highlight','Select a video from Results → Highlights, or choose a match.');
-}
+function clearCatalogSelection(){catalogSelection=null;++highlightPlaybackRequest;highlightsPanel.querySelectorAll('iframe').forEach(frame=>frame.remove());}
 window.kayCatalogHighlightActive=()=>{
  if(catalogSelection&&!usableCatalogVideo(catalogSelection)){clearCatalogSelection();render();}
  return !!catalogSelection;
 };
-function chooseCatalogVideo(item){
+async function chooseCatalogVideo(item){
  if(!usableCatalogVideo(item))return;
- ++playToken;stop();waitingFixture=null;waitingManualLive=false;wantPlayback=false;channel=null;selected=null;startupPlaybackChecked=true;
- ++highlightsRequest;highlightsKey='';catalogSelection=item;refreshLineup();
- $('title').textContent=item.title;$('subtitle').textContent=[item.league,'MatchHighlights · YouTube'].filter(Boolean).join(' · ');
- $('scoreboard').hidden=true;$('channel-label').hidden=true;$('channels').replaceChildren();$('retry').hidden=true;$('stage').hidden=true;$('message').textContent='';
- highlightsPanel.hidden=false;highlightsPanel.parentElement.classList.add('has-highlights');renderHighlights({videos:[item]},null);
- highlightsPanel.querySelector('.highlights-actions button').click();
- if(typeof showMobileView==='function')showMobileView('watch');
- render();
+ ++playToken;stop();wantPlayback=false;
+ catalogSelection=item;render();await playOfficialHighlight(item);
 }
 const chooseBeforeCatalog=choose;
 choose=function(...args){clearCatalogSelection();return chooseBeforeCatalog(...args);};
@@ -82,13 +72,13 @@ function renderCatalog(){
   const heading=node('h3','','catalog-section-heading');heading.append(node('span',group.title),node('small',String(group.items.length)));container.append(heading);
   for(const item of group.items){
   const card=node('button','','catalog-card'+(catalogSelection?.videoId===item.videoId?' active':''));card.dataset.videoId=item.videoId;card.type='button';card.setAttribute('aria-label','Watch highlights: '+item.title);
-  const img=document.createElement('img');img.src='https://i.ytimg.com/vi/'+item.videoId+'/hqdefault.jpg';img.alt='';img.loading='lazy';img.onerror=()=>{img.hidden=true;};
-  const thumb=node('span','','catalog-thumb');thumb.append(node('span','▶'),img);
-  card.append(thumb,node('strong',item.title),node('small',[item.league,catalogPublicationDay(item)==='today'?'Today':'Yesterday','YouTube'].filter(Boolean).join(' · ')));card.onclick=()=>chooseCatalogVideo(item);container.append(card);
+  const img=document.createElement('img');img.src=typeof item.thumbnail==='string'&&/^https:\/\/hoofoot\.thertstv\.com\/logos\//.test(item.thumbnail)?item.thumbnail:'';img.alt='';img.loading='lazy';img.onerror=()=>{img.hidden=true;};
+  img.style.objectFit='contain';const thumb=node('span','','catalog-thumb');thumb.append(node('span','▶'),img);
+  card.append(thumb,node('strong',item.title),node('small',[item.league,catalogPublicationDay(item)==='today'?'Today':'Yesterday','HooFoot'].filter(Boolean).join(' · ')));card.onclick=()=>chooseCatalogVideo(item);container.append(card);
   }
   $('list').append(container);
  }
- if(!rows.length)$('list').append(node('p',catalogBusy?'Finding recent highlights…':catalogError||($('search').value?'No recent highlights match this search.':'No highlights published today or yesterday on the source homepage yet.'),'meta'));
+ if(!rows.length)$('list').append(node('p',catalogBusy?'Finding recent highlights…':catalogError||($('search').value?'No recent highlights match this search.':'No HooFoot highlights listed for today or yesterday yet.'),'meta'));
 }
 const renderBeforeCatalog=render;
 render=function(){
@@ -101,5 +91,4 @@ render=function(){
 };
 const headerRefreshBeforeCatalog=$('refresh').onclick;
 $('refresh').onclick=()=>filter==='results'&&resultsContent==='highlights'?refreshHighlightsCatalog(true,true):headerRefreshBeforeCatalog();
-
 render();

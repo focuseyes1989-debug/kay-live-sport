@@ -188,9 +188,10 @@ function failedStream(attempt, reason) {
     return;
   }
   if (!nextRoute && !next) {
-    finishRetryOutcome(false);
+    const message=selected?.myanmarChannel?reason+' Retry to refresh the channel link, or use Open channel website.':'All commentator links have been tried. No working stream is available. Press Retry all channels to try again.';
+    finishRetryOutcome(false,message);
     wantPlayback = false;
-    recoveryNotice('All commentator links have been tried. No working stream is available. Press Retry all channels to try again.', true);
+    recoveryNotice(message, true);
     $('retry').hidden = false;
     return;
   }
@@ -338,7 +339,7 @@ async function play(c, automatic = false, routes = null, routeIndex = 0, fromCac
       wantPlayback = false;
       failedStream(attempt, 'HLS playback is not supported.');
     }
-  } catch (e) { failedStream(attempt, 'This commentator is unavailable.'); }
+  } catch (e) { failedStream(attempt, selected?.myanmarChannel?(e?.message||'The channel source is unavailable.'):'This commentator is unavailable.'); }
 }
 
 function retryPlayback() {

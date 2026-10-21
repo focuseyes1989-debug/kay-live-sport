@@ -148,6 +148,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ("text/javascript", include_bytes!("../ui/results-highlights.js").to_vec())
             } else if request.uri().path() == "/highlights.js" {
                 ("text/javascript", include_bytes!("../ui/highlights.js").to_vec())
+            } else if request.uri().path() == "/desktop-nav.js" {
+                ("text/javascript", include_bytes!("../ui/desktop-nav.js").to_vec())
             } else if request.uri().path() == "/lineups.js" {
                 ("text/javascript", include_bytes!("../ui/lineups.js").to_vec())
             } else if request.uri().path() == "/update.js" {
@@ -209,6 +211,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Some("lineups") => lineups::fetch(&c, &v["args"]),
                     Some("highlights") => highlights::fetch(&c, &v["args"]),
                     Some("highlights_catalog") => highlights::catalog(&c),
+                    Some("official_highlight") => highlights::official(&c, &v["args"]),
                     Some("open_highlight") => highlights::open(&v["args"]),
                     Some("resolve") => resolve(&c, &v["args"]),
                     _ => Err("Unknown command".into()),

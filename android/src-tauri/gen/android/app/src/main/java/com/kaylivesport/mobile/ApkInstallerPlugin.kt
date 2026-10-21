@@ -48,7 +48,7 @@ class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
  fun openHighlight(invoke: Invoke) {
   try {
    val uri=Uri.parse(invoke.parseArgs(HighlightArgs::class.java).url)
-   require(uri.scheme=="https" && uri.host in listOf("www.youtube.com","matchhighlights.live") && uri.userInfo==null && uri.port==-1) { "Invalid highlights link" }
+   require(uri.scheme=="https" && uri.host=="hoofoot.net" && uri.userInfo==null && uri.port==-1 && uri.query==null && uri.fragment==null && (uri.path=="/full-matches/" || Regex("^/full-matches/[a-z0-9-]+/[a-z0-9-]+-highlights-[a-z0-9-]+/$").matches(uri.path ?: ""))) { "Invalid highlights link" }
    activity.runOnUiThread {try {activity.startActivity(Intent(Intent.ACTION_VIEW,uri)); val result=JSObject();result.put("opened",true);invoke.resolve(result)}catch(e:Exception){invoke.reject(e.message ?: "Could not open highlights")}}
   } catch(e:Exception) {invoke.reject(e.message ?: "Invalid highlights link")}
  }

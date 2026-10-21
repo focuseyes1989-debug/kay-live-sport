@@ -65,7 +65,7 @@ function updateMobileNavigation(view){
 $('mobile-matches').onclick=()=>{document.querySelector('[data-filter="all"]').click();showMobileView('matches');};
 $('mobile-live').onclick=()=>{document.querySelector('[data-filter="live"]').click();showMobileView('matches');};
 $('mobile-results').onclick=()=>{document.querySelector('[data-filter="results"]').click();showMobileView('matches');};
-$('mobile-search').onclick=()=>{showMobileView('matches');updateMobileNavigation('search');$('search').focus();};
+if($('mobile-search'))$('mobile-search').onclick=()=>{showMobileView('matches');updateMobileNavigation('search');$('search').focus();};
 new MutationObserver(()=>{if(!document.body.classList.contains('mobile-watch')&&document.activeElement!==$('search'))showMobileView('matches');}).observe(document.querySelector('.filters'),{subtree:true,attributes:true,attributeFilter:['class']});
 
 const liveNavigationLabel=document.createElement('strong');liveNavigationLabel.className='nav-live-label';liveNavigationLabel.textContent='LIVE';liveNavigationLabel.setAttribute('aria-hidden','true');$('mobile-live').querySelector('svg').replaceWith(liveNavigationLabel);

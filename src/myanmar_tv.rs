@@ -70,6 +70,9 @@ fn parse_catalog(html: &str) -> Vec<Value> {
     }
     rows
 }
+fn retain_supported(rows: &mut Vec<Value>, supported: &[Value]) {
+    rows.retain(|row| supported.iter().any(|seed| seed["id"] == row["id"]));
+}
 pub fn catalog(c: &Client) -> Result<Value, String> {
     let cached = seeds();
     let fetched = read(c, &format!("{SITE}/channels/"))
@@ -77,6 +80,8 @@ pub fn catalog(c: &Client) -> Result<Value, String> {
         .unwrap_or_default();
     let fallback = fetched.is_empty();
     let mut rows = if fallback { cached.clone() } else { fetched };
+    // A refreshed directory must not restore channels removed as unavailable.
+    retain_supported(&mut rows, &cached);
     for row in &mut rows {
         let id = row["id"].as_str().unwrap_or("").to_string();
         row["page"] = json!(page(&id));
@@ -91,33 +96,106 @@ fn stream_from_html(html: &str) -> Option<String> {
         .find(|s| safe_stream(s))
         .map(str::to_string)
 }
+fn token_stream(c: &Client, id: &str) -> Result<String, String> {
+    let stream = if id == "heyplay" { "channel9" } else { id };
+    let response = c
+        .get(format!("{SITE}/api/token"))
+        .query(&[("stream", stream)])
+        .header("X-Requested-With", "XMLHttpRequest")
+        .header("Referer", page(id))
+        .timeout(Duration::from_secs(5))
+        .send()
+        .map_err(|e| {
+            if e.is_timeout() {
+                "The channel source timed out. Retry or open the channel website.".to_string()
+            } else {
+                "Could not connect to the channel source. Retry or open the channel website."
+                    .to_string()
+            }
+        })?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(source_status_error(status.as_u16()));
+    }
+    let token = response.json::<Value>().map_err(|_| {
+        "The source did not return a stream. Open the channel website to check access.".to_string()
+    })?;
+    token["signedUrl"]
+        .as_str()
+        .filter(|s| safe_stream(s))
+        .map(str::to_string)
+        .ok_or(
+            "No public stream was returned. Open the channel website to check this channel."
+                .to_string(),
+        )
+}
+fn source_status_error(status: u16) -> String {
+    match status {
+        401 | 403 => format!(
+            "Channel source access denied (HTTP {status}). Open the channel website; a browser session or access step may be required."
+        ),
+        404 => "This channel's stream is not currently listed by the source (HTTP 404).".into(),
+        429 => "The channel source is busy (HTTP 429). Wait a moment and Retry.".into(),
+        _ => {
+            format!("The channel source returned HTTP {status}. Retry or open the channel website.")
+        }
+    }
+}
+fn add_route(routes: &mut Vec<Value>, url: &str) {
+    if safe_stream(url) && !routes.iter().any(|r| r["url"] == url) {
+        routes.push(json!({"url":url,"format":"hls"}));
+    }
+}
+fn add_seed_routes(routes: &mut Vec<Value>, seed: &Value) {
+    if let Some(url) = seed["stream"].as_str() {
+        add_route(routes, url);
+    }
+    if let Some(fallbacks) = seed["fallbacks"].as_array() {
+        for url in fallbacks.iter().filter_map(Value::as_str) {
+            add_route(routes, url);
+        }
+    }
+}
 pub fn resolve(c: &Client, args: &Value) -> Result<Value, String> {
     let id = args["id"].as_str().ok_or("Choose a Myanmar TV channel")?;
-    let seed = seeds().into_iter().find(|r| r["id"] == id);
     if id.is_empty() || id.len() > 60 || !id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
     {
         return Err("Invalid channel".into());
     }
-    let current = read(c, &page(id)).ok().and_then(|s| stream_from_html(&s));
-    let direct = current.or_else(|| {
-        seed.as_ref()
-            .and_then(|s| s["stream"].as_str())
-            .filter(|s| safe_stream(s))
-            .map(str::to_string)
-    });
-    if let Some(url) = direct {
-        return Ok(json!({"url":url,"format":"hls"}));
+    let seed = seeds().into_iter().find(|r| r["id"] == id);
+    if seed.is_none() {
+        return Err("This channel is no longer available in Myanmar TV.".into());
     }
-    let stream = if id == "heyplay" { "channel9" } else { id };
-    let token=c.get(format!("{SITE}/api/token")).query(&[("stream",stream)]).header("X-Requested-With","XMLHttpRequest").header("Referer",page(id)).timeout(Duration::from_secs(8)).send().and_then(|r|r.error_for_status()).and_then(|r|r.json::<Value>()).map_err(|_|"The source requires a browser session or is unavailable. Retry or open the source page.".to_string())?;
-    let url = token["signedUrl"]
-        .as_str()
-        .filter(|s| safe_stream(s))
-        .ok_or(
-            "No playable public stream is available. Open the source page to check this channel.",
-        )?;
-    Ok(json!({"url":url,"format":"hls"}))
+    let current = read(c, &page(id)).ok().and_then(|s| stream_from_html(&s));
+    let mut routes = Vec::new();
+    let mut token_error = None;
+    // An explicit Retry obtains a fresh source token before reusing public URLs.
+    // No browser cookies or access challenges are bypassed.
+    if args["refreshToken"] == true {
+        match token_stream(c, id) {
+            Ok(url) => add_route(&mut routes, &url),
+            Err(e) => token_error = Some(e),
+        }
+    }
+    if let Some(url) = current {
+        add_route(&mut routes, &url);
+    }
+    if let Some(seed) = seed.as_ref() {
+        add_seed_routes(&mut routes, seed);
+    }
+    if routes.is_empty() && token_error.is_none() {
+        match token_stream(c, id) {
+            Ok(url) => add_route(&mut routes, &url),
+            Err(e) => token_error = Some(e),
+        }
+    }
+    if routes.is_empty() {
+        return Err(token_error
+            .unwrap_or_else(|| "No public stream is available. Open the channel website.".into()));
+    }
+    Ok(json!({"url":routes[0]["url"],"format":"hls","sources":routes}))
 }
+
 pub fn allowed_page(value: &str) -> bool {
     url::Url::parse(value).is_ok_and(|u| {
         u.scheme() == "https"
@@ -148,7 +226,52 @@ mod tests {
             stream_from_html(r#"<video data-stream-url='https://evil.test/stream.m3u8'>"#)
                 .is_none()
         );
-        assert_eq!(seeds().len(), 18);
+        assert_eq!(seeds().len(), 11);
+        let mut refreshed = vec![
+            json!({"id":"mahar"}),
+            json!({"id":"5plus"}),
+            json!({"id":"channel7"}),
+            json!({"id":"unknown"}),
+        ];
+        retain_supported(&mut refreshed, &seeds());
+        assert_eq!(refreshed, vec![json!({"id":"channel7"})]);
+    }
+    #[test]
+    fn source_errors_and_public_routes() {
+        assert!(source_status_error(403).contains("browser session"));
+        assert!(source_status_error(404).contains("not currently listed"));
+        assert!(source_status_error(429).contains("Wait"));
+        let mut routes = Vec::new();
+        add_route(
+            &mut routes,
+            "https://live.pyoneplay.com/live/fresh/index.m3u8",
+        );
+        add_route(
+            &mut routes,
+            "https://live.pyoneplay.com/live/fresh/index.m3u8",
+        );
+        add_route(
+            &mut routes,
+            "https://live.pyoneplay.com/live/previous/index.m3u8",
+        );
+        add_route(&mut routes, "https://evil.test/index.m3u8");
+        assert_eq!(routes.len(), 2);
+        assert!(routes[0]["url"].as_str().unwrap().contains("fresh"));
+    }
+    #[test]
+    fn verified_channel_fallbacks_are_ordered_and_validated() {
+        let seed = seeds().into_iter().find(|r| r["id"] == "dvb").unwrap();
+        let mut routes = Vec::new();
+        add_seed_routes(&mut routes, &seed);
+        assert_eq!(routes.len(), 2);
+        assert_eq!(routes[0]["url"], seed["stream"]);
+        assert_eq!(routes[1]["url"], seed["fallbacks"][0]);
+        add_seed_routes(&mut routes, &seed);
+        add_seed_routes(
+            &mut routes,
+            &json!({"fallbacks":["https://evil.test/live.m3u8", "http://live-stream.dvb.no/live.m3u8", null]}),
+        );
+        assert_eq!(routes.len(), 2);
     }
     #[test]
     fn source_links_restricted() {

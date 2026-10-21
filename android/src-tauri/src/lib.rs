@@ -70,6 +70,7 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
             "lineups" => lineups::fetch(&client, &args),
             "highlights" => highlights::fetch(&client, &args),
             "highlights_catalog" => highlights::catalog(&client),
+            "official_highlight" => highlights::official(&client, &args),
             _ => Err("Unsupported mobile command".into()),
         }
     })

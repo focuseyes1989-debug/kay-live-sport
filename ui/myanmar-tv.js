@@ -3,7 +3,7 @@ let myanmarPage=false,myanmarChannels=[],myanmarLoaded=0,myanmarBusy=false,myanm
 const myanmarSource=node('button','Open channel website');myanmarSource.id='myanmar-source';myanmarSource.type='button';myanmarSource.hidden=true;$('retry').after(myanmarSource);
 myanmarSource.onclick=()=>{if(!selected?.myanmarChannel)return;rpc('open_myanmar_tv',{url:selected.sourcePage}).catch(e=>recoveryNotice(e.message,true));};
 const myanmarRpc=rpc;
-rpc=function(command,args={}){if(command==='resolve'&&String(args.post).startsWith('myanmar:'))return myanmarRpc('myanmar_resolve',{id:args.post.slice(8)});return myanmarRpc(command,args);};
+rpc=function(command,args={}){if(command==='resolve'&&String(args.post).startsWith('myanmar:'))return myanmarRpc('myanmar_resolve',{id:args.post.slice(8),refreshToken:retryInProgress});return myanmarRpc(command,args);};
 const myanmarUpdate=updateSelected;
 updateSelected=function(...args){myanmarUpdate(...args);const active=!!selected?.myanmarChannel;myanmarSource.hidden=!active;if(active){$('title').textContent=selected.home;$('subtitle').textContent='Myanmar TV · myanmartvchannels.com';$('scoreboard').hidden=true;$('channel-label').hidden=true;$('channels').hidden=true;}else $('channels').hidden=false;};
 const myanmarRetry=retryPlayback;
@@ -12,6 +12,7 @@ $('retry').onclick=()=>retryPlayback();$('player-retry').onclick=()=>retryPlayba
 function chooseMyanmar(item){
  clearCatalogSelection();myanmarPage=true;
  choose({id:'myanmar-'+item.id,myanmarChannel:true,sourcePage:item.page,home:item.name,away:'',league:'Myanmar TV',sport:'tv',kickoff:0,live:true,finished:false,post:'myanmar:'+item.id,channels:[{id:item.id,name:item.name}]});
+ $('channel-label').hidden=true;
 }
 const myanmarRender=render;
 render=function(...args){

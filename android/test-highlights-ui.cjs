@@ -1,43 +1,27 @@
-const {chromium}=require('@playwright/test'),fs=require('fs'),http=require('http'),path=require('path');
+const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 (async()=>{
- const root=path.join(__dirname,'www');
- const server=http.createServer((req,res)=>{const file=path.join(root,req.url==='/'?'index.html':req.url.split('?')[0]);if(!file.startsWith(root)||!fs.existsSync(file)){res.writeHead(404);return res.end()}res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(fs.readFileSync(file))});
- await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
- try{
-  browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('https://www.youtube-nocookie.com/**',r=>r.fulfill({contentType:'text/html',body:'<body><button>Fullscreen test</button></body>'}));
-  await page.addInitScript(()=>{window.__TAURI__={core:{invoke:async(_,{command,args})=>{if(command==='mobile_fullscreen'){(window.nativeFullscreenCalls??=[]).push(args.enabled);return {enabled:args.enabled};}return command==='matches'?[]:command==='highlights_catalog'?{videos:[{title:'Recent Real Madrid highlights',videoId:'SjxTxaJUvpU',published:new Date(Date.now()-60000).toISOString(),url:'https://www.youtube.com/watch?v=SjxTxaJUvpU',league:'LALIGA',sections:['trending','la_liga'],views:100},{title:'Yesterday football highlights',videoId:'3uoy7oVLriY',published:new Date(new Date().setHours(-1,0,0,0)).toISOString(),url:'https://www.youtube.com/watch?v=3uoy7oVLriY',league:'Premier League',sections:['premier_league']},{title:'Old highlights',videoId:'abcdefghijk',published:new Date(Date.now()-4*86400000).toISOString(),url:'https://www.youtube.com/watch?v=abcdefghijk'}]}:command==='highlights'?{videos:[{title:'Real Madrid vs Villarreal highlights',videoId:'SjxTxaJUvpU',url:'https://www.youtube.com/watch?v=SjxTxaJUvpU'}]}:{batches:[],errors:[]};}}}});
-  await page.goto('http://127.0.0.1:'+server.address().port);
-  await page.evaluate(()=>choose({id:'test-result',sport:'1',home:'Real Madrid',away:'Villarreal',league:'LALIGA',finished:true,live:false,kickoff:Math.floor(Date.now()/1000)-3600,channels:[],homeScore:'1',awayScore:'0'}));
-  for(const [name,width,height] of [['portrait',390,844],['landscape',844,390],['wide',1366,768]]){
-   await page.setViewportSize({width,height});await page.getByRole('button',{name:'▶ Watch highlights',exact:true}).click();
-   await page.locator('.highlights-frame').waitFor({state:'attached'});
-   await page.frameLocator('.highlights-frame').locator('body').evaluate(body=>body.requestFullscreen());
-   await page.waitForFunction(()=>!!document.fullscreenElement&&window.nativeFullscreenCalls?.at(-1)===true,{}, {timeout:5000});
-   await page.evaluate(()=>document.exitFullscreen());
-   await page.waitForFunction(()=>!document.fullscreenElement&&window.nativeFullscreenCalls?.at(-1)===false);
-
-   const source=page.getByRole('button',{name:'Open in YouTube',exact:true});await source.scrollIntoViewIfNeeded();const box=await source.boundingBox();
-   if(!box||box.y<0||box.y+box.height>height)throw Error(name+' source button clipped');
-   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error(name+' horizontal overflow');
-   await page.screenshot({path:path.join(__dirname,'../dist/highlights-'+name+'-player-layout.png')});
-  }
-  await page.setViewportSize({width:390,height:844});await page.locator('#mobile-results').click();await page.locator('[data-results-content="highlights"]').click();await page.locator('.catalog-card').first().waitFor();
-  if(await page.locator('.catalog-card').count()!==3)throw Error('Trending/league grouping failed');
-  if(await page.locator('#count').innerText()!=='2 highlights')throw Error('Duplicate trending video counted twice');
-  const groups=await page.locator('.catalog-section').evaluateAll(items=>items.map(e=>e.dataset.catalogSection));if(JSON.stringify(groups)!==JSON.stringify(['trending','premier_league','la_liga']))throw Error('Wrong category order: '+groups);
-  await page.locator('.catalog-card').first().evaluate(e=>e.dataset.identity='retained');await page.evaluate(()=>render());if(await page.locator('.catalog-card').first().getAttribute('data-identity')!=='retained')throw Error('Score poll rebuilt catalog cards');
-  await page.locator('[data-catalog-day="today"]').click();if(await page.locator('.catalog-card').count()!==2)throw Error('Today filter failed');if(await page.locator('[data-catalog-section=premier_league]').count())throw Error('Empty section not hidden');
-  await page.locator('[data-catalog-day="yesterday"]').click();if(await page.locator('.catalog-card').count()!==1)throw Error('Yesterday filter failed');if(await page.locator('[data-catalog-section=trending]').count())throw Error('Trending ignored date filter');
-  await page.locator('[data-catalog-day="both"]').click();await page.locator('.catalog-card img').first().evaluate(img=>img.decode().catch(()=>{}));await page.screenshot({path:path.join(__dirname,'../dist/results-highlights-mobile.png')});
-  await page.locator('.catalog-card').first().click();await page.locator('.highlights-frame').waitFor();
-  if(!await page.locator('body').evaluate(e=>e.classList.contains('mobile-watch')))throw Error('Card did not open mobile Watch');
-  if(!await page.locator('.highlights-frame').getAttribute('src').then(s=>s.includes('SjxTxaJUvpU')))throw Error('Wrong catalog video');
-  await page.evaluate(()=>updateSelected());if(!await page.locator('#highlights-panel').isVisible())throw Error('Score poll hid catalog player');
-  await page.setViewportSize({width:844,height:390});await page.getByRole('button',{name:'Open in YouTube',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(__dirname,'../dist/results-highlights-landscape.png')});
-  await page.evaluate(()=>choose({id:'upcoming',sport:'1',home:'A',away:'B',league:'Football',finished:false,live:false,kickoff:Date.now()/1000+3600,channels:[]}));if(await page.locator('.highlights-frame').count())throw Error('Old highlight kept playing after choosing a match');
-  await page.locator('#mobile-results').click();await page.locator('[data-results-content="scores"]').click();if(!await page.locator('#results-controls').isVisible())throw Error('Scores controls did not return');
-  if(errors.length)throw Error(errors.join('\n'));
-  console.log('Highlights layout: embedded player and source button remain reachable in portrait, landscape and wide views');
- }finally{if(browser)await browser.close();server.close()}
-})().catch(e=>{console.error(e);process.exitCode=1});
+const windows=process.env.KAY_HIGHLIGHTS_WINDOWS==='1',tv=process.env.KAY_TV==='1',root=path.join(__dirname,windows?'../ui':'www');
+const server=http.createServer((req,res)=>{const f=path.join(root,req.url==='/'?'index.html':req.url.split('?')[0]);if(!f.startsWith(root)||!fs.existsSync(f)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync(f));});await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+try{
+browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const page=await browser.newPage({viewport:windows?{width:1366,height:768}:tv?{width:1280,height:720}:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.addInitScript(()=>{
+window.highlightCalls=[];window.openedHighlights=[];window.failBrowser=false;
+const date=offset=>{const d=new Date();d.setDate(d.getDate()+offset);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T00:00:00';};
+const row=(id,league,offset)=>({videoId:id,title:id.replaceAll('-',' '),league,published:date(offset),url:'https://hoofoot.net/full-matches/'+league.toLowerCase().replaceAll(' ','-')+'/'+id+'-highlights-october-20-2026/'});
+const mock=async(command,args)=>{window.highlightCalls.push(command);if(command==='official_highlight')return window.officialResult||{video:null};if(command==='matches')return [];if(command==='highlights_catalog')return {videos:[row('psg-vs-barcelona','Champions League',0),row('liverpool-vs-villarreal','Champions League',-1),row('a-vs-b','Premier League',-1),row('old-vs-match','La Liga',-3),row('future-vs-match','La Liga',1)]};if(command==='open_highlight'){if(window.failBrowser)throw Error('No browser');window.openedHighlights.push(args.url);return {opened:true};}return {batches:[],errors:[],videos:[]};};
+window.__TAURI__={core:{invoke:async(_,{command,args})=>mock(command,args)}};window.ipc={postMessage(body){const {id,command,args}=JSON.parse(body);mock(command,args).then(data=>window.receive({id,data}),e=>window.receive({id,error:e.message}));}};
+});
+await page.goto('http://127.0.0.1:'+server.address().port);await page.locator(windows?'.filters [data-filter="results"]':tv?'#tv-highlights':'#mobile-results').click();if(!tv)await page.locator('[data-results-content="highlights"]').click();await page.locator('.catalog-card').first().waitFor();
+assert.equal(await page.locator('.catalog-card').count(),3);assert.equal(await page.locator('.catalog-section').count(),2);assert(await page.locator('.catalog-days').isVisible());
+await page.locator('[data-catalog-day="today"]').click();assert.equal(await page.locator('.catalog-card').count(),1);await page.locator('.catalog-card').first().click();await page.waitForFunction(()=>openedHighlights.length===1);assert.match(await page.evaluate(()=>openedHighlights[0]),/^https:\/\/hoofoot.net\//);assert.equal(await page.locator('iframe').count(),0);
+await page.locator('[data-catalog-day="yesterday"]').click();assert.equal(await page.locator('.catalog-card').count(),2);await page.evaluate(()=>window.failBrowser=true);await page.locator('.catalog-card').first().click();await page.waitForFunction(()=>document.querySelector('#highlights-panel').textContent.includes('Could not open'));
+await page.evaluate(()=>{window.failBrowser=false;window.officialResult={video:{source:'ESPN',title:'Official recap',embed:'https://www.espn.com/core/video/iframe?id=42&endcard=false'}}});
+await page.route('https://www.espn.com/**',route=>route.fulfill({body:'<html>Official player test</html>',contentType:'text/html'}));
+await page.locator('.catalog-card').first().click();await page.locator('.highlights-frame').waitFor();assert.equal(await page.locator('.highlights-frame').getAttribute('src'),'https://www.espn.com/core/video/iframe?id=42&endcard=false');
+await page.locator('.highlights-actions button').filter({hasText:'HooFoot fallback'}).click();await page.waitForFunction(()=>openedHighlights.length===2);
+if(!windows)await page.evaluate(()=>showMobileView('matches'));
+await page.locator('[data-catalog-day="both"]').click();if(tv){await page.locator('#search').focus();await page.keyboard.press('Enter');}await page.locator('#search').fill('PSG');assert.equal(await page.locator('.catalog-card').count(),1);await page.locator('#search').fill('');if(tv)await page.keyboard.press('Escape');
+const count=await page.evaluate(()=>highlightCalls.filter(c=>c==='highlights_catalog').length);await page.evaluate(()=>refreshHighlightsCatalog());assert.equal(await page.evaluate(()=>highlightCalls.filter(c=>c==='highlights_catalog').length),count);
+assert.deepEqual(errors,[]);await page.screenshot({path:path.join(__dirname,'../dist/hoofoot-'+(windows?'windows':tv?'tv':'phone')+'-catalog.png')});console.log((windows?'Windows':tv?'TV':'Phone/Tablet')+': HooFoot catalog, league groups, local today/yesterday, old/future exclusion, search, browser open/error and cache passed');
+}finally{if(browser)await browser.close();server.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

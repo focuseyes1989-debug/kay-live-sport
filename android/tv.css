@@ -167,7 +167,7 @@ body.tv-ui #tv-highlight-expand span{position:absolute;top:10px;right:10px;paddi
 body.tv-ui.tv-highlights-fullscreen #tv-highlight-expand{display:none!important}
 
 /* TV pages show recent content directly without filter controls. */
-body.tv-ui #results-controls>label,body.tv-ui #results-controls>input,body.tv-ui #results-controls>div,body.tv-ui .catalog-days{display:none!important}
+body.tv-ui #results-controls>label,body.tv-ui #results-controls>input,body.tv-ui #results-controls>div{display:none!important}
 
 /* Four compact fixture cards per row on Matches and Live TV pages. */
 body.tv-ui[data-tv-page="matches"] #list,body.tv-ui[data-tv-page="live"] #list{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}

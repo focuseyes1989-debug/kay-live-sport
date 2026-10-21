@@ -1,44 +1,38 @@
 use reqwest::blocking::Client;
 use scraper::{Html, Selector};
 use serde_json::{Value, json};
-use std::sync::{
-    Mutex,
-    atomic::{AtomicUsize, Ordering},
+use std::{
+    io::Read,
+    sync::Mutex,
+    time::{Duration, Instant},
 };
-use std::time::Duration;
-use std::time::Instant;
-use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
-
-fn key(s: &str) -> String {
-    s.nfd()
-        .filter(|c| !is_combining_mark(*c))
-        .collect::<String>()
-        .to_lowercase()
-        .replace("utd", "united")
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|s| !matches!(*s, "fc" | "afc" | "cf" | "sc" | "f" | "c"))
-        .collect::<Vec<_>>()
-        .join(" ")
+const SOURCE: &str = "https://hoofoot.net";
+fn safe_path(path: &str) -> bool {
+    if path == "/full-matches/" {
+        return true;
+    }
+    let parts: Vec<_> = path.trim_matches('/').split('/').collect();
+    parts.len() == 3
+        && parts[0] == "full-matches"
+        && parts[1]
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b == b'-' || b.is_ascii_digit())
+        && parts[2].contains("-highlights-")
+        && parts[2]
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b == b'-' || b.is_ascii_digit())
 }
-fn matches(title: &str, home: &str, away: &str) -> bool {
-    let title = format!(" {} ", key(title));
-    [home, away].iter().all(|team| {
-        let team = key(team);
-        team.len() >= 3 && title.contains(&format!(" {team} "))
+pub fn allowed_url(value: &str) -> bool {
+    url::Url::parse(value).is_ok_and(|u| {
+        u.scheme() == "https"
+            && u.host_str() == Some("hoofoot.net")
+            && u.username().is_empty()
+            && u.password().is_none()
+            && u.port().is_none()
+            && u.query().is_none()
+            && u.fragment().is_none()
+            && safe_path(u.path())
     })
-}
-pub fn allowed_url(s: &str) -> bool {
-    let Ok(u) = url::Url::parse(s) else {
-        return false;
-    };
-    u.scheme() == "https"
-        && u.username().is_empty()
-        && u.password().is_none()
-        && u.port().is_none()
-        && matches!(
-            u.host_str(),
-            Some("www.youtube.com" | "matchhighlights.live")
-        )
 }
 #[cfg(target_os = "windows")]
 pub fn open(args: &Value) -> Result<Value, String> {
@@ -82,228 +76,269 @@ pub fn open(args: &Value) -> Result<Value, String> {
         Ok(json!({"opened":true}))
     }
 }
-fn published_day(s: &str) -> Option<i64> {
-    // Gregorian date to Unix day; publication date is a bounded freshness guard.
-    let date = s.get(..10)?;
-    let p: Vec<i64> = date
-        .split('-')
-        .map(str::parse)
-        .collect::<Result<_, _>>()
-        .ok()?;
-    if p.len() != 3 || !(1..=12).contains(&p[1]) || !(1..=31).contains(&p[2]) {
+
+fn date_from_path(path: &str) -> Option<String> {
+    let (_, date) = path.rsplit_once("-highlights-")?;
+    let parts: Vec<_> = date.trim_end_matches('/').split('-').collect();
+    let months = [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+    ];
+    if parts.len() != 3 {
         return None;
     }
-    let y = p[0] - i64::from(p[1] <= 2);
-    let era = y.div_euclid(400);
-    let yo = y - era * 400;
-    let m = p[1] + if p[1] > 2 { -3 } else { 9 };
-    Some(era * 146097 + yo * 365 + yo / 4 - yo / 100 + (153 * m + 2) / 5 + p[2] - 1 - 719468)
+    let month = months.iter().position(|m| *m == parts[0])? + 1;
+    let day = parts[1].parse::<u32>().ok()?;
+    let year = parts[2].parse::<u32>().ok()?;
+    let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let max = [
+        31,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ][month - 1];
+    if !(2000..=2100).contains(&year) || day == 0 || day > max {
+        return None;
+    }
+    // The source supplies a match date, not a publication time or time zone.
+    Some(format!("{year:04}-{month:02}-{day:02}T00:00:00"))
 }
-fn video(data: &Value, home: &str, away: &str, kickoff: i64, page: &str) -> Option<Value> {
-    if data["@type"] != "VideoObject" {
-        return None;
-    }
-    let title = data["name"].as_str()?;
-    let day = published_day(data["uploadDate"].as_str()?)?;
-    if !matches(title, home, away) || !(0..=3).contains(&(day - kickoff.div_euclid(86400))) {
-        return None;
-    }
-    catalog_video(data, page)
+fn logo(value: &str) -> Option<String> {
+    let u = url::Url::parse(value).ok()?;
+    (u.scheme() == "https"
+        && u.host_str() == Some("hoofoot.thertstv.com")
+        && u.path().starts_with("/logos/")
+        && u.username().is_empty()
+        && u.password().is_none()
+        && u.port().is_none())
+    .then(|| value.to_string())
 }
-fn catalog_video(data: &Value, page: &str) -> Option<Value> {
-    if data["@type"] != "VideoObject" {
-        return None;
-    }
-    let title = data["name"].as_str().filter(|s| !s.trim().is_empty())?;
-    published_day(data["uploadDate"].as_str()?)?;
-    let u = url::Url::parse(data["embedUrl"].as_str()?).ok()?;
-    if u.scheme() != "https"
-        || !matches!(
-            u.host_str(),
-            Some("www.youtube.com" | "www.youtube-nocookie.com")
-        )
-    {
-        return None;
-    }
-    let id = u.path().strip_prefix("/embed/")?;
-    if id.len() != 11
-        || !id
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
-    {
-        return None;
-    }
-    Some(
-        json!({"title":title,"source":"MatchHighlights","published":data["uploadDate"],"page":page,"thumbnail":format!("https://i.ytimg.com/vi/{id}/hqdefault.jpg"),
-        "videoId":id,"url":format!("https://www.youtube.com/watch?v={id}")}),
-    )
-}
-fn catalog_pages(html: &str) -> Vec<(String, String)> {
+fn parse_catalog(html: &str) -> Vec<Value> {
     let doc = Html::parse_document(html);
-    let mut pages = Vec::new();
-    for a in doc.select(&Selector::parse("a[href^='/video/']").unwrap()) {
-        let href = a.value().attr("href").unwrap_or("");
-        let page = format!("https://matchhighlights.live{href}");
-        if !allowed_url(&page) || pages.iter().any(|(p, _): &(String, String)| p == &page) {
-            continue;
-        }
-        let league = a
-            .select(
-                &Selector::parse(".mh-scorebug-competition,.mh-card-league,.mh-card-competition")
-                    .unwrap(),
-            )
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default();
-        pages.push((page, league));
-        if pages.len() == 120 {
-            break;
-        }
-    }
-    pages
-}
-static CATALOG: Mutex<Option<(Instant, Value)>> = Mutex::new(None);
-fn public_catalog(data: &Value) -> Result<Value, String> {
-    let rows = data.as_array().ok_or("Invalid highlights feed")?;
-    let mut videos = Vec::<Value>::new();
-    for row in rows {
-        let Some(id) = row["video_id"].as_str() else {
+    let anchors = Selector::parse("a[href]").unwrap();
+    let spans = Selector::parse("span").unwrap();
+    let images = Selector::parse("img[alt]").unwrap();
+    let base = url::Url::parse(SOURCE).unwrap();
+    let mut rows = Vec::new();
+    for a in doc.select(&anchors) {
+        let Some(u) = a.value().attr("href").and_then(|href| base.join(href).ok()) else {
             continue;
         };
-        let metadata = json!({"@type":"VideoObject","name":row["title"],"uploadDate":row["published_at"],"embedUrl":format!("https://www.youtube.com/embed/{id}")});
-        if let Some(mut item) = catalog_video(&metadata, "https://matchhighlights.live/") {
-            let section = row["section"].as_str().unwrap_or("");
-            if let Some(existing) = videos.iter_mut().find(|v| v["videoId"] == item["videoId"]) {
-                if !section.is_empty()
-                    && !existing["sections"]
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .any(|s| s == section)
-                {
-                    existing["sections"]
-                        .as_array_mut()
-                        .unwrap()
-                        .push(json!(section));
-                }
-                let views = row["view_count"].as_u64().unwrap_or(0);
-                if views > existing["views"].as_u64().unwrap_or(0) {
-                    existing["views"] = json!(views);
-                }
-                continue;
+        if !allowed_url(u.as_str())
+            || !a
+                .select(&spans)
+                .any(|e| e.text().collect::<String>().trim() == "Highlights")
+        {
+            continue;
+        }
+        let Some(published) = date_from_path(u.path()) else {
+            continue;
+        };
+        if rows.iter().any(|r: &Value| r["url"] == u.as_str()) {
+            continue;
+        }
+        let parts: Vec<_> = u.path().trim_matches('/').split('/').collect();
+        let names: Vec<_> = a
+            .select(&images)
+            .filter_map(|i| i.value().attr("alt"))
+            .filter(|s| !s.trim().is_empty())
+            .take(2)
+            .collect();
+        let title = if names.len() == 2 {
+            format!("{} vs {}", names[0], names[1])
+        } else {
+            parts[2]
+                .split("-highlights-")
+                .next()
+                .unwrap_or(parts[2])
+                .replace("-vs-", " vs ")
+                .replace('-', " ")
+        };
+        let league = parts[1]
+            .split('-')
+            .map(|s| {
+                let mut c = s.chars();
+                c.next()
+                    .map(|x| x.to_uppercase().collect::<String>() + c.as_str())
+                    .unwrap_or_default()
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+        let logos: Vec<_> = a
+            .select(&images)
+            .filter_map(|i| i.value().attr("src").and_then(logo))
+            .take(2)
+            .collect();
+        rows.push(json!({"videoId":parts[2],"title":title,"url":u.as_str(),"page":u.as_str(),"published":published,"league":league,"source":"HooFoot","sections":[],"thumbnail":logos.first(),"awayLogo":logos.get(1)}));
+    }
+    rows.sort_by(|a, b| b["published"].as_str().cmp(&a["published"].as_str()));
+    rows
+}
+fn stream_catalog(mut reader: impl Read) -> Result<(Vec<Value>, bool), String> {
+    let mut buffer = Vec::new();
+    let mut chunk = [0u8; 8192];
+    let mut total = 0usize;
+    let mut rows = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut partial = false;
+    loop {
+        let n = match reader.read(&mut chunk) {
+            Ok(n) => n,
+            Err(_) if !rows.is_empty() => {
+                partial = true;
+                break;
             }
-            item["sections"] = if section.is_empty() {
-                json!([])
-            } else {
-                json!([section])
+            Err(_) => return Err("Could not read HooFoot highlights. Please retry.".into()),
+        };
+        if n == 0 {
+            break;
+        }
+        total += n;
+        if total > 30_000_000 {
+            return Err("HooFoot returned an unexpectedly large page.".into());
+        }
+        buffer.extend_from_slice(&chunk[..n]);
+        loop {
+            let Some(start) = buffer.windows(3).position(|w| w == b"<a ") else {
+                if buffer.len() > 2 {
+                    buffer.drain(..buffer.len() - 2);
+                }
+                break;
             };
-            item["views"] = json!(row["view_count"].as_u64().unwrap_or(0));
-            item["league"] = row["league"].clone();
-            item["embeddable"] = row["embeddable"].clone();
-            videos.push(item);
+            if start > 0 {
+                buffer.drain(..start);
+            }
+            let Some(end) = buffer.windows(4).position(|w| w == b"</a>") else {
+                if buffer.len() > 131072 {
+                    return Err("Invalid highlight markup.".into());
+                }
+                break;
+            };
+            let end = end + 4;
+            let text = String::from_utf8_lossy(&buffer[..end]);
+            if text.contains("-highlights-") {
+                for row in parse_catalog(&text) {
+                    if seen.insert(row["url"].as_str().unwrap().to_string()) {
+                        rows.push(row);
+                    }
+                }
+            }
+            buffer.drain(..end);
         }
     }
-    if !rows.is_empty() && videos.is_empty() {
-        return Err("Highlights feed metadata unavailable".into());
-    }
-    Ok(json!({"videos":videos,"partial":false,"source":"MatchHighlights","feed":"live"}))
+    rows.sort_by(|a, b| b["published"].as_str().cmp(&a["published"].as_str()));
+    Ok((rows, partial))
 }
+static CATALOG: Mutex<Option<(Instant, Value)>> = Mutex::new(None);
 pub fn catalog(c: &Client) -> Result<Value, String> {
-    if let Some((time, data)) = CATALOG
+    if let Some((at, data)) = CATALOG
         .lock()
-        .map_err(|_| "Catalog cache unavailable")?
+        .map_err(|_| "Highlights cache unavailable")?
         .as_ref()
     {
-        if time.elapsed() < Duration::from_secs(300) {
+        if at.elapsed() < Duration::from_secs(300) {
             return Ok(data.clone());
         }
     }
-    // This is the same unauthenticated public feed used by the site's browser UI.
-    // Its pre-rendered HTML can lag behind the live catalog by several days.
-    let live = c
-        .get("https://matchhighlights.live/api/public-data/cached_highlights")
-        .query(&[
-            (
-                "select",
-                "video_id,title,published_at,league,embeddable,section,view_count",
-            ),
-            ("order", "published_at.desc"),
-            ("limit", "500"),
-        ])
-        .timeout(Duration::from_secs(15))
+    let response = c
+        .get(format!("{SOURCE}/full-matches/"))
+        .timeout(Duration::from_secs(55))
         .send()
         .and_then(|r| r.error_for_status())
-        .and_then(|r| r.json::<Value>())
-        .map_err(|e| e.to_string())
-        .and_then(|data| public_catalog(&data));
-    if let Ok(data) = live {
-        *CATALOG.lock().map_err(|_| "Catalog cache unavailable")? =
-            Some((Instant::now(), data.clone()));
-        return Ok(data);
+        .map_err(|_| "Could not reach HooFoot. Please retry.")?;
+    let (videos, partial) = stream_catalog(response)?;
+    if videos.is_empty() {
+        return Err(
+            "No playable highlight links were found on HooFoot. Please retry later.".into(),
+        );
     }
-    let html = c
-        .get("https://matchhighlights.live/")
+    let result = json!({"videos":videos,"partial":partial,"source":"HooFoot","feed":"catalog"});
+    *CATALOG.lock().map_err(|_| "Highlights cache unavailable")? =
+        Some((Instant::now(), result.clone()));
+    Ok(result)
+}
+fn team_key(s: &str) -> String {
+    s.to_lowercase()
+        .replace("paris saint-germain", "psg")
+        .replace("manchester united", "man united")
+        .replace("manchester city", "man city")
+        .split_whitespace()
+        .filter(|s| !matches!(*s, "fc" | "afc" | "cf"))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+// Use the publisher's player, including its ads and availability checks.
+pub fn official(c: &Client, args: &Value) -> Result<Value, String> {
+    let home = args["home"]
+        .as_str()
+        .filter(|s| (3..=120).contains(&s.len()))
+        .ok_or("Invalid home team")?;
+    let away = args["away"]
+        .as_str()
+        .filter(|s| (3..=120).contains(&s.len()))
+        .ok_or("Invalid away team")?;
+    let date = args["date"]
+        .as_str()
+        .filter(|s| s.len() == 8 && s.bytes().all(|b| b.is_ascii_digit()))
+        .ok_or("Invalid match date")?;
+    let data: Value = c.get(format!("https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates={date}&limit=1000"))
+        .timeout(Duration::from_secs(12)).send().and_then(|r|r.error_for_status()).and_then(|r|r.json()).map_err(|_| "Official highlights lookup unavailable")?;
+    let event = data["events"].as_array().into_iter().flatten().find(|e| {
+        let teams = &e["competitions"][0]["competitors"];
+        let names: Vec<_> = teams
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|t| team_key(t["team"]["displayName"].as_str().unwrap_or("")))
+            .collect();
+        names.contains(&team_key(home)) && names.contains(&team_key(away))
+    });
+    let Some(id) = event
+        .and_then(|e| e["id"].as_str())
+        .filter(|s| s.bytes().all(|b| b.is_ascii_digit()))
+    else {
+        return Ok(json!({"video":null}));
+    };
+    let summary: Value = c
+        .get(format!(
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event={id}"
+        ))
         .timeout(Duration::from_secs(12))
         .send()
         .and_then(|r| r.error_for_status())
-        .and_then(|r| r.text())
-        .map_err(|e| e.to_string())?;
-    let pages = catalog_pages(&html);
-    if pages.is_empty() {
-        return Err("Highlights catalog is unavailable. Please try Refresh.".into());
+        .and_then(|r| r.json())
+        .map_err(|_| "Official highlights lookup unavailable")?;
+    if summary["header"]["id"].as_str() != Some(id) {
+        return Err("Official match identity mismatch".into());
     }
-    // Bounded parallel detail reads; a complete catalog never blocks IPC indefinitely.
-    let next = AtomicUsize::new(0);
-    let videos = Mutex::new(Vec::<Value>::new());
-    let errors = AtomicUsize::new(0);
-    let started = Instant::now();
-    std::thread::scope(|scope| {
-        for _ in 0..6 {
-            scope.spawn(|| {
-                while started.elapsed() < Duration::from_secs(25) {
-                    let i = next.fetch_add(1, Ordering::Relaxed);
-                    let Some((page, league)) = pages.get(i) else {
-                        break;
-                    };
-                    let result = c
-                        .get(page)
-                        .timeout(Duration::from_secs(6))
-                        .send()
-                        .and_then(|r| r.error_for_status())
-                        .and_then(|r| r.text());
-                    let Ok(html) = result else {
-                        errors.fetch_add(1, Ordering::Relaxed);
-                        continue;
-                    };
-                    let mut found = false;
-                    for script in Html::parse_document(&html)
-                        .select(&Selector::parse("script[type='application/ld+json']").unwrap())
-                    {
-                        if let Ok(data) = serde_json::from_str::<Value>(&script.inner_html()) {
-                            if let Some(mut v) = catalog_video(&data, page) {
-                                v["league"] = json!(league);
-                                let mut rows = videos.lock().unwrap();
-                                if !rows.iter().any(|r| r["videoId"] == v["videoId"]) {
-                                    rows.push(v)
-                                }
-                                found = true;
-                            }
-                        }
-                    }
-                    if !found {
-                        errors.fetch_add(1, Ordering::Relaxed);
-                    }
-                }
-            });
-        }
-    });
-    let videos = videos.into_inner().map_err(|_| "Catalog unavailable")?;
-    if videos.is_empty() {
-        return Err("Could not load highlight videos. Please try Refresh.".into());
-    }
-    let result =
-        json!({"videos":videos,"partial":true,"source":"MatchHighlights","feed":"html-fallback"});
-    Ok(result)
+    Ok(json!({"video":official_video(&summary)}))
+}
+fn official_video(summary: &Value) -> Option<Value> {
+    summary["videos"].as_array()?.iter().filter(|v|v["source"]=="espn").find_map(|v|{
+        let id=v["id"].as_u64()?;
+        let title=v["headline"].as_str()?;
+        let label=format!("{} {}",title,v["description"].as_str().unwrap_or("")).to_lowercase();
+        if !["highlight","recap","goals"].iter().any(|s|label.contains(s)){return None;}
+        Some(json!({"source":"ESPN","title":title,"embed":format!("https://www.espn.com/core/video/iframe?id={id}&endcard=false")}))
+    })
 }
 pub fn fetch(c: &Client, args: &Value) -> Result<Value, String> {
     let home = args["home"]
@@ -314,193 +349,110 @@ pub fn fetch(c: &Client, args: &Value) -> Result<Value, String> {
         .as_str()
         .filter(|s| (3..=120).contains(&s.len()))
         .ok_or("Invalid away team")?;
-    let kickoff = args["kickoff"]
-        .as_i64()
-        .filter(|t| *t > 0)
-        .ok_or("Invalid kickoff")?;
-    if let Ok(data) = catalog(c) {
-        if data["feed"] == "live" {
-            let videos: Vec<Value> = data["videos"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .filter(|v| {
-                    matches(v["title"].as_str().unwrap_or(""), home, away)
-                        && v["published"]
-                            .as_str()
-                            .and_then(published_day)
-                            .is_some_and(|day| (0..=3).contains(&(day - kickoff.div_euclid(86400))))
-                })
-                .cloned()
-                .collect();
-            let mut browse = url::Url::parse("https://matchhighlights.live/").unwrap();
-            browse.query_pairs_mut().append_pair("q", home);
-            return Ok(json!({"videos":videos,"browse":browse.as_str()}));
-        }
-    }
-    let mut search = url::Url::parse("https://matchhighlights.live/").unwrap();
-    search
-        .query_pairs_mut()
-        .append_pair("q", &format!("{home} {away}"));
-    let get = |u: &str| -> Result<String, String> {
-        c.get(u)
-            .timeout(Duration::from_secs(12))
-            .send()
-            .and_then(|r| r.error_for_status())
-            .and_then(|r| r.text())
-            .map_err(|e| e.to_string())
-    };
-    let html = get(search.as_str())?;
-    let doc = Html::parse_document(&html);
-    let mut pages = Vec::new();
-    for a in doc.select(&Selector::parse("a[href^='/video/']").unwrap()) {
-        let title = a.value().attr("aria-label").unwrap_or("").to_string()
-            + " "
-            + &a.text().collect::<Vec<_>>().join(" ");
-        let href = a.value().attr("href").unwrap_or("");
-        let page = format!("https://matchhighlights.live{href}");
-        if matches(&title, home, away) && allowed_url(&page) && !pages.contains(&page) {
-            pages.push(page)
-        }
-        if pages.len() == 3 {
-            break;
-        }
-    }
-    let mut videos = Vec::new();
-    let mut failed = false;
-    for page in pages {
-        let Ok(html) = get(&page) else {
-            failed = true;
-            continue;
-        };
-        for script in Html::parse_document(&html)
-            .select(&Selector::parse("script[type='application/ld+json']").unwrap())
-        {
-            if let Ok(data) = serde_json::from_str::<Value>(&script.inner_html()) {
-                if let Some(v) = video(&data, home, away, kickoff, &page) {
-                    if !videos.iter().any(|r: &Value| r["videoId"] == v["videoId"]) {
-                        videos.push(v)
-                    }
-                }
-            }
-        }
-    }
-    if videos.is_empty() && failed {
-        return Err("Could not load highlight details. Please retry.".into());
-    }
-    Ok(json!({"videos":videos,"browse":search.as_str()}))
+    let data = catalog(c)?;
+    let h = team_key(home);
+    let a = team_key(away);
+    let videos: Vec<_> = data["videos"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|v| {
+            let title = team_key(v["title"].as_str().unwrap_or(""));
+            title.contains(&h) && title.contains(&a)
+        })
+        .cloned()
+        .collect();
+    Ok(json!({"videos":videos,"browse":"https://hoofoot.net/full-matches/"}))
 }
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn homepage_cards_and_metadata() {
-        let pages = catalog_pages(
-            r#"<a href="/video/one/"><span class="mh-scorebug-competition">La Liga</span></a><a href="/video/one/">duplicate</a><a href="https://evil.test/video/x/">bad</a><a href="/video/two/">second</a>"#,
-        );
-        assert_eq!(pages.len(), 2);
-        assert_eq!(pages[0].1, "La Liga");
-        let item = json!({"@type":"VideoObject","name":"A highlights","uploadDate":"2026-10-19T01:00:00Z","embedUrl":"https://www.youtube.com/embed/SjxTxaJUvpU"});
-        let result = catalog_video(&item, &pages[0].0).unwrap();
-        assert_eq!(
-            result["thumbnail"],
-            "https://i.ytimg.com/vi/SjxTxaJUvpU/hqdefault.jpg"
-        );
-        let mut bad = item.clone();
-        bad["embedUrl"] = json!("https://evil.test/embed/SjxTxaJUvpU");
-        assert!(catalog_video(&bad, &pages[0].0).is_none());
-        bad = item;
-        bad["uploadDate"] = json!("unknown");
-        assert!(catalog_video(&bad, &pages[0].0).is_none());
-    }
-    #[test]
-    fn live_feed_normalization() {
-        let row = json!({"video_id":"I1yeLaFydjM","title":"Real Madrid 4-1 Sevilla","published_at":"2026-10-18T22:01:31+00:00","league":"La Liga","embeddable":true,"section":"la_liga","view_count":10});
-        let mut invalid = row.clone();
-        invalid["video_id"] = json!("bad/id");
-        let mut trending = row.clone();
-        trending["section"] = json!("trending");
-        trending["view_count"] = json!(20);
-        let data = public_catalog(&json!([row.clone(), trending, row, invalid])).unwrap();
-        assert_eq!(data["videos"].as_array().unwrap().len(), 1);
-        assert_eq!(data["feed"], "live");
-        assert_eq!(
-            data["videos"][0]["sections"],
-            json!(["la_liga", "trending"])
-        );
-        assert_eq!(data["videos"][0]["views"], 20);
-        assert_eq!(data["videos"][0]["published"], "2026-10-18T22:01:31+00:00");
-        assert!(public_catalog(&json!({"error":"unavailable"})).is_err());
+    #[ignore = "requires ESPN public services"]
+    fn live_official_match_lookup() {
+        let result = official(
+            &crate::provider::client().unwrap(),
+            &json!({"home":"United States","away":"Zambia","date":"20240725"}),
+        )
+        .unwrap();
+        assert_eq!(result["video"]["source"], "ESPN");
         assert!(
-            public_catalog(&json!([])).unwrap()["videos"]
-                .as_array()
-                .unwrap()
-                .is_empty()
-        );
-    }
-    #[test]
-    #[ignore = "requires the live homepage"]
-    fn live_homepage_catalog() {
-        let data = catalog(&crate::provider::client().unwrap()).unwrap();
-        let rows = data["videos"].as_array().unwrap();
-        assert!(!rows.is_empty());
-        assert!(rows.iter().all(|r| {
-            r["thumbnail"]
+            result["video"]["embed"]
                 .as_str()
                 .unwrap()
-                .starts_with("https://i.ytimg.com/vi/")
-        }));
-        println!(
-            "Homepage catalog: {} unique videos; partial={}",
-            rows.len(),
-            data["partial"]
+                .starts_with("https://www.espn.com/core/video/iframe?id=")
         );
     }
     #[test]
-    #[ignore = "requires the live MatchHighlights catalog"]
-    fn live_catalog() {
-        let c = crate::provider::client().unwrap();
-        let result=fetch(&c,&json!({"home":"Liverpool","away":"Manchester City","kickoff":published_day("2026-10-11").unwrap()*86400})).unwrap();
-        assert!(
-            result["videos"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .any(|v| v["videoId"] == "3uoy7oVLriY")
+    fn official_publisher_player_only() {
+        let v=official_video(&json!({"videos":[{"source":"other","id":1,"headline":"Highlights"},{"source":"espn","id":42,"headline":"Match recap"}]})).unwrap();
+        assert_eq!(
+            v["embed"],
+            "https://www.espn.com/core/video/iframe?id=42&endcard=false"
         );
-        println!(
-            "Matched live catalog video: {}",
-            result["videos"][0]["title"]
-        );
-    }
-    #[test]
-    fn identity_date_and_url_guards() {
-        assert!(matches(
-            "Manchester Utd vs Bournemouth highlights",
-            "Manchester United",
-            "Bournemouth AFC"
-        ));
-        assert!(!matches(
-            "Manchester City vs Bournemouth highlights",
-            "Manchester United",
-            "Bournemouth AFC"
-        ));
-        assert!(!matches("Inter Miami vs Milan", "Inter", "AC Milan"));
-        let d = json!({"@type":"VideoObject","name":"Liverpool vs Manchester City highlights","uploadDate":"2026-10-11T18:00:00Z","embedUrl":"https://www.youtube.com/embed/3uoy7oVLriY"});
-        let t = published_day("2026-10-11").unwrap() * 86400;
         assert!(
-            video(
-                &d,
-                "Liverpool",
-                "Manchester City",
-                t,
-                "https://matchhighlights.live/video/test/"
+            official_video(
+                &json!({"videos":[{"source":"espn","id":1,"headline":"Transfer discussion"}]})
             )
-            .is_some()
+            .is_none()
         );
-        assert!(video(&d, "Liverpool", "Manchester City", t + 86400 * 7, "").is_none());
-        assert!(!allowed_url("https://www.youtube.com.evil.test/watch?v=x"));
-        assert!(!allowed_url("file:///test"));
-        assert!(allowed_url("https://www.youtube.com/watch?v=x"));
+    }
+    #[test]
+    fn source_pages_dates_and_playable_cards() {
+        let html = r#"<a href='/full-matches/champions-league/psg-vs-barcelona-highlights-october-20-2026/'><img alt='Paris Saint-Germain' src='https://hoofoot.thertstv.com/logos/160-128.webp'><img alt='Barcelona' src='https://hoofoot.thertstv.com/logos/83-128.webp'><span>Highlights</span></a><a href='/full-matches/premier-league/a-vs-b-highlights-october-21-2026/'><span>View Details</span></a><a href='https://evil.test/full-matches/la-liga/a-vs-b-highlights-october-20-2026/'><span>Highlights</span></a>"#;
+        struct Tiny<'a>(&'a [u8]);
+        impl Read for Tiny<'_> {
+            fn read(&mut self, out: &mut [u8]) -> std::io::Result<usize> {
+                let n = out.len().min(3).min(self.0.len());
+                out[..n].copy_from_slice(&self.0[..n]);
+                self.0 = &self.0[n..];
+                Ok(n)
+            }
+        }
+        let streamed = stream_catalog(Tiny(html.as_bytes())).unwrap();
+        let rows = parse_catalog(html);
+        assert_eq!(streamed, (rows.clone(), false));
+        struct Interrupted<'a>(&'a [u8]);
+        impl Read for Interrupted<'_> {
+            fn read(&mut self, out: &mut [u8]) -> std::io::Result<usize> {
+                if self.0.is_empty() {
+                    return Err(std::io::Error::from(std::io::ErrorKind::TimedOut));
+                }
+                self.0.read(out)
+            }
+        }
+        assert_eq!(
+            stream_catalog(Interrupted(html.as_bytes())).unwrap(),
+            (rows.clone(), true)
+        );
+        assert!(stream_catalog(Interrupted(&[])).is_err());
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["title"], "Paris Saint-Germain vs Barcelona");
+        assert_eq!(rows[0]["league"], "Champions League");
+        assert_eq!(rows[0]["published"], "2026-10-20T00:00:00");
+        assert!(date_from_path("/a-highlights-february-30-2026/").is_none());
+        assert!(date_from_path("/a-highlights-february-29-2024/").is_some());
+        for bad in [
+            "https://hoofoot.net.evil.test/full-matches/",
+            "http://hoofoot.net/full-matches/",
+            "https://x@hoofoot.net/full-matches/",
+            "https://hoofoot.net/full-matches/?redirect=evil",
+            "https://hoofoot.net/other/",
+        ] {
+            assert!(!allowed_url(bad));
+        }
+        assert!(allowed_url(
+            "https://hoofoot.net/full-matches/la-liga/a-vs-b-highlights-october-20-2026/"
+        ));
+    }
+    #[test]
+    #[ignore = "requires the public HooFoot homepage"]
+    fn live_catalog() {
+        let data = catalog(&crate::provider::client().unwrap()).unwrap();
+        assert_eq!(data["source"], "HooFoot");
+        assert!(!data["videos"].as_array().unwrap().is_empty());
+        for v in data["videos"].as_array().unwrap() {
+            assert!(allowed_url(v["url"].as_str().unwrap()));
+        }
     }
 }

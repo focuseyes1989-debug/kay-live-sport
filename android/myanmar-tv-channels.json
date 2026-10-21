@@ -1,18 +1,8 @@
 [
   {
-    "id": "5plus",
-    "name": "5 Plus",
-    "stream": ""
-  },
-  {
     "id": "channel7",
     "name": "Channel 7",
     "stream": "https://live.pyoneplay.com/live/01m2sr3kyn6bztz3xk02w3t7pn/index.m3u8"
-  },
-  {
-    "id": "channelk",
-    "name": "Channel K",
-    "stream": ""
   },
   {
     "id": "channelme",
@@ -22,7 +12,10 @@
   {
     "id": "dvb",
     "name": "DVB TV",
-    "stream": "https://live-stream.dvb.no/hls/stream.m3u8"
+    "stream": "https://live-stream.dvb.no/hls/stream.m3u8",
+    "fallbacks": [
+      "https://live-stream.dvb.no/hls/stream_src/index.m3u8"
+    ]
   },
   {
     "id": "farmer",
@@ -30,39 +23,14 @@
     "stream": "https://mrtvott.com/cache/MRTV-FARMER/master.m3u8"
   },
   {
-    "id": "fortune",
-    "name": "Fortune TV",
-    "stream": ""
-  },
-  {
-    "id": "heyplay",
-    "name": "HEY Play",
-    "stream": ""
-  },
-  {
     "id": "hluttaw",
     "name": "Hluttaw Channel",
     "stream": "https://mrtvott.com/cache/MRTV-HLUTTAW/master.m3u8"
   },
   {
-    "id": "mchannel",
-    "name": "M Channel",
-    "stream": ""
-  },
-  {
-    "id": "mahar",
-    "name": "Mahar",
-    "stream": "https://ygncdn.com/live/mahar/playlist.m3u8"
-  },
-  {
     "id": "maharbawdi",
     "name": "Mahar BawDi",
     "stream": "https://live.pyoneplay.com/live/01m2tfrqkdceydf6g6f48pdrmn/index.m3u8"
-  },
-  {
-    "id": "maharesports",
-    "name": "Mahar Esports",
-    "stream": "https://ygncdn.com/live/maharesports/playlist.m3u8"
   },
   {
     "id": "mitv",
