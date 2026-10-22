@@ -1,9 +1,26 @@
+// Display priority for league filters; other competitions follow alphabetically.
+function leagueFilterRank(name){
+ const key=String(name).toLowerCase().replace(/[^a-z0-9]/g,'');
+ const groups=[
+  ['uefachampionsleague','championsleague','championleague'],
+  ['uefaeuropaleague','europaleague'],
+  ['englishpremierleague','englandpremierleague','premierleague'],
+  ['spanishlaliga','spainlaliga','laliga','primeradivision','spanishprimeradivision'],
+  ['italianseriea','italyseriea','seriea'],
+  ['germanbundesliga','germanybundesliga','bundesliga'],
+  ['frenchligue1','franceligue1','ligue1'],
+  ['uefaconferenceleague','uefaeuropaconferenceleague','europaconferenceleague','conferenceleague']
+ ];
+ const rank=groups.findIndex(aliases=>aliases.includes(key));
+ return rank<0?groups.length:rank;
+}
+function compareFilterLeagues(a,b){return leagueFilterRank(a)-leagueFilterRank(b)||a.localeCompare(b);}
 let matchLeague='',matchLeagueOptionsKey=null;
 try{const saved=JSON.parse(localStorage.getItem('live-sport.match-league'));if(typeof saved==='string'&&saved.length<=200)matchLeague=saved;}catch{}
 function matchesMatchLeague(match){return !matchLeague||match.league===matchLeague;}
 function updateMatchLeagues(){
  const select=$('match-league');
- const leagues=[...new Set(matches.filter(m=>!m.finished&&(filter!=='live'||m.live)).map(m=>m.league).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const leagues=[...new Set(matches.filter(m=>!m.finished&&(filter!=='live'||m.live)).map(m=>m.league).filter(Boolean))].sort(compareFilterLeagues);
  const key=JSON.stringify([leagues,matchLeague]);if(key===matchLeagueOptionsKey)return;matchLeagueOptionsKey=key;
  select.replaceChildren(new Option('All leagues',''));
  for(const league of leagues)select.add(new Option(league,league));
@@ -25,7 +42,7 @@ try{const saved=JSON.parse(localStorage.getItem('live-sport.results-league'));if
 function matchesResultsLeague(match){return !resultsLeague||match.league===resultsLeague;}
 function updateResultsLeagues(){
  const select=$('results-league');
- const leagues=[...new Set(resultMatches.map(m=>m.league).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const leagues=[...new Set(resultMatches.map(m=>m.league).filter(Boolean))].sort(compareFilterLeagues);
  select.replaceChildren(new Option('All leagues',''));
  for(const league of leagues)select.add(new Option(league,league));
  if(resultsLeague&&!leagues.includes(resultsLeague))select.add(new Option(resultsLeague+' (no results)',resultsLeague));
