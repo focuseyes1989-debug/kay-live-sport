@@ -1,5 +1,6 @@
 /target/
 /dist/*.exe
+/dist/github-pages/
 /dist/*.WebView2/
 /KAYLiveSport-windows-x64.exe
 *.download

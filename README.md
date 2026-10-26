@@ -17,6 +17,8 @@ Video availability depends on the stream provider. Scores and video use separate
 
 ## Download and run
 
+Choose Phone, Tablet, Android TV or Windows on the [download website](https://focuseyes1989-debug.github.io/kay-live-sport/).
+
 Download `KAYLiveSport-windows-x64.exe` from [Releases](https://github.com/focuseyes1989-debug/kay-live-sport/releases). Windows x64 and Microsoft Edge WebView2 Runtime are required. Internet access is required for match data and video. No Node.js or local server is needed to run the EXE.
 
 ## Build
