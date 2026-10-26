@@ -11,6 +11,7 @@ body.phone-edition{background:#0a1119;font-size:14px}
 .phone-edition .search-wrap input{height:42px;border-radius:13px;font-size:14px}
 .phone-edition #toggle-sidebar,.phone-edition .filters,.phone-edition #mobile-match-summary,.phone-edition #mobile-drawer-backdrop{display:none!important}
 .phone-edition #match-league-controls{display:none!important}
+.phone-data-status{margin:-4px 0 12px;font-size:11px;line-height:1.5;color:var(--muted)}
 .phone-edition main,.phone-edition.sidebar-hidden main{height:calc(var(--app-height,100vh) - 116px)!important;display:block!important;width:100%!important;margin-left:0!important}
 .phone-edition #matches-sidebar{padding:0 16px 24px!important;background:transparent;overflow:auto}
 body.phone-edition #mobile-tabs{position:sticky;inset:0 auto auto;z-index:4;display:flex!important;flex-direction:row;width:100%;max-width:none;height:64px;margin:0;padding:10px 0;gap:8px;border:0;border-radius:0;box-shadow:none;background:#0a1119}

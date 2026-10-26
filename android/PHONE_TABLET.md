@@ -6,6 +6,8 @@ The Tablet edition retains the previous Phone/Tablet layout and its existing pag
 
 Phone does not show the league filter and ignores a previously saved league selection without overwriting it for Tablet. Settings → Appearance has Light/Dark buttons. Light is the default; the Phone theme preference persists across restarts and is cleared by Reset settings. Playback remains dark in both themes.
 
+Phone loads fixtures eagerly rather than on page entry. A fixture snapshot no older than five minutes appears immediately on restart, followed by parallel fixture/score requests. Matches/Live switches filter the in-memory list without fetching. Visible foreground sessions refresh 30 seconds after the previous update completes; hidden/offline sessions pause polling and refresh on resume/reconnection. Background updates retain the list, scroll position and focused fixture and do not show the central loading box over an existing list. Manual refresh and cold launches still show loading feedback. Tablet and TV keep their previous lazy-loading behavior.
+
 Build from the repository root in PowerShell:
 
 ```powershell

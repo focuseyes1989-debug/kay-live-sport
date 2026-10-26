@@ -1,24 +1,21 @@
-## KAY LIVE SPORT Android v0.1.27 — Phone and Tablet editions
+## KAY LIVE SPORT Android v0.1.28 — Faster Phone loading
 
-### Phone
-- New single-page Matches / Live navigation, search and direct fullscreen playback when a fixture is selected.
-- Tries available provider channels even when a fixture is still marked Scheduled. Fixtures without links show the waiting state.
-- Back stops playback and returns to the fixture list. Commentator selection, Retry and Fit / Fill remain available in fullscreen.
-- Removes the league filter and ignores old league selections without overwriting Tablet preferences.
-- Light theme by default, with persistent Light / Dark buttons under Settings → Appearance.
-- Clear, centered data-loading messages in both themes.
-- Clean tab backgrounds, compact landscape controls and a single-row landscape header.
+Phone now shows a recent saved fixture list immediately and refreshes it in the background, instead of fetching on page entry.
 
-### Tablet and TV
-- Tablet keeps the previous Phone/Tablet layout, including Scores, Highlights and Myanmar TV.
-- Tablet has its own APK/update asset names; Phone and Tablet labels now identify the edition.
-- TV retains its current UI. TV APKs are included to keep the shared Android update channel complete.
+- Starts fixture and ESPN/FotMob score requests in parallel; fixtures appear without waiting for slower score responses.
+- Matches / Live switches filter the in-memory list without sending new data requests.
+- Refreshes while visible, 30 seconds after the previous update completes. Hidden/offline sessions pause; resume and reconnection trigger an update when needed.
+- Deduplicates concurrent refreshes and keeps existing fixtures, scroll position and focused card during background updates.
+- Uses fixture snapshots for up to five minutes. Expired snapshots are ignored; failed updates keep the previous list, and valid empty responses clear old cached fixtures.
+- Background updates over an existing list use a small status label. Cold launches and manual refresh retain the centered loading feedback.
 
-### Downloads and settings
-- Phone: KAYLiveSport-android-arm64-debug.apk or KAYLiveSport-android-arm32-debug.apk.
-- Tablet: KAYLiveSport-tablet-arm64-debug.apk or KAYLiveSport-tablet-arm32-debug.apk.
-- TV: KAYLiveSport-tv-arm32-debug.apk or KAYLiveSport-tv-arm64-debug.apk.
+Tablet and TV retain their existing lazy-loading behavior. Phone Light/Dark themes, fullscreen/Back, search and stream fallback remain available. Windows is unchanged.
 
-Existing Phone/Tablet users who prefer the old layout should install the Tablet APK. All editions retain the existing application ID and signing certificate: install over the current app without uninstalling to preserve settings. Editions replace each other rather than installing side by side. Packages remain preview/debug builds. Windows is unchanged in this release.
+### Downloads
+- Phone: KAYLiveSport-android-arm64-debug.apk / KAYLiveSport-android-arm32-debug.apk.
+- Tablet (previous full Phone/Tablet UI): KAYLiveSport-tablet-arm64-debug.apk / KAYLiveSport-tablet-arm32-debug.apk.
+- TV: KAYLiveSport-tv-arm32-debug.apk / KAYLiveSport-tv-arm64-debug.apk.
 
-Validation: shared Rust/UI tests, Phone integration checks for theme persistence, league-filter removal, fullscreen/Back and responsive tab geometry; Tablet/TV loading and lazy-page regressions; native builds; APK versions, signing certificates, alignment and uploaded SHA-256 verification. Redmi update installation was verified during development, but physical-device UI/playback testing remains incomplete because the device was asleep/disconnected.
+Install the correct edition over the existing app without uninstalling to preserve settings. All editions use the existing application ID and signing certificate and replace each other rather than installing side by side. Packages remain preview/debug builds.
+
+Validation: shared Rust/UI tests; Phone controlled-network tests for cache-first display, parallel fetches, instant tab switches, deduplication, foreground refresh/background pause, resume, failure retention and cache expiry; Phone fullscreen/theme/layout regressions; Tablet/TV loading/lazy-page regressions; native builds; APK versions, certificates, alignment and uploaded SHA-256 verification. Redmi v0.1.28 update installation succeeded, but physical-device UI/performance testing remains incomplete because the phone locked before the app test connection was established. No measured live-network speedup is claimed.
