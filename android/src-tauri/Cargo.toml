@@ -1,6 +1,6 @@
 [package]
 name = "kay-live-sport-mobile"
-version = "0.1.26"
+version = "0.1.27"
 edition = "2024"
 [lib]
 name = "kay_live_sport_mobile_lib"

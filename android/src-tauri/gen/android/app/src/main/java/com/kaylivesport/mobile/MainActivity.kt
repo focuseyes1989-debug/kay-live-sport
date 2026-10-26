@@ -65,7 +65,7 @@ class MainActivity : TauriActivity() {
       override fun handleOnBackPressed() {
         val web = findWebView(window.decorView)
         if (web == null) { defaultBack(); return }
-        web.evaluateJavascript("Boolean(window.kayTvBack && window.kayTvBack())") { handled ->
+        web.evaluateJavascript("Boolean((window.kayPhoneBack && window.kayPhoneBack()) || (window.kayTvBack && window.kayTvBack()))") { handled ->
           if (handled != "true") defaultBack()
         }
       }

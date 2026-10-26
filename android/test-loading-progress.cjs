@@ -20,6 +20,13 @@ const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs
   assert.deepEqual(await page.evaluate(()=>firstLoad),{teams:['kept']});
   await page.evaluate(()=>progressDeferred[1].reject(Error('Offline')));await page.waitForFunction(()=>document.querySelector('#lazy-load-progress').dataset.state==='warning');
   assert.equal(await box.locator('progress').getAttribute('value'),'100');assert.match(await box.innerText(),/1 unavailable/);assert.deepEqual(await page.evaluate(()=>secondLoad),{error:'Offline'});
+  if(await page.locator('body').evaluate(e=>e.classList.contains('phone-edition'))){
+   for(const [width,height,theme] of [[390,844,'light'],[844,390,'dark'],[320,740,'light']]){
+    await page.setViewportSize({width,height});await page.evaluate(theme=>document.documentElement.dataset.phoneTheme=theme,theme);
+    const rect=await box.boundingBox();assert(rect);assert(Math.abs(rect.x+rect.width/2-width/2)<2);assert(Math.abs(rect.y+rect.height/2-height/2)<2);assert(rect.x>=0&&rect.y>=0&&rect.x+rect.width<=width&&rect.y+rect.height<=height);
+   }
+   await page.screenshot({path:path.join(__dirname,'../dist/phone-loading-centered.png')});
+  }
   await page.screenshot({path:path.join(__dirname,'../dist/loading-progress-'+(process.env.KAY_PROGRESS_WINDOWS==='1'?'windows':process.env.KAY_TV==='1'?'tv':'phone')+'.png')});
   assert.deepEqual(errors,[]);console.log('Loading progress: concurrent requests, indeterminate state, real completion counts, failure and unchanged results passed');
  }finally{if(browser)await browser.close();server.close();}

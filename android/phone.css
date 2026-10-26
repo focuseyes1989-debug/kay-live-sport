@@ -1,0 +1,109 @@
+/* Dedicated phone layout. Tablet and TV retain their existing layouts. */
+body.phone-edition{background:#0a1119;font-size:14px}
+.phone-edition header{height:116px;grid-template-columns:minmax(0,1fr) 40px 40px;padding:10px 16px;gap:10px}
+.phone-edition header .brand{min-width:0;grid-column:1;grid-row:1}
+.phone-edition header h1{font-size:14px;letter-spacing:.4px}
+.phone-edition header .edition-label{display:none}
+.phone-edition header .eyebrow{font-size:8px}
+.phone-edition #settings-menu-button{grid-column:2;grid-row:1}
+.phone-edition #refresh{grid-column:3;grid-row:1}
+.phone-edition header .search-wrap{grid-column:1/-1;grid-row:2;display:block!important;max-width:none!important}
+.phone-edition .search-wrap input{height:42px;border-radius:13px;font-size:14px}
+.phone-edition #toggle-sidebar,.phone-edition .filters,.phone-edition #mobile-match-summary,.phone-edition #mobile-drawer-backdrop{display:none!important}
+.phone-edition #match-league-controls{display:none!important}
+.phone-edition main,.phone-edition.sidebar-hidden main{height:calc(var(--app-height,100vh) - 116px)!important;display:block!important;width:100%!important;margin-left:0!important}
+.phone-edition #matches-sidebar{padding:0 16px 24px!important;background:transparent;overflow:auto}
+body.phone-edition #mobile-tabs{position:sticky;inset:0 auto auto;z-index:4;display:flex!important;flex-direction:row;width:100%;max-width:none;height:64px;margin:0;padding:10px 0;gap:8px;border:0;border-radius:0;box-shadow:none;background:#0a1119}
+.phone-edition #mobile-tabs button{display:none!important}
+.phone-edition #mobile-tabs #mobile-matches,.phone-edition #mobile-tabs #mobile-live{display:flex!important;flex-direction:row;align-items:center;justify-content:center;gap:8px;width:auto;min-height:44px;border-radius:13px;font-size:14px;font-weight:650;flex:1}
+.phone-edition #mobile-tabs svg,.phone-edition #mobile-live>span{display:none!important}
+.phone-edition #mobile-tabs #mobile-matches span{font-size:14px}
+.phone-edition #mobile-tabs button.active{background:#235640!important;border:1px solid #42bd8b;color:#c6ffe1}
+.phone-edition #mobile-tabs button:not(.active){background:#14232b!important;border:1px solid #253b43;color:#9fb4c1}
+.phone-edition #mobile-tabs .nav-live-label{font-size:13px;color:#ff6376}
+.phone-edition .list-heading{margin:8px 0 14px}.phone-edition .list-heading h2{font-size:17px}
+.phone-edition .card{padding:16px;margin-bottom:12px;border-radius:18px;background:linear-gradient(135deg,#162638,#111d2b);border-color:#273b4d;min-height:145px}
+.phone-edition .card-head{margin-bottom:13px}.phone-edition .league{font-size:11px;max-width:75%}
+.phone-edition .team-name{font-size:14px;line-height:1.5}.phone-edition .crest{width:30px;height:30px}
+.phone-edition .teams{gap:9px}.phone-edition .score{font-size:24px}.phone-edition .card-foot{margin-top:13px;padding-top:10px;font-size:11px}
+.phone-edition .badge{font-size:9px;padding:4px 7px;border-radius:6px}
+.phone-edition.mobile-watch #mobile-tabs{display:none!important}
+.phone-edition.mobile-watch main>section{display:flex!important;padding:0!important;height:100%;overflow:hidden}
+.phone-edition.mobile-watch header,.phone-edition.mobile-watch .section-top,.phone-edition.mobile-watch #title,.phone-edition.mobile-watch #subtitle,.phone-edition.mobile-watch .scoreboard,.phone-edition.mobile-watch .channels-label,.phone-edition.mobile-watch #message{display:none!important}
+.phone-edition.mobile-watch main{height:var(--app-height,100vh)!important}
+.phone-edition #stage{min-height:0;border-radius:0}
+.phone-player-options{position:absolute;top:0;left:0;right:0;z-index:8;padding:max(10px,env(safe-area-inset-top)) 12px 20px;background:linear-gradient(#000b,transparent);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.phone-player-options #channels{flex:1;margin:0;min-width:100px}
+.phone-player-options button{min-height:40px;background:#152435e8;border-radius:10px;font-size:12px}
+.phone-player-options #retry,.phone-player-options #try-stream{margin:0}
+.phone-edition #stage #empty{height:100%;padding:90px 24px}
+.phone-edition #stage .phone-player-back{flex-shrink:0;font-size:14px}
+.phone-edition #stage #recovery-bar{top:90px;bottom:auto;z-index:7;max-width:calc(100% - 24px)}
+.phone-edition #stage.controls-hidden .phone-player-options{opacity:0;pointer-events:none}
+.phone-edition #stage .player-controls{flex-wrap:wrap;gap:8px}
+.phone-edition #volume,.phone-edition label[for=volume],.phone-edition #volume-value{display:none}
+.phone-edition #settings-menu{top:58px!important;max-height:calc(var(--app-height,100vh) - 72px)}
+@media(orientation:landscape){
+ body.phone-edition header{display:grid;height:60px;grid-template-columns:minmax(140px,190px) minmax(120px,1fr) 40px 40px;padding:8px 16px;gap:10px}
+ .phone-edition header .brand{grid-column:1;grid-row:1}
+ .phone-edition header .search-wrap{grid-column:2;grid-row:1;margin:0!important}
+ .phone-edition #settings-menu-button{grid-column:3}.phone-edition #refresh{grid-column:4}
+ .phone-edition main,.phone-edition.sidebar-hidden main{height:calc(var(--app-height,100vh) - 60px)!important}
+ body.phone-edition #mobile-tabs{height:56px;padding:6px 0;gap:10px;justify-content:center;align-items:center}
+ .phone-edition #mobile-tabs #mobile-matches,.phone-edition #mobile-tabs #mobile-live{flex:0 1 180px;height:44px;min-height:44px;padding:8px 18px;border-radius:12px}
+ .phone-edition .list-heading{margin:6px 0 10px}
+ .phone-edition #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .phone-edition .card{margin:0}
+ .phone-edition.mobile-watch main{height:var(--app-height,100vh)!important}
+}
+.phone-theme-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 3px;font-size:13px}
+.phone-theme-buttons{display:flex;gap:6px}.phone-theme-buttons button{min-height:40px;min-width:64px;border-radius:10px}
+.phone-theme-buttons button[aria-pressed=true]{background:#235640;border-color:#42bd8b;color:#c6ffe1}
+html[data-phone-theme=light]{color-scheme:light;--bg:#f4f7f8;--surface:#fff;--line:#d6e1e5;--muted:#556b7b}
+html[data-phone-theme=light] body.phone-edition{background:#f4f7f8;color:#182d3a}
+html[data-phone-theme=light] .phone-edition header{background:#fff;border-color:#dce6e9}
+html[data-phone-theme=light] .phone-edition header h1{color:#182d3a}
+html[data-phone-theme=light] .phone-edition header h1 span{color:#09774e}
+html[data-phone-theme=light] .phone-edition .eyebrow{color:#526d7d}
+html[data-phone-theme=light] .phone-edition header button{background:#f0f5f6;border-color:#d9e4e8;color:#344e60}
+html[data-phone-theme=light] .phone-edition header button:hover{background:#e0f1e8;border-color:#86bfa5}
+html[data-phone-theme=light] .phone-edition .search-wrap input{background:#f4f7f8;border-color:#d8e2e7;color:#182d3a}
+html[data-phone-theme=light] .phone-edition input::placeholder{color:#627a89}
+html[data-phone-theme=light] .phone-edition #mobile-tabs{background:#f4f7f8}
+html[data-phone-theme=light] .phone-edition #mobile-tabs button.active{background:#d5f0e2!important;border-color:#68b28c;color:#075d3c}
+html[data-phone-theme=light] .phone-edition #mobile-tabs button:not(.active){background:#fff!important;border-color:#d4e0e5;color:#526c7b}
+html[data-phone-theme=light] .phone-edition #mobile-tabs .nav-live-label{color:#bf3148}
+html[data-phone-theme=light] .phone-edition .card{background:#fff;border-color:#d9e4e9;color:#182d3a;box-shadow:0 3px 12px #1b405308}
+html[data-phone-theme=light] .phone-edition .card.active{background:#ecf8f1;border-color:#63b78b;box-shadow:inset 3px 0 #25955e}
+html[data-phone-theme=light] .phone-edition .league{color:#516a7d}
+html[data-phone-theme=light] .phone-edition .card-foot{border-color:#e8eef1;color:#596f7d}
+html[data-phone-theme=light] .phone-edition .card-foot time{color:#425f70}
+html[data-phone-theme=light] .phone-edition .crest-fallback{background:#eaf1f5;border-color:#cfdfe7;color:#496779}
+html[data-phone-theme=light] .phone-edition .badge{color:#b02640;background:#fff0f3;border-color:#efc2cb}
+html[data-phone-theme=light] .phone-edition #settings-menu,html[data-phone-theme=light] .phone-edition dialog{background:#fff;border-color:#ccdce3;color:#1c3443;box-shadow:0 12px 40px #163d5126}
+html[data-phone-theme=light] .phone-edition #settings-menu button:not([aria-pressed]),html[data-phone-theme=light] .phone-edition dialog button{background:#edf4f6;color:#294b60;border-color:#d5e2e8}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-section-toggle{background:transparent!important;color:#5b7382!important}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-section-toggle[aria-expanded=true],html[data-phone-theme=light] .phone-edition #settings-menu .settings-section-toggle:hover{background:#e2f3e9!important;color:#087348!important}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-row,html[data-phone-theme=light] .phone-edition #settings-menu label,html[data-phone-theme=light] .phone-edition #settings-menu output,html[data-phone-theme=light] .phone-edition #app-version{color:#3e5c6e}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-row:hover,html[data-phone-theme=light] .phone-edition #settings-menu .settings-reset-row:hover{background:#e7f5ed}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-group{border-color:#dce7eb}
+html[data-phone-theme=light] .phone-edition #settings-menu button[aria-pressed=false]:not(.settings-row button){background:#eff4f6;color:#4b6575;border-color:#d2e1e7}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-row button[aria-pressed=false]{background:#c3ced5;border-color:#aebfc9}
+html[data-phone-theme=light] .phone-edition #settings-menu .phone-theme-buttons button[aria-pressed=true]{background:#d5f0e2;color:#075d3c;border-color:#68b28c}
+/* Playback stays dark so controls remain readable over the video. */
+.phone-edition #stage{color:#e9eff9;background:#05090f}
+.phone-edition .phone-player-options button,.phone-edition #player-controls button,.phone-edition #player-controls select{color:#e9eff9}
+/* Center page loading feedback without blocking touches or remote focus. */
+body.phone-edition.phone-tablet #lazy-load-progress,body.phone-edition #lazy-load-progress{
+ top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);
+ width:320px;max-width:calc(100vw - 40px);max-height:calc(var(--app-height,100vh) - 40px);
+ overflow:auto;padding:24px;border-radius:20px;background:#14241f;color:#e2f9ec;
+ border:1px solid #3b6653;box-shadow:0 16px 64px #0007;text-align:center;
+}
+body.phone-edition #lazy-load-progress strong{font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+body.phone-edition #lazy-load-progress span{font-size:12px;line-height:1.6;margin-top:8px;color:#b5cfbf}
+body.phone-edition #lazy-load-progress progress{height:7px;margin-top:18px}
+html[data-phone-theme=light] body.phone-edition #lazy-load-progress{background:#fff;color:#193c2c;border-color:#b8dac8;box-shadow:0 16px 64px #183f4138,0 0 0 1px #fff}
+html[data-phone-theme=light] body.phone-edition #lazy-load-progress span{color:#4a6c5d}
+html[data-phone-theme=light] body.phone-edition #lazy-load-progress progress,html[data-phone-theme=light] body.phone-edition #lazy-load-progress progress::-webkit-progress-bar{background:#e2eee7}
+html[data-phone-theme=light] body.phone-edition #lazy-load-progress[data-state=warning]{border-color:#c69b50}

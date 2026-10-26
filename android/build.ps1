@@ -37,7 +37,7 @@ try {
  $apk=Get-ChildItem -LiteralPath $outputs -Recurse -Filter "*-$Mode.apk" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
  if (-not $apk) { throw 'Built APK was not found' }
  $outputArch=if($Target -eq 'armv7'){'arm32'}else{'arm64'}
- $edition=if($env:KAY_TV -eq '1'){'tv'}else{'android'}
+ $edition=if($env:KAY_TV -eq '1'){'tv'}elseif($env:KAY_TABLET -eq '1'){'tablet'}else{'android'}
  $destination=Join-Path $workspace "dist/KAYLiveSport-$edition-$outputArch-$Mode.apk"
  Copy-Item -LiteralPath $apk.FullName -Destination $destination -Force
  Write-Output "APK: $destination"

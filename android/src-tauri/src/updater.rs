@@ -12,6 +12,8 @@ const BASE: &str = "https://github.com/focuseyes1989-debug/kay-live-sport/releas
 const TV_EDITION: bool = cfg!(kay_tv);
 const ASSET: &str = if TV_EDITION {
     if cfg!(target_arch = "arm") { "KAYLiveSport-tv-arm32-debug.apk" } else { "KAYLiveSport-tv-arm64-debug.apk" }
+} else if cfg!(kay_tablet) {
+    if cfg!(target_arch = "arm") { "KAYLiveSport-tablet-arm32-debug.apk" } else { "KAYLiveSport-tablet-arm64-debug.apk" }
 } else {
     if cfg!(target_arch = "arm") { "KAYLiveSport-android-arm32-debug.apk" } else { "KAYLiveSport-android-arm64-debug.apk" }
 };
