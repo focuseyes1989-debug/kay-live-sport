@@ -8,6 +8,8 @@ Phone does not show the league filter and ignores a previously saved league sele
 
 Phone loads fixtures eagerly rather than on page entry. A fixture snapshot no older than five minutes appears immediately on restart, followed by parallel fixture/score requests. Matches/Live switches filter the in-memory list without fetching. Visible foreground sessions refresh 30 seconds after the previous update completes; hidden/offline sessions pause polling and refresh on resume/reconnection. Background updates retain the list, scroll position and focused fixture and do not show the central loading box over an existing list. Manual refresh and cold launches still show loading feedback. Tablet and TV keep their previous lazy-loading behavior.
 
+Phone fullscreen uses one three-second idle timer for the Back/commentator bar and bottom playback controls. Touching the picture reveals both without pausing playback. Pause, buffering and connection errors keep controls available; the fade follows the existing animation preference.
+
 Build from the repository root in PowerShell:
 
 ```powershell

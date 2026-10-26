@@ -40,7 +40,8 @@ body.phone-edition #mobile-tabs{position:sticky;inset:0 auto auto;z-index:4;disp
 .phone-edition #stage #empty{height:100%;padding:90px 24px}
 .phone-edition #stage .phone-player-back{flex-shrink:0;font-size:14px}
 .phone-edition #stage #recovery-bar{top:90px;bottom:auto;z-index:7;max-width:calc(100% - 24px)}
-.phone-edition #stage.controls-hidden .phone-player-options{opacity:0;pointer-events:none}
+.phone-edition #stage .phone-player-options{transition:opacity calc(180ms * var(--motion-scale,1)) ease}
+.phone-edition #stage.controls-hidden .phone-player-options,.phone-edition #stage.controls-hidden #player-controls{opacity:0;pointer-events:none}
 .phone-edition #stage .player-controls{flex-wrap:wrap;gap:8px}
 .phone-edition #volume,.phone-edition label[for=volume],.phone-edition #volume-value{display:none}
 .phone-edition #settings-menu{top:58px!important;max-height:calc(var(--app-height,100vh) - 72px)}

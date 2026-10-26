@@ -43,6 +43,42 @@ const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs
   await page.locator('#list .card').first().click();await page.waitForFunction(()=>document.querySelector('#stage').classList.contains('is-fullscreen'));
   assert(await page.locator('#phone-player-back').isVisible());assert(await page.locator('#retry').isVisible());
   assert(await page.evaluate(()=>calls.some(c=>c.command==='mobile_fullscreen'&&c.args.enabled)));
+  await page.waitForFunction(()=>!fullscreenBusy);
+  await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+1000));
+  // Virtual timers do not advance compositor transitions; test the final states.
+  const controlsTestStyle=await page.addStyleTag({content:'.phone-player-options,#player-controls{transition:none!important}'});
+  await page.evaluate(()=>{
+   ++playToken;stop();waitingFixture=null;waitingManualLive=false;
+   window.phoneTestPaused=false;window.phoneTestReady=4;window.phoneTestToggleCount=0;window.phoneOriginalToggle=togglePlayback;
+   togglePlayback=()=>{phoneTestToggleCount++;};
+   Object.defineProperty(video,'paused',{configurable:true,get:()=>phoneTestPaused});
+   Object.defineProperty(video,'readyState',{configurable:true,get:()=>phoneTestReady});
+   Object.defineProperty(video,'ended',{configurable:true,get:()=>false});
+   video.hidden=false;$('empty').hidden=true;$('player-controls').hidden=false;$('recovery-bar').hidden=true;
+  });
+  for(const [width,height] of [[390,844],[844,390]]){
+   await page.setViewportSize({width,height});
+   await page.evaluate(()=>{phoneTestPaused=false;phoneTestReady=4;video.dispatchEvent(new Event('playing'));$('phone-player-back').focus();});
+   await page.locator('#player-controls').dispatchEvent('mouseenter');
+   await page.clock.runFor(50);
+   await page.clock.fastForward(3300);
+   const hiddenBars=await page.evaluate(()=>['.phone-player-options','#player-controls'].map(selector=>{const style=getComputedStyle(document.querySelector(selector));return {opacity:Number(style.opacity),pointerEvents:style.pointerEvents};}));
+   for(const bar of hiddenBars){assert.equal(bar.opacity,0,'Both bars hide while playing, including touch hover/focus');assert.equal(bar.pointerEvents,'none');}
+   await page.locator('#video').dispatchEvent('pointerdown',{pointerType:'touch'});await page.locator('#video').dispatchEvent('click');
+   assert.equal(await page.locator('#stage').evaluate(e=>e.classList.contains('controls-hidden')),false);assert(await page.locator('#phone-player-back').isVisible());assert(await page.locator('#player-controls').isVisible());
+   assert.equal(await page.evaluate(()=>phoneTestToggleCount),0,'Tap reveals controls without pausing playback');
+   await page.clock.runFor(50);await page.clock.fastForward(3300);assert.equal(await page.locator('.phone-player-options').evaluate(e=>Number(getComputedStyle(e).opacity)),0,'Controls hide again after the touch');
+   await page.evaluate(()=>{phoneTestPaused=true;video.dispatchEvent(new Event('pause'));});await page.clock.fastForward(3100);
+   assert.equal(await page.locator('#stage').evaluate(e=>e.classList.contains('controls-hidden')),false,'Pause retains controls');
+   await page.evaluate(()=>{phoneTestPaused=false;phoneTestReady=2;video.dispatchEvent(new Event('waiting'));});await page.clock.fastForward(3100);
+   assert.equal(await page.locator('#stage').evaluate(e=>e.classList.contains('controls-hidden')),false,'Buffering retains controls');
+   await page.evaluate(()=>{phoneTestReady=4;recoveryNotice('Test connection failure',true);});await page.clock.fastForward(3300);
+   assert.equal(await page.locator('#stage').evaluate(e=>e.classList.contains('controls-hidden')),false,'Connection errors retain controls');
+   await page.evaluate(()=>hidePlayerNotice());
+  }
+  await page.evaluate(()=>{delete video.paused;delete video.readyState;delete video.ended;togglePlayback=phoneOriginalToggle;showFullscreenControls();});
+  await controlsTestStyle.evaluate(e=>e.remove());
+  await page.clock.resume();
   await page.locator('#phone-player-back').click();await page.waitForFunction(()=>!document.body.classList.contains('mobile-watch')&&!document.querySelector('#stage').classList.contains('is-fullscreen'));
   assert.equal(await page.locator('#list .card').count(),2);
   await page.locator('#list .card').last().click();await page.waitForFunction(()=>document.querySelector('#stage').classList.contains('is-fullscreen'));
@@ -63,5 +99,3 @@ const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs
   assert.deepEqual(errors,[]);console.log('Phone: two filters, search, direct fullscreen, scheduled waiting/stream attempt, retry, native Back hook, list restoration and responsive widths passed');
  }finally{if(browser)await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
-
-

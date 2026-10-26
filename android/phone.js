@@ -31,6 +31,36 @@
  const playerOptions=node('div','','phone-player-options');
  playerOptions.append(back,$('channels'),$('try-stream'),$('retry'));
  $('stage').append(playerOptions);
+ // Use one hide timer for both bars. The older landscape and desktop timers
+ // can otherwise disagree, especially after touch-generated mouse hover.
+ const stage=$('stage'),bottom=$('player-controls');let controlsTimer;
+ clearTimeout(fullscreenControlsTimer);clearTimeout(mobileControlsTimer);
+ stage.removeEventListener('pointerdown',showFullscreenControls);
+ stage.removeEventListener('pointerdown',revealMobileControls);
+ video.removeEventListener('play',showFullscreenControls);
+ video.removeEventListener('pause',showFullscreenControls);
+ video.removeEventListener('playing',revealMobileControls);
+ function revealPhoneControls(){
+  clearTimeout(controlsTimer);stage.classList.remove('controls-hidden');document.body.classList.remove('landscape-controls-hidden');
+  if(!stage.classList.contains('is-fullscreen'))return;
+  controlsTimer=setTimeout(()=>{
+   const notice=$('recovery-bar');
+   if(!stage.classList.contains('is-fullscreen')||video.paused||video.ended||video.readyState<3
+    ||(!notice.hidden&&notice.dataset.kind!=='connected')
+    ||(fullscreenKeyboardMode&&(bottom.contains(document.activeElement)||playerOptions.contains(document.activeElement))))return;
+   stage.classList.add('controls-hidden');
+  },3000);
+ }
+ showFullscreenControls=revealPhoneControls;
+ revealMobileControls=revealPhoneControls;
+ stage.addEventListener('pointerdown',event=>{if(event.pointerType!=='mouse')fullscreenKeyboardMode=false;revealPhoneControls();});
+ playerOptions.addEventListener('focusin',revealPhoneControls);
+ playerOptions.addEventListener('focusout',revealPhoneControls);
+ for(const event of ['playing','pause','waiting','ended','error'])video.addEventListener(event,revealPhoneControls);
+ new MutationObserver(()=>{const notice=$('recovery-bar');if(!notice.hidden&&notice.dataset.kind!=='connected')revealPhoneControls();}).observe($('recovery-bar'),{attributes:true,attributeFilter:['hidden','data-kind']});
+ // Touching the picture reveals controls; playback is changed with Play/Pause.
+ video.addEventListener('click',event=>{event.stopImmediatePropagation();revealPhoneControls();},true);
+ video.removeEventListener('dblclick',toggleFullscreen);
  let lastFixtureId=null,leaving=false;
  const originalChoose=choose;
  choose=function(match,...args){
@@ -49,6 +79,7 @@
   try{
    // Invalidate pending playback and recovery before showing the list.
    ++playToken;stop();wantPlayback=false;
+   clearTimeout(controlsTimer);stage.classList.remove('controls-hidden');document.body.classList.remove('landscape-controls-hidden');
    while(fullscreenBusy)await new Promise(resolve=>setTimeout(resolve,25));
    await setFullscreen(false);
    document.body.classList.remove('player-fullscreen');$('stage').classList.remove('is-fullscreen');
