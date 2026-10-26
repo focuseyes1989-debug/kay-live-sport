@@ -18,7 +18,7 @@ body.phone-edition #mobile-tabs{position:sticky;inset:0 auto auto;z-index:4;disp
 .phone-edition #mobile-tabs button{display:none!important}
 .phone-edition #mobile-tabs #mobile-matches,.phone-edition #mobile-tabs #mobile-live{display:flex!important;flex-direction:row;align-items:center;justify-content:center;gap:8px;width:auto;min-height:44px;border-radius:13px;font-size:14px;font-weight:650;flex:1}
 .phone-edition #mobile-tabs svg,.phone-edition #mobile-live>span{display:none!important}
-.phone-edition #mobile-tabs #mobile-matches span{font-size:14px}
+.phone-edition #mobile-tabs #mobile-matches span{display:inline;font-size:14px}
 .phone-edition #mobile-tabs button.active{background:#235640!important;border:1px solid #42bd8b;color:#c6ffe1}
 .phone-edition #mobile-tabs button:not(.active){background:#14232b!important;border:1px solid #253b43;color:#9fb4c1}
 .phone-edition #mobile-tabs .nav-live-label{font-size:13px;color:#ff6376}

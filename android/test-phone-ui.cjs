@@ -36,7 +36,7 @@ const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs
   await page.waitForFunction(()=>document.querySelectorAll('#list .card').length===2);
   assert.equal(await page.locator('html').getAttribute('data-phone-theme'),'light');
   assert.equal(await page.locator('#mobile-tabs button:visible').count(),2);
-  await page.locator('#mobile-live').click();assert.equal(await page.locator('#list .card').count(),1);
+  await page.locator('#mobile-live').click();assert.equal(await page.locator('#list .card').count(),1);assert(await page.locator('#mobile-matches span').isVisible(),'Matches label remains visible when Live is selected');
   await page.locator('#mobile-matches').click();assert.equal(await page.locator('#list .card').count(),2);
   await page.locator('#search').fill('Barcelona');assert.equal(await page.locator('#list .card').count(),1);await page.locator('#search').fill('');
   await page.screenshot({path:path.join(__dirname,'../dist/phone-single-page.png')});
@@ -53,6 +53,7 @@ const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs
   assert.equal(landscapeTabs[0].height,44);assert(landscapeTabs[0].width<=180);
   assert(landscapeTabs[1].x>=landscapeTabs[0].x+landscapeTabs[0].width+9);
   assert.equal(landscapeTabs[0].y,landscapeTabs[1].y);
+  for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.phoneTheme=theme,theme);await page.locator('#mobile-live').click();assert(await page.locator('#mobile-matches span').isVisible());await page.locator('#mobile-matches').click();assert(await page.locator('#mobile-live .nav-live-label').isVisible());}
   await page.locator('#lazy-load-progress').waitFor({state:'hidden'});
   for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.phoneTheme=theme,theme);await page.screenshot({path:path.join(__dirname,'../dist/phone-landscape-'+theme+'.png')});}
   await page.evaluate(()=>{const match=matches.find(m=>!m.live);choose({...match,channels:[{id:'test-channel',name:'Test'}]});window.scheduledAttempted=!!manualStreamFixture;});
