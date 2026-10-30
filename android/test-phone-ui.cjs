@@ -96,6 +96,14 @@ const {chromium}=require('@playwright/test'),http=require('http'),fs=require('fs
   assert(await page.evaluate(()=>window.scheduledAttempted),'Scheduled fixture with channels attempts playback');
   await page.waitForFunction(()=>document.querySelector('#stage').classList.contains('is-fullscreen'));
   await page.evaluate(()=>window.kayPhoneBack());await page.waitForFunction(()=>!document.body.classList.contains('mobile-watch'));
+  await page.evaluate(()=>{document.documentElement.dataset.phoneTheme='light';});
+  await page.locator('#list .card').first().click();await page.waitForFunction(()=>document.querySelector('#stage').classList.contains('is-fullscreen'));
+  // Light overlays and player chrome must not inherit desktop dark surfaces.
+  await page.evaluate(()=>{++playToken;stop();recoveryNotice('Theme preview: retry connection',true);$('player-controls').hidden=false;showRefreshNotification('error','Theme preview: could not refresh');});
+  const surfaceColors=await page.evaluate(()=>['#recovery-bar','#refresh-notification','#player-controls','#phone-player-back'].map(id=>({id,bg:getComputedStyle(document.querySelector(id)).backgroundColor})));
+  for(const {id,bg} of surfaceColors){const rgb=bg.match(/[\d.]+/g).map(Number);assert(Math.min(...rgb.slice(0,3))>200,id+' uses a Light surface: '+bg);}
+  await page.screenshot({path:path.join(__dirname,'../dist/phone-light-overlays.png')});
+  await page.evaluate(()=>{hidePlayerNotice();$('refresh-notification').hidden=true;});
   assert.deepEqual(errors,[]);console.log('Phone: two filters, search, direct fullscreen, scheduled waiting/stream attempt, retry, native Back hook, list restoration and responsive widths passed');
  }finally{if(browser)await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -109,3 +109,43 @@ html[data-phone-theme=light] body.phone-edition #lazy-load-progress{background:#
 html[data-phone-theme=light] body.phone-edition #lazy-load-progress span{color:#4a6c5d}
 html[data-phone-theme=light] body.phone-edition #lazy-load-progress progress,html[data-phone-theme=light] body.phone-edition #lazy-load-progress progress::-webkit-progress-bar{background:#e2eee7}
 html[data-phone-theme=light] body.phone-edition #lazy-load-progress[data-state=warning]{border-color:#c69b50}
+/* Complete Light surfaces, including overlays mounted outside the fixture page. */
+html[data-phone-theme=light] .phone-edition{--phone-ink:#183b32;--phone-soft:#f0f6f3;--phone-border:#c6ddd1}
+html[data-phone-theme=light] .phone-edition :is(#refresh-notification,#retry-notification,#reset-notification,#update-notification,.match-live-toast){background:#f0faf4;border-color:#a5d3b8;color:#184b31;box-shadow:0 8px 28px #183f4124}
+html[data-phone-theme=light] .phone-edition :is(#refresh-notification,#retry-notification)[data-kind=error]{background:#fff1f1;border-color:#e1a7ad;color:#922c3c}
+html[data-phone-theme=light] .phone-edition #refresh-notification[data-kind=warning]{background:#fff8e8;border-color:#dfc17b;color:#785712}
+html[data-phone-theme=light] .phone-edition :is(.match-live-toast,#update-notification,#reset-notification) :is(strong,span,small){color:inherit}
+html[data-phone-theme=light] .phone-edition :is(.open-live-match,#open-update-notification){background:transparent;color:inherit}
+html[data-phone-theme=light] .phone-edition :is(.dismiss-live-match,#dismiss-refresh-notification,#dismiss-retry-notification,#dismiss-reset-notification,#dismiss-update-notification){background:transparent;color:#48675a;border-color:transparent}
+html[data-phone-theme=light] .phone-edition dialog :is(p,small,label){color:#4c6473}
+html[data-phone-theme=light] .phone-edition dialog :is(progress,input,select){accent-color:#168052;color:#213f34}
+html[data-phone-theme=light] .phone-edition dialog::backdrop{background:#122a3b66}
+html[data-phone-theme=light] .phone-edition #confirm-reset{background:#b73549;border-color:#a72b3e;color:#fff}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-reset-row{color:#405e6c;border-color:#dce7eb}
+html[data-phone-theme=light] .phone-edition #settings-menu .settings-section{border-color:#dce7eb}
+html[data-phone-theme=light] .phone-edition #settings-menu :is(#test-notification-sound,#animation-speed button,#time-format button){background:#edf4f0;color:#294f3d;border-color:#c9ddd0}
+/* Keep the actual video canvas black; all surrounding player UI follows Light. */
+html[data-phone-theme=light] .phone-edition #stage{background:#f4f7f8;color:#213f34;border-color:#d3e1db}
+html[data-phone-theme=light] .phone-edition #video{background:#000}
+html[data-phone-theme=light] .phone-edition #empty :is(h2,h3,strong){color:#213f34}
+html[data-phone-theme=light] .phone-edition #empty :is(p,span){color:#526d60}
+html[data-phone-theme=light] .phone-edition .empty-icon{background:#e3f0e9;border-color:#c6dbce}
+html[data-phone-theme=light] .phone-edition .phone-player-options{background:linear-gradient(#f7fbf5ed,#f7fbf5bd,transparent)}
+html[data-phone-theme=light] .phone-edition .phone-player-options button,html[data-phone-theme=light] .phone-edition #player-controls :is(button,select){background:#f5faf5ed;color:#234e36;border-color:#b8cebd}
+html[data-phone-theme=light] .phone-edition .phone-player-options #channels button.active{background:#ccebd7;color:#125b33;border-color:#67a87f}
+html[data-phone-theme=light] .phone-edition #player-controls{background:#f2f8f3ed;color:#234e36;border-color:#c6d9cb}
+html[data-phone-theme=light] .phone-edition #player-controls :is(label,span,output){color:#325841}
+html[data-phone-theme=light] .phone-edition #stage #recovery-bar{background:#f6fbf7f5;color:#244735;border-color:#a9c9b5;box-shadow:0 8px 28px #153e3426}
+html[data-phone-theme=light] .phone-edition #stage #recovery-bar[data-kind=error]{background:#fff3f3f5;color:#8f2939;border-color:#dfa8b2}
+html[data-phone-theme=light] .phone-edition #stage #recovery-bar[data-kind=connected]{background:#edf9f1f5;color:#165d36;border-color:#95c8a9}
+html[data-phone-theme=light] .phone-edition #stage #recovery-bar :is(strong,span,p){color:inherit}
+html[data-phone-theme=light] .phone-edition #stage #recovery-bar button{background:#fff;color:inherit;border-color:currentColor}
+html[data-phone-theme=light] .phone-edition #empty .ball{background:#e3f0e9;border-color:#c6dbce}
+html[data-phone-theme=light] .phone-edition #quality-info{background:#f2f8f3ed;color:#4a6855;border-color:#c6d9cb}
+html[data-phone-theme=light] .phone-edition #settings-menu #animation-speed button[aria-pressed=true]{background:#ccebd7;color:#125b33;border-color:#67a87f}
+html[data-phone-theme=light] .phone-edition :is(#confirm-install-update,#download-update){background:#d5f0e2;color:#075d3c;border-color:#68b28c}
+html[data-phone-theme=light] .phone-edition #empty{background:none}
+html[data-phone-theme=light] .phone-edition #mobile-fit-fill{background:#e3eee6;border-color:#b8cebd}
+html[data-phone-theme=light] .phone-edition #player-controls #mobile-fit-fill button{background:transparent;color:#42654c}
+html[data-phone-theme=light] .phone-edition #player-controls #mobile-fit-fill button[aria-pressed=true]{background:#c5e6ce;color:#125b33}
+html[data-phone-theme=light] .phone-edition #player-controls #mobile-fit-fill button:hover{background:#d7eddd;color:#125b33}

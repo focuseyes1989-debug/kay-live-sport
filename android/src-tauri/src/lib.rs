@@ -23,6 +23,14 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
         ) {
             return updater::request(&app, &command, &args);
         }
+        if command == "phone_notification_permission" || command == "phone_live_notification" || command == "phone_notifications" {
+            #[cfg(target_os = "android")]
+            return app.state::<tauri::plugin::PluginHandle<tauri::Wry>>().run_mobile_plugin(
+                if command == "phone_notification_permission" {"liveNotificationPermission"} else if command == "phone_notifications" {"phoneNotifications"} else {"liveNotification"}, args
+            ).map_err(|e| e.to_string());
+            #[cfg(not(target_os = "android"))]
+            return Ok(serde_json::json!({"shown":false}));
+        }
         if command == "open_myanmar_tv" {
             if !myanmar_tv::allowed_page(args["url"].as_str().unwrap_or("")) {return Err("Invalid Myanmar TV page".into())}
             #[cfg(target_os = "android")]

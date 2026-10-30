@@ -55,6 +55,8 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
     super.onCreate(savedInstanceState)
+    // Editions share a package; TV/Tablet must stop Phone background checks.
+    if (!getString(R.string.app_name).endsWith(" Phone")) PhoneLiveNotifications.configure(this, false)
     // The TV APK is also tested on phones/tablets; uiMode is not an edition flag.
     // Let the TV WebView consume Back before falling through to Android navigation.
     onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

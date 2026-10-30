@@ -18,6 +18,12 @@ import app.tauri.plugin.JSObject
 import java.io.File
 
 @InvokeArg
+class PhoneNotificationArgs { var enabled: Boolean = false; var fixtures: String = "[]" }
+
+@InvokeArg
+class LiveNoticeArgs { var title: String = "Live match"; var body: String = ""; var key: String = "" }
+
+@InvokeArg
 class FullscreenArgs { var enabled: Boolean = false }
 
 @InvokeArg
@@ -29,6 +35,38 @@ class InstallArgs { lateinit var path: String }
 @TauriPlugin
 class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
  private var keyboardRequest = 0
+ @Command
+ fun liveNotificationPermission(invoke: Invoke) {
+  activity.runOnUiThread {
+   if (Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+    activity.requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), 7301)
+   }
+   val result=JSObject();result.put("granted",androidx.core.app.NotificationManagerCompat.from(activity).areNotificationsEnabled());invoke.resolve(result)
+  }
+ }
+ @Command
+ fun phoneNotifications(invoke: Invoke) {
+  try {
+   val args=invoke.parseArgs(PhoneNotificationArgs::class.java)
+   val data=org.json.JSONArray(args.fixtures)
+   require(data.length()<=500)
+   val rows=(0 until data.length()).map { i ->
+    val m=data.getJSONObject(i)
+    LiveFixture(m.getString("key"),m.getString("home"),m.getString("away"),m.optBoolean("live"),m.optBoolean("finished"))
+   }
+   PhoneLiveNotifications.configure(activity,args.enabled)
+   if(rows.isNotEmpty())PhoneLiveNotifications.observe(activity,rows)
+   val result=JSObject();result.put("enabled",args.enabled);result.put("granted",androidx.core.app.NotificationManagerCompat.from(activity).areNotificationsEnabled());invoke.resolve(result)
+  }catch(e:Exception){invoke.reject(e.message ?: "Could not configure live notifications")}
+ }
+ @Command
+ fun liveNotification(invoke: Invoke) {
+  val args=invoke.parseArgs(LiveNoticeArgs::class.java)
+  try {
+   val result=JSObject();result.put("shown",PhoneLiveNotifications.show(activity,args.key,args.title,args.body));invoke.resolve(result)
+  }catch(e:Exception){invoke.reject(e.message ?: "Could not show notification")}
+ }
+
  @Command
  fun exitApp(invoke: Invoke) {
   activity.runOnUiThread {
