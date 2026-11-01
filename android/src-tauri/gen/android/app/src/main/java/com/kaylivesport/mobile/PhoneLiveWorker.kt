@@ -92,7 +92,7 @@ class PhoneLiveWorker(c:Context,params:WorkerParameters):Worker(c,params) {
  override fun doWork():Result {
   if(!PhoneLiveNotifications.enabled(applicationContext))return Result.success()
   return try {
-   val html=Jsoup.connect("https://sutbongtv8.net").userAgent("Mozilla/5.0 LiveSport/0.1").timeout(25000).maxBodySize(4000000).get().outerHtml()
+   val html=Jsoup.connect("https://sutbong8.net").userAgent("Mozilla/5.0 LiveSport/0.1").timeout(25000).maxBodySize(4000000).get().outerHtml()
    if(!isStopped)PhoneLiveNotifications.observe(applicationContext,PhoneFixtureParser.parse(html))
    Result.success()
   } catch(e:Exception) {if(runAttemptCount<3)Result.retry() else Result.failure()}

@@ -3,7 +3,7 @@ use reqwest::blocking::Client;
 use scraper::{Html, Selector};
 use serde_json::{Value, json};
 use std::time::Duration;
-const SITE: &str = "https://sutbongtv8.net";
+const SITE: &str = "https://sutbong8.net";
 fn selector(s: &str) -> Selector {
     Selector::parse(s).unwrap()
 }
@@ -48,11 +48,12 @@ pub(crate) fn parse_matches(html: &str) -> Result<Value, String> {
         let Some(link) = card.select(&selector("a.link-match")).next() else {
             continue;
         };
-        let page = link.value().attr("href").unwrap_or_default();
+        let page = url::Url::parse(SITE).unwrap().join(link.value().attr("href").unwrap_or_default())
+            .map(|u| u.to_string()).unwrap_or_default();
         let mut channels = Vec::new();
         for a in card.select(&selector("a[href*='blv=']")) {
             let href = a.value().attr("href").unwrap_or_default();
-            if let Ok(u) = url::Url::parse(href)
+            if let Ok(u) = url::Url::parse(SITE).unwrap().join(href)
                 && let Some((_, id)) = u.query_pairs().find(|(k, _)| k == "blv")
             {
                 let name = a
@@ -230,14 +231,16 @@ pub(crate) fn resolve(c: &Client, args: &Value) -> Result<Value, String> {
 fn stream_sources(stream: &str) -> Value {
     let u = url::Url::parse(stream).expect("validated stream URL");
     let mut sources = Vec::new();
-    // This exact alternate route is published by the provider's match player.
+    // Match the public player: numbered scstream hosts move to niues;
+    // other known provider hosts retain their hostname when changing FLV to HLS.
     // Preserve the signed query byte-for-byte, including its encoding.
     let host = u.host_str().unwrap_or_default();
     let numbered_pull = host.strip_prefix("pull").and_then(|h| h.strip_suffix(".scstream.net"))
         .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
-    if numbered_pull && u.path().ends_with(".flv") && u.port().is_none() && u.username().is_empty() && u.password().is_none() {
+    let same_host_hls = matches!(host, "pull.niur.live" | "pull.niues.live");
+    if (numbered_pull || same_host_hls) && u.path().ends_with(".flv") && u.port().is_none() && u.username().is_empty() && u.password().is_none() {
         let mut alternate = u.clone();
-        alternate.set_host(Some("pull.niues.live")).unwrap();
+        if numbered_pull { alternate.set_host(Some("pull.niues.live")).unwrap(); }
         alternate.set_path(&format!("{}.m3u8", u.path().trim_end_matches(".flv")));
         sources.push(json!({"url":alternate.as_str(),"format":"hls","label":"Alternate HLS"}));
     }
@@ -249,11 +252,32 @@ fn stream_sources(stream: &str) -> Value {
 mod stream_tests {
     use super::*;
     #[test]
+    fn relative_commentator_links_are_resolved() {
+        let rows=parse_matches(r#"<div class="match-item" data-match-id="fixture" data-post-id="42" data-bucket="live" sport-id="1">
+        <a class="link-match" href="/truc-tiep/home-away/"></a><span class="name-home">Home</span><span class="name-away">Away</span>
+        <a href="/truc-tiep/home-away/?blv=123"><img alt="Commentator"></a>
+        <a href="https://sutbong8.net/truc-tiep/home-away/?blv=456"><img alt="Other"></a>
+        </div>"#).unwrap();
+        assert_eq!(rows[0]["channels"].as_array().unwrap().len(),2);
+        assert_eq!(rows[0]["channels"][0]["id"],"123");
+        assert_eq!(rows[0]["page"],"https://sutbong8.net/truc-tiep/home-away/");
+        assert_eq!(rows[0]["live"],true);
+    }
+    #[test]
     fn official_alternate_preserves_signature() {
         let result=stream_sources("https://pull06.scstream.net/live/test.flv?auth_key=a%2Fb&token=x+y");
         assert_eq!(result["sources"][0]["url"],"https://pull.niues.live/live/test.m3u8?auth_key=a%2Fb&token=x+y");
         assert_eq!(result["sources"][1]["url"],"https://pull06.scstream.net/live/test.flv?auth_key=a%2Fb&token=x+y");
         assert_eq!(stream_sources("https://pull06.scstream.net.evil.test/a.flv")["sources"].as_array().unwrap().len(),1);
         assert_eq!(stream_sources("https://other.test/a.flv")["sources"].as_array().unwrap().len(),1);
+        let direct=stream_sources("https://pull.niur.live/live/test.flv?auth_key=a%2Fb&token=x+y");
+        assert_eq!(direct["sources"][0]["url"],"https://pull.niur.live/live/test.m3u8?auth_key=a%2Fb&token=x+y");
+        assert_eq!(direct["sources"][0]["format"],"hls");
+        assert_eq!(direct["sources"][1]["format"],"flv");
+        for url in ["https://pull.niur.live.evil.test/a.flv", "https://pull.niur.live:8443/a.flv", "https://user@pull.niur.live/a.flv"] {
+            assert_eq!(stream_sources(url)["sources"].as_array().unwrap().len(),1);
+        }
+        assert_eq!(stream_sources("https://pull.niur.live/live/test.m3u8")["sources"].as_array().unwrap().len(),1);
+
     }
 }

@@ -1,3 +1,12 @@
+## Windows 0.1.16 / Android 0.1.32 — Live stream repair
+
+- Fixes empty commentator lists after the provider switched to relative match/commentator URLs. Both relative and absolute links now resolve against the current public source origin.
+- Updates the source origin to sutbong8.net, including Phone background live checks.
+- Adds the public player's same-host HLS route for niur/niues FLV streams, preserving signed queries and original-route fallback. Existing numbered scstream HLS routing is retained.
+- Shared fix covers Windows, Phone and Tablet. TV APKs are rebuilt with the same resolver to keep the shared Android updater compatible.
+- Validation: Rust URL/signature regressions, bounded player fallback tests, live fixture/playlist/media fetch, and advancing 720p browser playback on both CDN routes passed. One sampled offline commentator returned 404; automatic commentator fallback remains available. Physical Windows/Android playback has not been verified.
+- Android APKs remain preview/debug builds signed with the existing key. Install over the current app to retain settings; do not uninstall first.
+
 ## Android Phone 0.1.31
 
 - Adds a saved Phone live notifications switch and Android notification permission.
