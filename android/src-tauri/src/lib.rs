@@ -38,12 +38,6 @@ async fn request(app: tauri::AppHandle, command: String, args: Value) -> Result<
             #[cfg(not(target_os = "android"))]
             return Ok(serde_json::json!({"opened":false}));
         }
-        if command == "open_asianbookie" {
-            #[cfg(target_os = "android")]
-            return app.state::<tauri::plugin::PluginHandle<tauri::Wry>>().run_mobile_plugin("openAsianBookie", serde_json::json!({})).map_err(|e| e.to_string());
-            #[cfg(not(target_os = "android"))]
-            return Ok(serde_json::json!({"opened":false}));
-        }
         if command == "open_highlight" {
             if !highlights::allowed_url(args["url"].as_str().unwrap_or("")) {return Err("Invalid highlights link".into())}
             #[cfg(target_os = "android")]

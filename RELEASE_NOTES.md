@@ -1,3 +1,9 @@
+## Windows 0.1.18 / Android 0.1.34 — Remove AsianBookie browser fallback
+
+- Removes Watch on AsianBookie actions from Windows, Phone, Tablet and TV.
+- Removes the associated native browser commands, UI scripts and styling.
+- No AsianBookie direct playback is added. The existing stream-source outage remains unresolved.
+
 ## Windows 0.1.17 / Android 0.1.33 — Watch on AsianBookie
 
 - Adds Watch on AsianBookie to Windows, Phone, Tablet and TV. The match-list action remains accessible when the stream source fails or no fixtures load.

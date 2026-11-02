@@ -149,7 +149,3 @@ html[data-phone-theme=light] .phone-edition #mobile-fit-fill{background:#e3eee6;
 html[data-phone-theme=light] .phone-edition #player-controls #mobile-fit-fill button{background:transparent;color:#42654c}
 html[data-phone-theme=light] .phone-edition #player-controls #mobile-fit-fill button[aria-pressed=true]{background:#c5e6ce;color:#125b33}
 html[data-phone-theme=light] .phone-edition #player-controls #mobile-fit-fill button:hover{background:#d7eddd;color:#125b33}
-
-html[data-phone-theme=light] .phone-edition .asianbookie-fallback{background:#edf8f1;color:#315d42;border-color:#bedbc7}
-html[data-phone-theme=light] .phone-edition .asianbookie-fallback button{background:#d5f0e0;color:#125b33;border-color:#83b998}
-.phone-edition .phone-player-options #watch-asianbookie-player{margin:0;white-space:normal;max-width:100%}
