@@ -1,3 +1,13 @@
+## Windows 0.1.17 / Android 0.1.33 — Watch on AsianBookie
+
+- Adds Watch on AsianBookie to Windows, Phone, Tablet and TV. The match-list action remains accessible when the stream source fails or no fixtures load.
+- Adds a playback fallback action; Phone places it in the auto-hiding player toolbar. Phone Light/Dark styling and TV button focus are retained.
+- Opens the fixed public AsianBookie Live page in the external browser. Users select a match and follow the site's advertisement/Close flow. No direct stream integration or advertisement bypass is added.
+- Reports browser launch errors, including Android TV without an installed browser, and re-enables the action for retry.
+- Validation: all four edition UI tests passed for source failure, native command dispatch, browser failure and retry readiness. Windows and Android native builds compile. Physical external-browser launch is not yet verified.
+- Existing source-site outage is not repaired by this release. This is a browser fallback. AsianBookie availability and ads depend on its website.
+- Android preview/debug APKs retain the existing package and signing key. Install over the existing app to retain settings; do not uninstall first.
+
 ## Windows 0.1.16 / Android 0.1.32 — Live stream repair
 
 - Fixes empty commentator lists after the provider switched to relative match/commentator URLs. Both relative and absolute links now resolve against the current public source origin.

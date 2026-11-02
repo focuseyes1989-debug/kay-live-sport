@@ -2,6 +2,7 @@
 mod language;
 mod myanmar_tv;
 mod provider;
+mod asianbookie;
 use provider::{client, matches, resolve};
 #[cfg(test)]
 use provider::{get, parse_matches};
@@ -140,6 +141,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ("text/javascript", include_bytes!("../ui/scores.js").to_vec())
             } else if request.uri().path() == "/player.js" {
                 ("text/javascript", include_bytes!("../ui/player.js").to_vec())
+            } else if request.uri().path() == "/asianbookie.js" {
+                ("text/javascript", include_bytes!("../ui/asianbookie.js").to_vec())
             } else if request.uri().path() == "/playback.js" {
                 ("text/javascript", include_bytes!("../ui/playback.js").to_vec())
             } else if request.uri().path() == "/session.js" {
@@ -214,6 +217,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Some("highlights") => highlights::fetch(&c, &v["args"]),
                     Some("highlights_catalog") => highlights::catalog(&c),
                     Some("official_highlight") => highlights::official(&c, &v["args"]),
+                    Some("open_asianbookie") => asianbookie::open(),
                     Some("open_highlight") => highlights::open(&v["args"]),
                     Some("resolve") => resolve(&c, &v["args"]),
                     _ => Err("Unknown command".into()),

@@ -83,6 +83,15 @@ class ApkInstallerPlugin(private val activity: Activity): Plugin(activity) {
   }catch(e:Exception){invoke.reject(e.message ?: "Could not open channel")}
  }
  @Command
+ fun openAsianBookie(invoke: Invoke) {
+  activity.runOnUiThread {
+   try {
+    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.asianbookie.org/en/live")))
+    val result=JSObject();result.put("opened",true);invoke.resolve(result)
+   }catch(e:Exception){invoke.reject("No browser available. Install a browser to watch on AsianBookie.")}
+  }
+ }
+ @Command
  fun openHighlight(invoke: Invoke) {
   try {
    val uri=Uri.parse(invoke.parseArgs(HighlightArgs::class.java).url)

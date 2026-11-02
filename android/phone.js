@@ -29,7 +29,7 @@
  const back=node('button','‹ Back','phone-player-back');back.id='phone-player-back';
  back.type='button';back.setAttribute('aria-label','Back to matches');
  const playerOptions=node('div','','phone-player-options');
- playerOptions.append(back,$('channels'),$('try-stream'),$('retry'));
+ playerOptions.append(back,$('channels'),$('try-stream'),$('retry'),$('watch-asianbookie-player'));
  $('stage').append(playerOptions);
  // Use one hide timer for both bars. The older landscape and desktop timers
  // can otherwise disagree, especially after touch-generated mouse hover.
