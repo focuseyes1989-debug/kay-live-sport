@@ -1,7 +1,8 @@
-const themeKey = 'kay-download-theme';
+const themeKey = 'kay-shared-theme';
 const root = document.documentElement;
 try {
-  root.dataset.theme = localStorage.getItem(themeKey) === 'dark' ? 'dark' : 'light';
+  const saved = localStorage.getItem(themeKey) ?? localStorage.getItem('kay-download-theme') ?? localStorage.getItem('kay-live-theme');
+  root.dataset.theme = saved === 'dark' ? 'dark' : 'light';
 } catch {
   root.dataset.theme = 'light';
 }
@@ -14,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('meta[name="theme-color"]').content = dark ? '#1d1e2e' : '#ffffff';
   };
   updateTheme();
+  window.addEventListener('storage', event => {
+    if (event.key !== themeKey) return;
+    root.dataset.theme = event.newValue === 'dark' ? 'dark' : 'light';
+    updateTheme();
+  });
   themeButton.hidden = false;
   themeButton.addEventListener('click', () => {
     root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
