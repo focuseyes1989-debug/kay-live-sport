@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeButton = document.getElementById('site-theme');
   const updateTheme = () => {
     const dark = root.dataset.theme === 'dark';
-    themeButton.textContent = dark ? 'Light theme' : 'Dark theme';
+    const label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    themeButton.title = label;
+    themeButton.setAttribute('aria-label', label);
     document.querySelector('meta[name="theme-color"]').content = dark ? '#1d1e2e' : '#ffffff';
   };
   updateTheme();
