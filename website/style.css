@@ -74,11 +74,6 @@
 .header nav .nav-download:hover { filter: brightness(1.15); }
 @media (max-width: 600px) {
   html { scroll-padding-top: 116px; }
-  .header { flex-wrap: wrap; gap: 8px; }
-  .brand { font-size: .9rem; }
-  .brand img { width: 32px; height: 32px; }
-  .header nav { width: 100%; justify-content: space-between; }
-  .header nav a { padding-inline: .5rem; }
 }
 
 #site-theme {
@@ -95,7 +90,6 @@
 #site-theme:hover { background: var(--nav-search); color: var(--nav-accent); }
 #site-theme:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 @media (max-width: 600px) {
-  .header nav { justify-content: flex-start; }
   #site-theme { padding-inline: .5rem; }
 }
 @media (max-width: 380px) {
@@ -107,3 +101,56 @@
 .theme-toggle .theme-sun, [data-theme="dark"] .theme-toggle .theme-moon { display: none; }
 [data-theme="dark"] .theme-toggle .theme-sun { display: block; }
 #site-theme.theme-toggle { padding: 0; }
+
+/* Keep the navigation geometry consistent across the three sites. */
+header .header-inner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  max-width: 1440px;
+  margin: auto;
+  padding: 10px clamp(14px, 4vw, 44px);
+  font-family: Inter, system-ui, sans-serif;
+}
+header .brand, header .header-brand {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+header .brand strong, header .header-brand strong { font: inherit; }
+header .brand img, header .header-brand img { width: 40px; height: 40px; flex: none; }
+header .header-inner nav {
+  grid-area: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+header .header-inner .nav-watch, header .header-inner #watch {
+  margin: 0;
+  padding: .6rem .85rem;
+  line-height: 1.25;
+}
+header .header-inner .nav-download, header .header-inner .header-download, header .header-inner .download {
+  padding: .6rem .9rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  header .header-search { grid-area: 2 / 1 / 3 / -1; width: 100%; }
+}
+@media (max-width: 520px) {
+  header .header-inner { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  header .brand, header .header-brand { grid-area: 1 / 1; font-size: .9rem; }
+  header .brand img, header .header-brand img { width: 32px; height: 32px; }
+  header .header-inner nav { grid-area: 2 / 1; width: 100%; justify-content: flex-start; }
+  header .header-inner .nav-watch, header .header-inner #watch { margin-inline-end: auto; }
+  header .header-search { grid-area: 3 / 1; }
+}
