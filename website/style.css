@@ -62,7 +62,8 @@
 .brand b { color: var(--accent); }
 .header nav { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 .header nav a { padding: .6rem .85rem; border-radius: 9px; color: var(--muted); font-size: .88rem; font-weight: 600; }
-.header nav a:hover, .header nav .nav-watch { background: var(--nav-search); color: var(--nav-accent); }
+.header nav .nav-watch { color: var(--nav-accent); white-space: nowrap; }
+.header nav .nav-watch:hover { text-decoration: underline; }
 .header nav .nav-download {
   border-radius: 99px;
   background: linear-gradient(105deg, #5143a3, #8d487d);
