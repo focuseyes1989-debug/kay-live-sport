@@ -1,0 +1,55 @@
+/* TV uses the single-page Phone layout with larger remote targets. */
+.phone-edition header{height:88px;grid-template-columns:minmax(180px,1fr) minmax(200px,2fr) 48px 48px;gap:14px;padding:14px 24px}
+.phone-edition header h1{font-size:19px}
+.phone-edition header .search-wrap{grid-column:2;grid-row:1}
+.phone-edition #settings-menu-button{grid-column:3}
+.phone-edition #refresh{grid-column:4}
+.phone-edition main,.phone-edition.sidebar-hidden main{height:calc(var(--app-height,100vh) - 88px)!important}
+.phone-edition #matches-sidebar{padding:0 24px 24px!important}
+body.phone-edition #mobile-tabs{height:68px;max-width:440px;gap:12px}
+.phone-edition #mobile-tabs #mobile-matches,.phone-edition #mobile-tabs #mobile-live{font-size:16px;min-height:46px}
+.phone-edition #list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.phone-edition #list>.card{min-height:160px;margin:0;padding:15px}
+.phone-edition .team-name{font-size:15px}
+.phone-edition .score{font-size:23px}
+.phone-edition .card-foot{white-space:normal}
+.phone-edition button:focus-visible,.phone-edition input:focus-visible,.phone-edition select:focus-visible,.phone-edition summary:focus-visible{outline:3px solid #16835b;outline-offset:3px}
+html[data-phone-theme=dark] .phone-edition :focus-visible{outline-color:#69e7ba}
+.phone-edition .phone-player-options{padding:14px 18px}
+.phone-edition.mobile-watch main{height:var(--app-height,100vh)!important}
+.phone-edition #volume,.phone-edition #volume-value,.phone-edition #mute{display:none!important}
+#tv-simple-exit{width:min(440px,calc(100% - 40px));border-radius:16px}
+#tv-simple-exit .dialog-actions{display:flex;gap:16px;justify-content:flex-end;margin-top:24px}
+#tv-simple-exit button{min-width:100px;min-height:44px}
+@media(max-width:1000px){.phone-edition #list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.phone-edition #list{grid-template-columns:repeat(2,minmax(0,1fr))}.phone-edition header{height:116px;grid-template-columns:1fr 48px 48px}.phone-edition header .search-wrap{grid-column:1/-1;grid-row:2}.phone-edition #settings-menu-button{grid-column:2}.phone-edition #refresh{grid-column:3}.phone-edition main,.phone-edition.sidebar-hidden main{height:calc(var(--app-height,100vh) - 116px)!important}}
+/* Override the shared wide-screen split view for the dedicated TV page. */
+body.phone-edition:not(.mobile-watch) main,body.phone-edition.sidebar-hidden:not(.mobile-watch) main{display:block!important;width:100%!important;margin-left:0!important}
+body.phone-edition:not(.mobile-watch) #matches-sidebar{display:block!important;width:100%!important;height:100%!important;max-width:none!important}
+body.phone-edition:not(.mobile-watch) main>section{display:none!important}
+body.phone-edition.mobile-watch #matches-sidebar{display:none!important}
+body.phone-edition.mobile-watch main,body.phone-edition.mobile-watch.sidebar-hidden main{display:block!important;width:100%!important;margin-left:0!important}
+body.phone-edition.mobile-watch header{display:none!important}
+body.phone-edition.mobile-watch main>section{display:flex!important;width:100%;height:100%}
+body.phone-edition.mobile-watch :is(.scoreboard,.channels-label,#title,#subtitle,.section-top,#message){display:none!important}
+body.phone-edition header{height:76px;grid-template-columns:minmax(0,1fr) 48px 48px}
+body.phone-edition header .search-wrap{display:none!important}
+body.phone-edition #settings-menu-button{grid-column:2;grid-row:1}
+body.phone-edition #refresh{grid-column:3;grid-row:1}
+body.phone-edition:not(.mobile-watch) main,body.phone-edition.sidebar-hidden:not(.mobile-watch) main{height:calc(var(--app-height,100vh) - 76px)!important}
+body.phone-edition #settings-menu>:not(#tv-update-only){display:none!important}
+#tv-update-only{padding:8px}
+#tv-update-only #check-update{display:block;width:100%;min-height:48px;font-size:16px}
+
+body.phone-edition header{grid-template-columns:minmax(180px,1fr) minmax(300px,440px) 48px 48px}
+body.phone-edition header #mobile-tabs{position:static;grid-column:2;grid-row:1;width:100%;height:auto;margin:0;padding:0;max-width:none;background:transparent}
+body.phone-edition header #mobile-tabs #mobile-matches,body.phone-edition header #mobile-tabs #mobile-live{flex:1;min-width:0;margin:0}
+body.phone-edition #settings-menu-button{grid-column:3}
+body.phone-edition #refresh{grid-column:4}
+@media(max-width:700px){
+ body.phone-edition header{height:126px;grid-template-columns:minmax(0,1fr) 48px 48px}
+ body.phone-edition header #mobile-tabs{grid-column:1/-1;grid-row:2}
+ body.phone-edition #settings-menu-button{grid-column:2}
+ body.phone-edition #refresh{grid-column:3}
+ body.phone-edition:not(.mobile-watch) main,body.phone-edition.sidebar-hidden:not(.mobile-watch) main{height:calc(var(--app-height,100vh) - 126px)!important}
+}

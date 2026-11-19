@@ -4,7 +4,8 @@
   'live-sport.kickoff-autoplay','live-sport.live-notifications','live-sport.goal-notifications',
   'live-sport.notification-sound','live-sport.notification-volume','live-sport.refresh-notifications',
   'live-sport.retry-notifications','live-sport.update-notifications','live-sport.animations',
-  'live-sport.animation-speed','live-sport.settings-sections','live-sport.time-format'
+  'live-sport.animation-speed','live-sport.settings-sections','live-sport.time-format',
+  'live-sport.phone-theme'
  ]);
  try{
   for(const key of Object.keys(localStorage)){
