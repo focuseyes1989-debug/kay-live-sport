@@ -22,7 +22,10 @@ ASSETS = {
 }
 
 
-def version(tag, windows):
+def version(tag, windows, tv=False):
+    if tv:
+        match = re.fullmatch(r'tv-release-v(\d+)\.(\d+)\.(\d+)', str(tag))
+        return tuple(map(int, match.groups())) if match else None
     match = re.fullmatch(r'v(\d+)\.(\d+)\.(\d+)' if windows else r'android-v(\d+)\.(\d+)\.(\d+)', str(tag))
     return tuple(map(int, match.groups())) if match else None
 
@@ -30,11 +33,13 @@ def version(tag, windows):
 def build(releases, output):
     values, downloads = {}, {}
     for key, name in ASSETS.items():
-        candidates = [(version(r.get('tag_name'), key == 'WINDOWS'), r) for r in releases
+        candidates = [(version(r.get('tag_name'), key == 'WINDOWS', key.startswith('TV')), r) for r in releases
                       if not r.get('draft') and (key != 'WINDOWS' or not r.get('prerelease'))]
         candidates = sorted((row for row in candidates if row[0]), key=lambda row: row[0], reverse=True)
         found = None
-        for _, release in candidates:
+        for release_version, release in candidates:
+            if key.startswith('TV'):
+                name = f'KAYLiveSport-TV-v{".".join(map(str, release_version))}-arm{key[2:]}-release.apk'
             asset = next((a for a in release.get('assets', []) if a.get('name') == name and a.get('state') == 'uploaded'), None)
             checksums = next((a for a in release.get('assets', []) if a.get('name') == 'SHA256SUMS.txt' and a.get('state') == 'uploaded'), None)
             if asset and checksums:
@@ -48,7 +53,7 @@ def build(releases, output):
             if a.get('browser_download_url') != f'https://github.com/{REPO}/releases/download/{tag}/{a["name"]}':
                 raise ValueError('Unexpected download host or path')
         release_url = f'https://github.com/{REPO}/releases/tag/{tag}'
-        info = {'version': '.'.join(map(str, version(tag, key == 'WINDOWS'))),
+        info = {'version': '.'.join(map(str, version(tag, key == 'WINDOWS', key.startswith('TV')))),
                 'url': asset['browser_download_url'], 'size': f'{asset["size"] / 1048576:.1f} MB',
                 'release': release_url, 'checksums': checksums['browser_download_url'],
                 'filename': name, 'bytes': asset['size'], 'sha256': asset.get('digest')}
