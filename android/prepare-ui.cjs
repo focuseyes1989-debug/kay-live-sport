@@ -36,4 +36,13 @@ if(edition==='TV'){
  });
  html=html.replace('<head>','<head><script>'+fs.readFileSync(path.join(__dirname,'tv-boot.js'),'utf8')+'</script>');
 }
+if(edition==='TV'){
+ const {transformSync}=require('esbuild');
+ const compatible=code=>transformSync(code,{target:'chrome70',charset:'utf8',legalComments:'inline'}).code;
+ // The active TV WebView can differ from the version shown by Android Settings.
+ for(const name of fs.readdirSync(out))if(name.endsWith('.js')){
+  const file=path.join(out,name);fs.writeFileSync(file,compatible(fs.readFileSync(file,'utf8')));
+ }
+ html=html.replace(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g,(_,attributes,code)=>'<script'+attributes+'>'+compatible(code).replace(/<\/script/gi,'<\\/script')+'</script>');
+}
 fs.writeFileSync(path.join(out,'index.html'),html);

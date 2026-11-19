@@ -48,7 +48,19 @@
   if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
   if(active?.matches('select,input[type=range]'))return;
   if((active?.id==='mobile-matches'&&event.key==='ArrowRight')||(active?.id==='mobile-live'&&event.key==='ArrowLeft')){event.preventDefault();event.stopImmediatePropagation();$(event.key==='ArrowRight'?'mobile-live':'mobile-matches').focus();return;}
-  if(event.key==='ArrowUp'&&active?.closest('#list')){event.preventDefault();event.stopImmediatePropagation();$('mobile-matches').focus();return;}
+  if(['ArrowUp','ArrowDown'].includes(event.key)&&active?.matches('#list .card')){
+   event.preventDefault();event.stopImmediatePropagation();
+   const current=active.getBoundingClientRect(),sign=event.key==='ArrowUp'?-1:1;
+   const rows=Array.from($('list').querySelectorAll('.card')).filter(card=>card!==active).map(card=>{
+    const box=card.getBoundingClientRect();
+    return {card,distance:(box.top-current.top)*sign,cross:Math.abs(box.left+box.width/2-current.left-current.width/2)};
+   }).filter(item=>item.distance>4);
+   const rowDistance=Math.min(...rows.map(item=>item.distance));
+   const next=rows.filter(item=>Math.abs(item.distance-rowDistance)<4).sort((a,b)=>a.cross-b.cross)[0];
+   if(next){next.card.focus();next.card.scrollIntoView({block:'nearest',inline:'nearest'});}
+   else if(event.key==='ArrowUp')$(filter==='live'?'mobile-live':'mobile-matches').focus();
+   return;
+  }
   if(event.key==='ArrowDown'&&active?.closest('#mobile-tabs')){event.preventDefault();event.stopImmediatePropagation();$('list').querySelector('.card')?.focus();return;}
   event.preventDefault();event.stopImmediatePropagation();
   if(document.body.classList.contains('mobile-watch'))showFullscreenControls();

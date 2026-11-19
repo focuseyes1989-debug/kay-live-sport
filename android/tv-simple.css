@@ -10,7 +10,9 @@ body.phone-edition #mobile-tabs{height:68px;max-width:440px;gap:12px}
 .phone-edition #mobile-tabs #mobile-matches,.phone-edition #mobile-tabs #mobile-live{font-size:16px;min-height:46px}
 .phone-edition #list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .phone-edition #list>.card{min-height:160px;margin:0;padding:15px}
-.phone-edition .team-name{font-size:15px}
+.phone-edition .team{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:9px}
+.phone-edition .crest{width:28px;height:28px}
+.phone-edition .team-name{min-width:0;font-size:13px;line-height:1.5}
 .phone-edition .score{font-size:23px}
 .phone-edition .card-foot{white-space:normal}
 .phone-edition button:focus-visible,.phone-edition input:focus-visible,.phone-edition select:focus-visible,.phone-edition summary:focus-visible{outline:3px solid #16835b;outline-offset:3px}
