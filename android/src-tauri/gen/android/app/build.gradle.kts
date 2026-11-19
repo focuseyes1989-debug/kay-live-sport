@@ -41,9 +41,11 @@ android {
             }
         }
         getByName("release") {
-            optimization {
-               enable = true
-            }
+            // Preserve the native/WebView bridge when packaging production APKs.
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = false
+            isJniDebuggable = false
             proguardFiles(
                 *fileTree(".") {
                   include("**/*.pro")
