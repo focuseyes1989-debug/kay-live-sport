@@ -8,10 +8,11 @@ use std::{
 use tauri::{Emitter, Manager};
 const API: &str =
     "https://api.github.com/repos/focuseyes1989-debug/kay-live-sport/releases?per_page=100";
+const MIRROR: &str = "https://focuseyes1989-debug.github.io/kay-live-sport/releases.json";
 const BASE: &str = "https://github.com/focuseyes1989-debug/kay-live-sport/releases/download/";
 const TV_EDITION: bool = cfg!(kay_tv);
 const ASSET: &str = if TV_EDITION {
-    if cfg!(target_arch = "arm") { "KAYLiveSport-tv-arm32-debug.apk" } else { "KAYLiveSport-tv-arm64-debug.apk" }
+    if cfg!(target_arch = "arm") { "KAYLiveSport-tv-arm32-release.apk" } else { "KAYLiveSport-tv-arm64-release.apk" }
 } else if cfg!(kay_tablet) {
     if cfg!(target_arch = "arm") { "KAYLiveSport-tablet-arm32-debug.apk" } else { "KAYLiveSport-tablet-arm64-debug.apk" }
 } else {
@@ -31,7 +32,7 @@ fn choose_for(rows: &Value, tv: bool, asset: &str) -> Result<Value, String> {
         .filter(|r| r["draft"] != true)
         .filter_map(|r| {
             let tag = r["tag_name"].as_str()?;
-            let version = tag.strip_prefix("android-v").or_else(|| if tv { tag.strip_prefix("tv-v") } else { None })?;
+            let version = if tv && asset.ends_with("-release.apk") { tag.strip_prefix("tv-release-v") } else { tag.strip_prefix("android-v").or_else(|| if tv { tag.strip_prefix("tv-v") } else { None }) }?;
             Some((semver::Version::parse(version).ok()?, r))
         })
         .max_by(|a, b| a.0.cmp(&b.0));
@@ -41,9 +42,10 @@ fn choose_for(rows: &Value, tv: bool, asset: &str) -> Result<Value, String> {
     if v <= current {
         return Ok(json!({"status":"up_to_date","current":current.to_string()}));
     }
+    let expected = if tv && asset.ends_with("-release.apk") { format!("KAYLiveSport-TV-v{v}-{}-release.apk", if asset.contains("arm32") { "arm32" } else { "arm64" }) } else { asset.to_string() };
     let Some(a) = r["assets"].as_array().and_then(|a| {
         a.iter()
-            .find(|a| a["name"] == asset && a["state"] == "uploaded")
+            .find(|a| a["name"] == expected && a["state"] == "uploaded")
     }) else {
         return Ok(
             json!({"status":"missing_asset","current":current.to_string(),"latest":v.to_string()}),
@@ -53,7 +55,7 @@ fn choose_for(rows: &Value, tv: bool, asset: &str) -> Result<Value, String> {
         .as_str()
         .ok_or("Missing APK URL")?;
     let tag = r["tag_name"].as_str().ok_or("Missing release tag")?;
-    if url != format!("{BASE}{tag}/{asset}") {
+    if url != format!("{BASE}{tag}/{expected}") {
         return Err("Unexpected APK URL".into());
     }
     let hash = a["digest"]
@@ -75,13 +77,14 @@ fn check() -> Result<Value, String> {
         .timeout(Duration::from_secs(25))
         .build()
         .map_err(|e| e.to_string())?;
-    let rows = c
-        .get(API)
-        .send()
-        .and_then(|r| r.error_for_status())
-        .and_then(|r| r.json())
-        .map_err(|e| e.to_string())?;
-    choose(&rows)
+    let mut last_error = String::new();
+    for endpoint in [API, MIRROR] {
+        match c.get(endpoint).send().and_then(|r| r.error_for_status()).and_then(|r| r.json::<Value>()) {
+            Ok(rows) => return choose(&rows),
+            Err(error) => last_error = error.to_string(),
+        }
+    }
+    Err(format!("Could not reach update servers. Try again later. {last_error}"))
 }
 pub fn request(app: &tauri::AppHandle, command: &str, args: &Value) -> Result<Value, String> {
     if command == "cancel_download_update" {
@@ -149,16 +152,7 @@ fn download(app: &tauri::AppHandle, args: &Value) -> Result<Value, String> {
                 .timeout(Duration::from_secs(300))
                 .build()
                 .map_err(|e| e.to_string())?;
-            let rows: Value = c
-                .get(API)
-                .send()
-                .await
-                .and_then(|r| r.error_for_status())
-                .map_err(|e| e.to_string())?
-                .json()
-                .await
-                .map_err(|e| e.to_string())?;
-            let release = choose(&rows)?;
+            let release = tauri::async_runtime::spawn_blocking(check).await.map_err(|e| e.to_string())??;
             let version = args["version"].as_str().ok_or("Missing version")?;
             if release["status"] != "available" || release["latest"] != version {
                 return Err("Update changed. Check for updates again.".into());
@@ -297,6 +291,22 @@ fn verify(bytes: &[u8], release: &Value) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // Shared Android assertions explicitly exercise the non-TV channel.
+    fn choose(rows: &Value) -> Result<Value, String> { choose_for(rows, false, ASSET) }
+    #[test]
+    fn production_tv_uses_versioned_release_assets_only() {
+        for arch in ["arm32", "arm64"] {
+            let asset = format!("KAYLiveSport-tv-{arch}-release.apk");
+            let name = format!("KAYLiveSport-TV-v99.1.0-{arch}-release.apk");
+            let rows = json!([
+                {"tag_name":"tv-v100.0.0","assets":[]},
+                {"tag_name":"tv-release-v99.1.0","assets":[{"name":name,"state":"uploaded","browser_download_url":format!("{BASE}tv-release-v99.1.0/{name}"),"digest":format!("sha256:{}", "a".repeat(64)),"size":10}]}
+            ]);
+            let selected = choose_for(&rows, true, &asset).unwrap();
+            assert_eq!(selected["latest"], "99.1.0");
+            assert!(selected["url"].as_str().unwrap().ends_with(&name));
+        }
+    }
     #[test]
     fn range_headers_are_validated() {
         assert!(range_response(206, Some("bytes 5-9/10"), 5, 10).unwrap());

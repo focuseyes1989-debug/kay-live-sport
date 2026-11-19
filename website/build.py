@@ -66,6 +66,7 @@ def build(releases, output):
     shutil.copytree(SOURCE / 'assets', output / 'assets', dirs_exist_ok=True)
     (output / 'index.html').write_text(template, encoding='utf-8')
     (output / 'downloads.json').write_text(json.dumps(downloads, indent=2), encoding='utf-8')
+    (output / 'releases.json').write_text(json.dumps([r for r in releases if not r.get('draft')]), encoding='utf-8')
     (output / '.nojekyll').touch()
     print('Website built with verified release paths:', ', '.join(f'{key} v{info["version"]}' for key, info in downloads.items()))
 
