@@ -22,7 +22,7 @@
  setMatchFilter('all');
  showMobileView('matches');
  const tabs=$('mobile-tabs');
- $('matches-sidebar').insertBefore(tabs,$('matches-sidebar').firstChild);
+ if(!window.kayTvSimple)$('matches-sidebar').insertBefore(tabs,$('matches-sidebar').firstChild);
  $('mobile-matches').querySelector('span').textContent='Matches';
  const liveLabel=$('mobile-live').querySelector('.nav-live-label');
  if(liveLabel)liveLabel.textContent='● LIVE';

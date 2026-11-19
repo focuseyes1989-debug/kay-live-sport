@@ -20,6 +20,10 @@ html=viewportUnits(html).replace('</head>','<link rel="stylesheet" href="/compat
 if(edition==='Phone')html=html.replace('<head>','<head><script src="/phone-theme.js"></script>').replace('</head>','<link rel="stylesheet" href="/phone.css"></head>').replace('setMatchFilter(filter);if(filter!==\'results\')refresh();','filter=\'all\';setMatchFilter(filter);').replace('<script src="/lazy-loading.js"></script>','').replace('</body>','<script src="/phone.js"></script><script src="/phone-notifications.js"></script><script src="/phone-data.js"></script></body>');
 for(const name of ['mobile.css','tv.css'])fs.writeFileSync(path.join(out,name),viewportUnits(fs.readFileSync(path.join(out,name),'utf8')));
 if(edition==='TV'){
+ html=html.replace('<body>','<body class="phone-edition mobile-matches">');
+ const tabs=html.match(/<nav id="mobile-tabs"[\s\S]*?<\/nav>/);
+ if(!tabs)throw Error('TV header tabs were not generated');
+ html=html.replace(tabs[0],'').replace('<button id="settings-menu-button"',tabs[0]+'<button id="settings-menu-button"');
  // Keep application startup independent of subresource loading on TV WebViews.
  html=html.replace(/<script src="\/([^"]+)"><\/script>/g,(tag,name)=>{
   if(['hls.min.js','mpegts.js'].includes(name))return tag;

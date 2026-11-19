@@ -1,4 +1,5 @@
 (function(){
+ window.kayTvSimple=true;
  var startupError='';
  function showError(){
   if(!startupError||!document.body)return;
